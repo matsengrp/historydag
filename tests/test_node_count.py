@@ -1,8 +1,8 @@
 import ete3
 import pickle
 import historydag.dag as hdag
-import historydag.utils as dagutils
-from collections import Counter
+
+import ete3
 
 
 def deterministic_newick(tree: ete3.TreeNode) -> str:
@@ -29,8 +29,8 @@ def deterministic_newick_topology(tree: ete3.TreeNode) -> str:
 
 
 newicklistlist = [
-    ["((AA, CT)CG, (TA, CC)CG)CC;"],                                    # hDAG contains 1 tree
-    ["((AA, CT)CG, (TA, CC)CG)CC;", "((AA, CT)CA, (TA, CC)CC)CC;"],     # hDAG contains 4 trees
+    ["((AA, CT)CG, (TA, CC)CG)CC;"],
+    ["((AA, CT)CG, (TA, CC)CG)CC;", "((AA, CT)CA, (TA, CC)CC)CC;"],
     [
         "((CA, GG)CA, AA, (TT, (CC, GA)CC)CC)AA;",
         "((CA, GG)CA, AA, (TT, (CC, GA)CA)CA)AA;",
@@ -67,25 +67,19 @@ dags.append(
     )
 )
 
-# compdags = [dag.copy() for dag in dags]
-# for dag in compdags:
-#     dag.add_all_allowed_edges()
-# dags.extend(compdags)
-
-# cdags = [dag.copy() for dag in dags]
-# for dag in cdags:
-#     dag.convert_to_collapsed()
-
 
 def test_node_counts():
     print(f"Testing with {len(dags)} dags")
     for dag in dags:
         # print(dag.to_graphviz())
+        print("new dag")
         node2count = dag.count_nodes()
         for node in node2count.keys():
             # print(f"Current node:\t{node}")
-            ground_truth = sum([node in set(tree.postorder()) for tree in dag.get_trees()])
-            # print(f"\t node2count[node] = {node2count[node]} \t ground_truth = {ground_truth}")
+            ground_truth = sum(
+                [node in set(tree.postorder()) for tree in dag.get_trees()]
+            )
+            print(
+                f"\t node2count[node] = {node2count[node]} \t ground_truth = {ground_truth}"
+            )
             assert node2count[node] == ground_truth
-
-

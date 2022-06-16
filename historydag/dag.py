@@ -917,19 +917,21 @@ class HistoryDag:
             sum,
             prod,
         )
-    
+
     def count_nodes(self) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
-        
+
         Returns:
-            A dicitonary mapping each node in the DAG to the number of trees that it
-            takes part in.
+            A dicitonary mapping each node in the DAG to the number of trees
+            that it takes part in.
         """
         node2count = {}
         node2stats = {}
 
-        self.count_trees()  # Initializes node._dp_data to contain number of subtrees below
-        reverse_postorder = reversed(list(self.postorder()))    # TODO: Find a better way to visit parents first...
+        self.count_trees()
+        reverse_postorder = reversed(
+            list(self.postorder())
+        )  # TODO: Find a better way to visit parents first...
         for node in reverse_postorder:
             # print(node)
             below = node._dp_data
@@ -937,16 +939,17 @@ class HistoryDag:
                 above = 1
             else:
                 curr_clade = set()
-                curr_clade = frozenset(curr_clade.union(*[set(clade) for clade in node.clades]))
-                # print(f"\tCurr_clade = {curr_clade}")
+                curr_clade = frozenset(
+                    curr_clade.union(*[set(clade) for clade in node.clades])
+                )
 
                 above = 0
                 for parent in node.parents:
                     above_parent = node2stats[parent][0]
                     below_parent = 1
                     for clade in parent.clades:
-                        if clade == curr_clade or parent.is_root():     # Skip clade covered by node of interest
-                            # print("\t skipping current clade...")
+                        # Skip clade covered by node of interest
+                        if clade == curr_clade or parent.is_root():
                             continue
                         below_clade = 0
                         for sib in parent.children(clade=clade):
@@ -954,13 +957,10 @@ class HistoryDag:
                         below_parent *= below_clade
 
                     above += above_parent * below_parent
-            
+
             node2count[node] = above * below
-            # print(f"\tabove: {above}")
-            # print(f"\tbelow: {below}")
             node2stats[node] = (above, below)
-            # node._dp_data = {"above": above, "below": below} # NOTE: Don't want to overwrite _dp_data while alg is running...
-        
+
         return node2count
 
     def weight_counts_with_ambiguities(
