@@ -2,8 +2,6 @@ import ete3
 import pickle
 import historydag.dag as hdag
 
-import ete3
-
 
 def deterministic_newick(tree: ete3.TreeNode) -> str:
     """For use in comparing ete3 TreeNodes with newick strings"""
