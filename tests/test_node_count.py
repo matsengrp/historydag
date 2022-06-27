@@ -89,9 +89,7 @@ def test_collapsed_node_counts():
 
         for node in node2count.keys():
             ground_truth = sum(
-                [node in set([
-                        n.under_clade() for n in tree.postorder()
-                    ])
+                [node in set([n.under_clade() for n in tree.postorder()])
                 for tree in dag.get_trees()]
             )
             print(
