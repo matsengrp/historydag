@@ -448,6 +448,7 @@ class HistoryDag:
         # initialize empty/default value for each item in model_label
         field_values = tuple(type(item)() for item in model_label)
         internal_label = type(model_label)(*field_values)
+
         for node in newdag.preorder(skip_root=True):
             if not node.is_leaf():
                 node.label = internal_label
@@ -1083,8 +1084,13 @@ class HistoryDag:
             prod,
         )
 
-    def count_nodes(self) -> Dict[HistoryDagNode, int]:
+    def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
+
+        Args:
+            collapse: A flag that when set to true, treats nodes as clade unions and
+                ignores label information. Then, the returned dictionary is keyed by
+                clade union sets.
 
         Returns:
             A dicitonary mapping each node in the DAG to the number of trees
@@ -1094,20 +1100,14 @@ class HistoryDag:
         node2stats = {}
 
         self.count_trees()
-        reverse_postorder = reversed(
-            list(self.postorder())
-        )  # TODO: Find a better way to visit parents first...
+        reverse_postorder = reversed(list(self.postorder()))
         for node in reverse_postorder:
-            # print(node)
             below = node._dp_data
+            curr_clade = node.under_clade()
+
             if node.is_root():
                 above = 1
             else:
-                curr_clade = set()
-                curr_clade = frozenset(
-                    curr_clade.union(*[set(clade) for clade in node.clades])
-                )
-
                 above = 0
                 for parent in node.parents:
                     above_parent = node2stats[parent][0]
@@ -1124,9 +1124,20 @@ class HistoryDag:
                     above += above_parent * below_parent
 
             node2count[node] = above * below
-            node2stats[node] = (above, below)
+            node2stats[node] = [above, below]
 
-        return node2count
+        collapsed_n2c = {}
+        if collapse:
+            for node in node2count.keys():
+                clade = node.under_clade()
+                if clade not in collapsed_n2c:
+                    collapsed_n2c[clade] = 0
+
+                collapsed_n2c[clade] += node2count[node]
+            return collapsed_n2c
+        else:
+            return node2count
+
     def count_paths_to_leaf(
         self,
         leaf_label,

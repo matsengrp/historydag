@@ -69,15 +69,32 @@ dags.append(
 def test_node_counts():
     print(f"Testing with {len(dags)} dags")
     for dag in dags:
-        # print(dag.to_graphviz())
-        print("new dag")
         node2count = dag.count_nodes()
         for node in node2count.keys():
-            # print(f"Current node:\t{node}")
             ground_truth = sum(
                 [node in set(tree.postorder()) for tree in dag.get_trees()]
             )
+            # print(
+            #     f"\t node2count[node] = {node2count[node]} \t ground_truth = {ground_truth}"
+            # )
+            assert node2count[node] == ground_truth
+
+
+def test_collapsed_node_counts():
+    print(f"Testing with {len(dags)} dags")
+    for dag in dags:
+        node2count = dag.count_nodes(collapse=True)
+        print("new dag")
+        # print(dag.to_graphviz())
+
+        for node in node2count.keys():
+            ground_truth = sum(
+                [node in set([
+                        n.under_clade() for n in tree.postorder()
+                    ])
+                for tree in dag.get_trees()]
+            )
             print(
-                f"\t node2count[node] = {node2count[node]} \t ground_truth = {ground_truth}"
+                f"node2count[node] = {node2count[node]} \t ground_truth = {ground_truth}\t {node}"
             )
             assert node2count[node] == ground_truth
