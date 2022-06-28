@@ -1,4 +1,3 @@
-from calendar import c
 import ete3
 import pickle
 import historydag.dag as hdag
