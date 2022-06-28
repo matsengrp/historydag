@@ -1140,7 +1140,6 @@ class HistoryDag:
         else:
             return node2count
 
-    
     # TODO: Consider ways to reduce redundancy between this method and the one above
     def count_edges(self) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each edge takes part in.
@@ -1178,7 +1177,7 @@ class HistoryDag:
 
                     edge2count[(parent, node)] = (above_parent * below_parent) * below
             node2stats[node] = [above, below]
-        
+
         return edge2count
 
     def count_paths_to_leaf(

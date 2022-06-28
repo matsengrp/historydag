@@ -90,13 +90,16 @@ def test_collapsed_node_counts():
 
         for node in node2count.keys():
             ground_truth = sum(
-                [node in set([n.under_clade() for n in tree.postorder()])
-                    for tree in dag.get_trees()]
+                [
+                    node in set([n.under_clade() for n in tree.postorder()])
+                    for tree in dag.get_trees()
+                ]
             )
             print(
                 f"node2count[node] = {node2count[node]} \t ground_truth = {ground_truth}\t {node}"
             )
             assert node2count[node] == ground_truth
+
 
 # NOTE: Tests that edge2count contains edges -> count that are correct, but not that all
 # edges are contained...
@@ -114,7 +117,7 @@ def test_edge_counts():
                     if node in curr_parent.children():
                         ground_truth += 1
                         break
-                
+
             print(
                 f"count={edge2count[(parent, node)]}\tground_truth={ground_truth}\t{parent.label}\t{node.label}"
             )
