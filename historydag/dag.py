@@ -448,6 +448,7 @@ class HistoryDag:
         # initialize empty/default value for each item in model_label
         field_values = tuple(type(item)() for item in model_label)
         internal_label = type(model_label)(*field_values)
+
         for node in newdag.preorder(skip_root=True):
             if not node.is_leaf():
                 node.label = internal_label
@@ -1082,6 +1083,102 @@ class HistoryDag:
             sum,
             prod,
         )
+
+    # TODO: Rename to node_support() or something...
+    # TODO: Currently, the returned type is only correct when collapse is False
+    def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
+        """Counts the number of trees each node takes part in.
+
+        Args:
+            collapse: A flag that when set to true, treats nodes as clade unions and
+                ignores label information. Then, the returned dictionary is keyed by
+                clade union sets.
+
+        Returns:
+            A dicitonary mapping each node in the DAG to the number of trees
+            that it takes part in.
+        """
+        node2count = {}
+        node2stats = {}
+
+        self.count_trees()
+        reverse_postorder = reversed(list(self.postorder()))
+        for node in reverse_postorder:
+            below = node._dp_data
+            curr_clade = node.under_clade()
+
+            if node.is_root():
+                above = 1
+            else:
+                above = 0
+                for parent in node.parents:
+                    above_parent = node2stats[parent][0]
+                    below_parent = 1
+                    for clade in parent.clades:
+                        # Skip clade covered by node of interest
+                        if clade == curr_clade or parent.is_root():
+                            continue
+                        below_clade = 0
+                        for sib in parent.children(clade=clade):
+                            below_clade += sib._dp_data
+                        below_parent *= below_clade
+
+                    above += above_parent * below_parent
+
+            node2count[node] = above * below
+            node2stats[node] = [above, below]
+
+        collapsed_n2c = {}
+        if collapse:
+            for node in node2count.keys():
+                clade = node.under_clade()
+                if clade not in collapsed_n2c:
+                    collapsed_n2c[clade] = 0
+
+                collapsed_n2c[clade] += node2count[node]
+            return collapsed_n2c
+        else:
+            return node2count
+
+    # TODO: Consider ways to reduce redundancy between this method and the one above
+    def count_edges(self) -> Dict[HistoryDagNode, int]:
+        """Counts the number of trees each edge takes part in.
+
+        Returns:
+            A dicitonary mapping each edge in the DAG to the number of trees
+            that it takes part in.
+        """
+        edge2count = {}
+        node2stats = {}
+
+        self.count_trees()
+        reverse_postorder = reversed(list(self.postorder()))
+        for node in reverse_postorder:
+            below = node._dp_data
+            curr_clade = node.under_clade()
+
+            if node.is_root():
+                above = 1
+            else:
+                above = 0
+                for parent in node.parents:
+                    above_parent = node2stats[parent][0]
+                    below_parent = 1
+                    for clade in parent.clades:
+                        # Skip clade covered by node of interest
+                        if clade == curr_clade or parent.is_root():
+                            continue
+                        below_clade = 0
+                        for sib in parent.children(clade=clade):
+                            below_clade += sib._dp_data
+                        below_parent *= below_clade
+
+                    above += above_parent * below_parent
+
+                    edge2count[(parent, node)] = (above_parent * below_parent) * below
+            node2stats[node] = [above, below]
+
+        return edge2count
 
     def count_paths_to_leaf(
         self,
