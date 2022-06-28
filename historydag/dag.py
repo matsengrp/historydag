@@ -1084,6 +1084,8 @@ class HistoryDag:
             prod,
         )
 
+    # TODO: Rename to node_support() or something...
+    # TODO: Currently, the returned type is only correct when collapse is False
     def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
 
@@ -1137,6 +1139,47 @@ class HistoryDag:
             return collapsed_n2c
         else:
             return node2count
+
+    
+    # TODO: Consider ways to reduce redundancy between this method and the one above
+    def count_edges(self) -> Dict[HistoryDagNode, int]:
+        """Counts the number of trees each edge takes part in.
+
+        Returns:
+            A dicitonary mapping each edge in the DAG to the number of trees
+            that it takes part in.
+        """
+        edge2count = {}
+        node2stats = {}
+
+        self.count_trees()
+        reverse_postorder = reversed(list(self.postorder()))
+        for node in reverse_postorder:
+            below = node._dp_data
+            curr_clade = node.under_clade()
+
+            if node.is_root():
+                above = 1
+            else:
+                above = 0
+                for parent in node.parents:
+                    above_parent = node2stats[parent][0]
+                    below_parent = 1
+                    for clade in parent.clades:
+                        # Skip clade covered by node of interest
+                        if clade == curr_clade or parent.is_root():
+                            continue
+                        below_clade = 0
+                        for sib in parent.children(clade=clade):
+                            below_clade += sib._dp_data
+                        below_parent *= below_clade
+
+                    above += above_parent * below_parent
+
+                    edge2count[(parent, node)] = (above_parent * below_parent) * below
+            node2stats[node] = [above, below]
+        
+        return edge2count
 
     def count_paths_to_leaf(
         self,
