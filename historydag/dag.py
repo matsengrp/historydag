@@ -62,7 +62,10 @@ class HistoryDagNode:
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, HistoryDagNode):
-            return (self.label, self.child_clades()) == (other.label, other.child_clades())
+            return (self.label, self.child_clades()) == (
+                other.label,
+                other.child_clades(),
+            )
         else:
             raise NotImplementedError
 
@@ -91,8 +94,8 @@ class HistoryDagNode:
         return not self.__lt__(other)
 
     def empty_copy(self) -> "HistoryDagNode":
-        """Returns a HistoryDagNode object with the same clades, label, and attr dictionary, but
-        no descendant edges."""
+        """Returns a HistoryDagNode object with the same clades, label, and
+        attr dictionary, but no descendant edges."""
         return HistoryDagNode(
             self.label, {clade: EdgeSet() for clade in self.clades}, deepcopy(self.attr)
         )
@@ -118,7 +121,8 @@ class HistoryDagNode:
         return not bool(self.clades)
 
     def is_ua_node(self) -> bool:
-        """Returns whether this is the source node in the DAG, from which all others are reachable."""
+        """Returns whether this is the source node in the DAG, from which all
+        others are reachable."""
         return False
 
     def is_root(self) -> bool:
@@ -328,7 +332,8 @@ class UANode(HistoryDagNode):
         return newnode
 
     def is_ua_node(self) -> bool:
-        """Returns whether this is the source node in the DAG, from which all others are reachable."""
+        """Returns whether this is the source node in the DAG, from which all
+        others are reachable."""
         return True
 
 
@@ -472,7 +477,8 @@ class HistoryDag:
         return pickle.dumps(self.__getstate__())
 
     def get_histories(self) -> Generator["HistoryDag", None, None]:
-        """Return a generator containing all internally labeled trees in the history DAG.
+        """Return a generator containing all internally labeled trees in the
+        history DAG.
 
         Note that each history is a history DAG, containing a UA node.
 
@@ -1004,7 +1010,7 @@ class HistoryDag:
                 )
         return self.dagroot._dp_data
 
-    def postorder_cladetree_accum(*args, **kwargs) -> Weight:
+    def postorder_cladetree_accum(self, *args, **kwargs) -> Weight:
         """Deprecated name for :meth:`postorder_history_accum`"""
         return self.postorder_history_accum(*args, **kwargs)
 
@@ -1800,6 +1806,7 @@ def history_dag_from_histories(treelist: List[HistoryDag]) -> HistoryDag:
     dag = treelist[0].copy()
     dag.merge(treelist[1:])
     return dag
+
 
 def history_dag_from_clade_trees(*args, **kwargs) -> HistoryDag:
     """Deprecated name for :meth:`history_dag_from_histories`"""
