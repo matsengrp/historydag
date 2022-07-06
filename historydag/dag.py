@@ -97,10 +97,9 @@ class HistoryDagNode:
             self.label, {clade: EdgeSet() for clade in self.clades}, deepcopy(self.attr)
         )
 
-    # def node_self(self) -> "HistoryDagNode":
-    #     """Deprecated name for :meth:`empty_copy`"""
-    #     return self.empty_copy()
-    # [Walrus]
+    def node_self(self) -> "HistoryDagNode":
+        """Deprecated name for :meth:`empty_copy`"""
+        return self.empty_copy()
 
     def clade_union(self) -> FrozenSet[Label]:
         r"""Returns the union of this node's child clades
@@ -110,10 +109,9 @@ class HistoryDagNode:
         else:
             return frozenset().union(*self.clades.keys())
 
-    # def under_clade(self) -> FrozenSet[Label]:
-    #     """Deprecated name for :meth:`clade_union`"""
-    #     return self.clade_union()
-    # [Walrus]
+    def under_clade(self) -> FrozenSet[Label]:
+        """Deprecated name for :meth:`clade_union`"""
+        return self.clade_union()
 
     def is_leaf(self) -> bool:
         """Returns whether this is a leaf node."""
@@ -123,30 +121,27 @@ class HistoryDagNode:
         """Returns whether this is the source node in the DAG, from which all others are reachable."""
         return False
 
-    # def is_root(self) -> bool:
-    #     """Deprecated name for :meth:`is_ua_node`"""
-    #     return self.is_ua_node()
-    # [Walrus]
+    def is_root(self) -> bool:
+        """Deprecated name for :meth:`is_ua_node`"""
+        return self.is_ua_node()
 
     def child_clades(self) -> frozenset:
         """Returns the node's child clades, or a frozenset containing a
         frozenset if this node is a UANode."""
         return frozenset(self.clades.keys())
 
-    # def partitions(self) -> frozenset:
-    #     """Deprecated name for :meth:`child_clades`"""
-    #     return self.child_clades()
-    # # [Walrus]
+    def partitions(self) -> frozenset:
+        """Deprecated name for :meth:`child_clades`"""
+        return self.child_clades()
 
     def sorted_child_clades(self) -> tuple:
         """Returns the node's child clades as a sorted tuple containing leaf
         labels in sorted tuples."""
         return tuple(sorted([tuple(sorted(clade)) for clade in self.clades.keys()]))
 
-    # def sorted_partitions(self) -> frozenset:
-    #     """Deprecated name for :meth:`sorted_child_clades`"""
-    #     return self.sorted_child_clades()
-    # # [Walrus]
+    def sorted_partitions(self) -> tuple:
+        """Deprecated name for :meth:`sorted_child_clades`"""
+        return self.sorted_child_clades()
 
     def children(
         self, clade: Set[Label] = None
@@ -489,10 +484,9 @@ class HistoryDag:
         for history in self.dagroot._get_subhistories():
             yield HistoryDag(history)
 
-    # def get_trees(self) -> frozenset:
-    #     """Deprecated name for :meth:`get_histories`"""
-    #     return self.get_histories()
-    # # [Walrus]
+    def get_trees(self) -> Generator["HistoryDag", None, None]:
+        """Deprecated name for :meth:`get_histories`"""
+        return self.get_histories()
 
     def sample(self) -> "HistoryDag":
         r"""Samples a history from the history DAG.
@@ -533,10 +527,9 @@ class HistoryDag:
                     return False
         return True
 
-    # def is_clade_tree(self) -> bool:
-    #     """Deprecated name for :meth:`is_history`"""
-    #     return self.is_history()
-    # # [Walrus]
+    def is_clade_tree(self) -> bool:
+        """Deprecated name for :meth:`is_history`"""
+        return self.is_history()
 
     def copy(self) -> "HistoryDag":
         """Uses bytestring serialization, and is guaranteed to copy:
@@ -1011,10 +1004,9 @@ class HistoryDag:
                 )
         return self.dagroot._dp_data
 
-    # def postorder_cladetree_accum(*args, **kwargs) -> Weight:
-    #     """Deprecated name for :meth:`postorder_history_accum`"""
-    #     return self.postorder_history_accum(*args, **kwargs)
-    # # [Walrus]
+    def postorder_cladetree_accum(*args, **kwargs) -> Weight:
+        """Deprecated name for :meth:`postorder_history_accum`"""
+        return self.postorder_history_accum(*args, **kwargs)
 
     def optimal_weight_annotate(
         self,
@@ -1164,10 +1156,9 @@ class HistoryDag:
             prod,
         )
 
-    # def count_trees(self):
-    #     """Deprecated name for :meth:`count_histories`"""
-    #     return self.count_histories()
-    # # [Walrus]
+    def count_trees(self):
+        """Deprecated name for :meth:`count_histories`"""
+        return self.count_histories()
 
     def count_paths_to_leaf(
         self,
@@ -1810,7 +1801,6 @@ def history_dag_from_histories(treelist: List[HistoryDag]) -> HistoryDag:
     dag.merge(treelist[1:])
     return dag
 
-# def history_dag_from_clade_trees(*args, **kwargs) -> HistoryDag:
-#     """Deprecated name for :meth:`history_dag_from_histories`"""
-#     return history_dag_from_histories(*args, **kwargs)
-# # [Walrus]
+def history_dag_from_clade_trees(*args, **kwargs) -> HistoryDag:
+    """Deprecated name for :meth:`history_dag_from_histories`"""
+    return history_dag_from_histories(*args, **kwargs)
