@@ -377,7 +377,7 @@ def summarize(dagpath, treedir, csv_data, print_header):
         return distance(seq1, seq2)
     dag = load_dag(dagpath)
     data = []
-    data.append(("before_collapse_n_trees", dag.count_trees()))
+    data.append(("before_collapse_n_trees", dag.count_histories()))
     data.append(("before_collapse_n_nodes", len(list(dag.preorder()))))
     wc = dag.weight_count(edge_weight_func=dist)
     data.append(("before_collapse_max_pars", max(wc.keys())))
@@ -385,7 +385,7 @@ def summarize(dagpath, treedir, csv_data, print_header):
     dag.add_all_allowed_edges()
     dag.trim_optimal_weight(edge_weight_func=dist)
     dag.convert_to_collapsed()
-    data.append(("n_trees", dag.count_trees()))
+    data.append(("n_trees", dag.count_histories()))
     wc = dag.weight_count(edge_weight_func=dist)
     data.append(("parsimony_score", min(wc.keys())))
     data.append(("avg_node_parents", dag.internal_avg_parents()))
@@ -822,7 +822,7 @@ def make_testcase(pickled_forest, outdir, num_trees, random_seed):
     for tree in trees[1:]:
         newdag.merge(tree)
     write_dag(newdag, outdir / "full_dag.pb", from_mutseqs=False)
-    print(f"Test case dag contains {newdag.count_trees()} trees")
+    print(f"Test case dag contains {newdag.count_histories()} trees")
 
 @cli.command("change-ref")
 @click.argument("in_pb")
