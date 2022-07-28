@@ -239,6 +239,10 @@ def dag_to_mad_pb(dag, leaf_data_func=None, from_mutseqs=True):
             else:
                 parent_seq = pnode.label.mutseq
             return cg_diff(parent_seq, child.label.mutseq)
+
+        def key_func(cladeitem):
+            clade, _ = cladeitem
+            return sorted(sorted(idx for idx in label.mutseq) for label in clade)
     else:
         refseq = next(dag.preorder(skip_root=True)).label.sequence
         refseqid = 'unknown_seq_id'
@@ -248,6 +252,10 @@ def dag_to_mad_pb(dag, leaf_data_func=None, from_mutseqs=True):
             else:
                 parent_seq = pnode.label.sequence
             return string_seq_diff(parent_seq, cnode.label.sequence)
+
+        def key_func(cladeitem):
+            clade, _ = cladeitem
+            return sorted(sorted(idx for idx in sequence_to_cg(label.sequence, refseq)) for label in clade)
 
     node_dict = {}
     data = dpb.data()
@@ -260,7 +268,7 @@ def dag_to_mad_pb(dag, leaf_data_func=None, from_mutseqs=True):
                 node_name.condensed_leaves.append(leaf_data_func(node))
 
     for node in dag.postorder():
-        for cladeidx, (clade, edgeset) in enumerate(node.clades.items()):
+        for cladeidx, (clade, edgeset) in enumerate(sorted(node.clades.items(), key=key_func)):
             for child in edgeset.targets:
                 edge = data.edges.add()
                 edge.parent_node = node_dict[node]
