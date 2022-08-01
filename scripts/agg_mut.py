@@ -406,12 +406,14 @@ def summarize(dagpath, treedir, csv_data, print_header):
     node_counts = dag.weight_count(edge_weight_func=lambda n1, n2: 1)
     data.append(("tree_min_n_nodes", min(node_counts.keys())))
     data.append(("tree_max_n_nodes", max(node_counts.keys())))
+    data.append(("n_nodes_unlabeled", len(list(dag.unlabel().preorder()))))
     data.append(("n_tree_roots", len(list(dag.dagroot.children()))))
     if treedir:
         treepath = Path(treedir)
         treefiles = list(treepath.glob('*.pb'))
         wc = count_parsimony(treefiles)
         data.append(("n_input_trees", len(treefiles)))
+        data.append(("n_unique_inputs", count_unique(treefiles)))
         data.append(("input_min_pars", min(wc.keys())))
         data.append(("input_max_pars", max(wc.keys())))
     if csv_data:
@@ -555,12 +557,16 @@ class TreeComparer:
     def __hash__(self):
         return hash(self.tree)
 
-@cli.command('count-unique')
-@click.argument('trees', nargs=-1, type=click.Path(exists=True))
 def count_unique(trees):
     """Count the number of unique trees represented by MAT protobufs passed to this function"""
     ushertrees = {TreeComparer(process_from_mat(str(file), 'node_1')) for file in trees}
-    print(len(ushertrees))
+    return len(ushertrees)
+
+@cli.command('count-unique')
+@click.argument('trees', nargs=-1, type=click.Path(exists=True))
+def cli_count_unique(trees):
+    """Count the number of unique trees represented by MAT protobufs passed to this function"""
+    print(count_unique(trees))
 
 @cli.command('find-duplicates')
 @click.option('-t', '--tree', help='tree in which to search for duplicate samples')
