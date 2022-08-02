@@ -14,6 +14,7 @@ from frozendict import frozendict
 import json
 from typing import NamedTuple
 import warnings
+
 nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
 nuc_codes = {nuc: code for code, nuc in nuc_lookup.items()}
 
@@ -68,6 +69,7 @@ def build_tree_from_mat(infile):
     return build_tree_from_lists(node_info, edges)
 
 def process_from_mat(file, refseqid):
+    print("loading", str(file))
     tree = build_tree_from_mat(file)
     # reconstruct root sequence:
     try:
@@ -379,9 +381,10 @@ def pb_to_dag(pbdata):
 @cli.command('summarize')
 @click.argument('dagpath')
 @click.option('-t', '--treedir', help='include parsimony counts for .pb trees in the given directory')
+@click.option('-o', '--outfile', help='print output to the provided file')
 @click.option('-c', '--csv_data', nargs=1, help='print information as csv row, with passed identifier')
 @click.option('-p', '--print_header', is_flag=True, help='also print csv header row')
-def summarize(dagpath, treedir, csv_data, print_header):
+def summarize(dagpath, treedir, outfile, csv_data, print_header):
     """output summary information about the provided input file(s)"""
     @hdag.utils.access_nodefield_default("mutseq", default=0)
     def dist(seq1, seq2):
@@ -416,13 +419,19 @@ def summarize(dagpath, treedir, csv_data, print_header):
         data.append(("n_unique_inputs", count_unique(treefiles)))
         data.append(("input_min_pars", min(wc.keys())))
         data.append(("input_max_pars", max(wc.keys())))
+    outstring = ''
     if csv_data:
         if print_header:
-            print(','.join(['Identifier'] + [str(stat[0]) for stat in data]))
-        print(','.join([csv_data] + [str(stat[1]) for stat in data]))
+            outstring += ','.join(['Identifier'] + [str(stat[0]) for stat in data]) + '\n'
+        outstring += ','.join([csv_data] + [str(stat[1]) for stat in data]) + '\n'
     else:
         for stat in data:
-            print(stat[0], stat[1])
+            outstring += str(stat[0]) + str(stat[1]) + '\n'
+    if outfile is not None:
+        with open(outfile, 'w') as fh:
+            print(outstring, file=fh)
+    else:
+        print(outstring)
 
 
 @cli.command('merge')
