@@ -1767,7 +1767,7 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, unrooted=(not rooted))
+        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
     def count_rf_distances(self, history, rooted=False):
@@ -1780,7 +1780,7 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, unrooted=(not rooted))
+        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
         return self.weight_count(**kwargs)
 
     # ######## End Abstract DP method derivatives ########

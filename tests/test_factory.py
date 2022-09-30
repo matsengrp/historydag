@@ -352,8 +352,8 @@ def test_trim_fixedleaves():
     for dag in dags + cdags:
         reftree = dag.sample()
         kwarglist = [
-            (dagutils.make_rfdistance_countfuncs(reftree, unrooted=True), min),
-            (dagutils.make_rfdistance_countfuncs(reftree, unrooted=False), min),
+            (dagutils.make_rfdistance_countfuncs(reftree, rooted=True), min),
+            (dagutils.make_rfdistance_countfuncs(reftree, rooted=False), min),
         ]
         for kwargs, opt_func in kwarglist:
             dag = dag.copy()
@@ -486,7 +486,7 @@ def test_relabel():
 def test_rf_rooted_distances():
     for dag in dags:
         ref_tree = dag.sample()
-        weight_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, unrooted=False)
+        weight_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True)
         ref_tree_ete = ref_tree.to_ete(features=["sequence"])
 
         def add_root(tree):
@@ -540,10 +540,10 @@ def test_rf_rooted_distances():
                     assert False
 
 
-def test_rf_distances():
+def test_rf_unrooted_distances():
     for dag in reversed(dags):
         ref_tree = dag.sample()
-        weight_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree)
+        weight_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=False)
         ref_tree_ete = ref_tree.to_ete(features=["sequence"])
         for node in ref_tree_ete.traverse():
             node.name = node.sequence

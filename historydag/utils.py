@@ -420,7 +420,7 @@ node_countfuncs = AddFuncDict(
 For use with :meth:`historydag.HistoryDag.weight_count`."""
 
 
-def make_rfdistance_countfuncs(ref_tree, unrooted=True):
+def make_rfdistance_countfuncs(ref_tree, rooted=False):
     """Provides functions to compute RF distances of trees in a DAG, relative
     to a fixed reference tree.
 
@@ -445,7 +445,7 @@ def make_rfdistance_countfuncs(ref_tree, unrooted=True):
     """
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
-    if unrooted:
+    if not rooted:
 
         def split(node):
             cu = node.clade_union()
