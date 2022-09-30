@@ -1758,7 +1758,12 @@ class HistoryDag:
             ).values()
         )[0]
 
-    def optimal_rf_distance(self, history, rooted=False, optimal_func=min):
+    def optimal_rf_distance(
+        self,
+        history: "HistoryDag",
+        rooted: bool = False,
+        optimal_func: Callable[[List[Weight]], Weight] = min,
+    ):
         """Returns the optimal (min or max) RF distance to a given history.
 
         The given history must be on the same taxa as all trees in the DAG.
@@ -1770,7 +1775,7 @@ class HistoryDag:
         kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
-    def count_rf_distances(self, history, rooted=False):
+    def count_rf_distances(self, history: "HistoryDag", rooted: bool = False):
         """Returns a Counter containing all RF distances to a given history.
 
         The given history must be on the same taxa as all trees in the DAG.

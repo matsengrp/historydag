@@ -21,7 +21,7 @@ from typing import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from historydag.dag import HistoryDagNode
+    from historydag.dag import HistoryDagNode, HistoryDag
 
 Weight = Any
 Label = Union[NamedTuple, "UALabel"]
@@ -420,9 +420,14 @@ node_countfuncs = AddFuncDict(
 For use with :meth:`historydag.HistoryDag.weight_count`."""
 
 
-def make_rfdistance_countfuncs(ref_tree, rooted=False):
+def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     """Provides functions to compute RF distances of trees in a DAG, relative
     to a fixed reference tree.
+
+    Args:
+        ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.
+        rooted: If False, use edges' splits for RF distance computation. Otherwise, use
+            the clade below each edge.
 
     The reference tree must have the same taxa as all the trees in the DAG.
 
