@@ -422,10 +422,6 @@ class HistoryDag:
                                    edge_weight_func,
                                    min_possible_weight)
 
-        # Recomputing the weights to ensure that     
-        self.optimal_weight_annotate(start_func=start_func,
-                            edge_weight_func=edge_weight_func)
-
         if min_weight is not None:
             self.trim_below_weight(-min_weight,
                                    lambda n: -start_func(n),
@@ -449,7 +445,7 @@ class HistoryDag:
             if node.is_leaf():  # base case - the node is a leaf
                 return
             else:
-                node_min_weight = node._dp_data
+                node_min_weight = node._dp_data # minimum weight of subtree under node
                 for clade, eset in node.clades.items():
                     weightlist = []
                     for target in eset.targets:
@@ -464,7 +460,7 @@ class HistoryDag:
                     min_weight_under_clade = min(minweight for minweight, _, _ in weightlist)
                     # The sum of minimum scores beneath all other clades is
                     # quantity in parentheses:
-                    max_weight_allowed_clade = max_weight - (node_min_weight - min_weight_under_clade)
+                    max_weight_allowed_clade = node.maxweight - (node_min_weight - min_weight_under_clade)
 
                     to_keep = []
                     for minweight, edgeweight, target in weightlist: # this is looping through all the edges under clade
