@@ -421,6 +421,11 @@ class HistoryDag:
                                    start_func,
                                    edge_weight_func,
                                    min_possible_weight)
+
+        # Recomputing the weights to ensure that     
+        self.optimal_weight_annotate(start_func=start_func,
+                            edge_weight_func=edge_weight_func)
+
         if min_weight is not None:
             self.trim_below_weight(-min_weight,
                                    lambda n: -start_func(n),
