@@ -407,14 +407,12 @@ class HistoryDag:
                 * All label fields passed to ``label_fields`` are present in the same order as passed, followed
                   by any label fields required by the class, in the same order as they appear in
                   ``_required_label_fields``.
-                * If original label fields match label fields required by ``to_cls`` and passed label fields
-                  (or if passed label fields is empty) then no conversion of labels will be done,
-                  and the passed HistoryDag will be cast to ``to_cls`` directly.
-        """
-        if set(cls._required_label_fields.keys()) == set(dag.label_fields) and (
-            tuple(dag.label_fields) == tuple(label_fields) or len(label_fields) == 0
-        ):
-            # No conversion necessary
+                * If passed ``label_fields`` match existing fields and all required fields are present, or if ``label_fields``
+                  is empty and existing fields contain all required label fields, the passed dag will be cast to the new
+                  subclass without any modification of node labels."""
+        required_fields_set = set(cls._required_label_fields.keys())
+        if ((tuple(label_fields) == dag.label_fields and required_fields_set.issubset(set(dag.label_fields))) or
+                (len(label_fields) == 0 and required_fields_set.issubset(set(dag.label_fields)))):
             return cls(dag.dagroot, dag.attr)
 
         def get_existing_field(fieldname: str):
@@ -431,6 +429,8 @@ class HistoryDag:
                 "is supported."
             )
 
+        precursor_fields = set()
+
         def find_conversion_func(fieldname: str):
             if fieldname in dag.label_fields:
                 return (fieldname, get_existing_field(fieldname))
@@ -439,6 +439,7 @@ class HistoryDag:
                     fieldname
                 ]:
                     if set(from_fields).issubset(set(dag.label_fields)):
+                        precursor_fields.update(from_fields)
                         return (fieldname, conversion_func)
             raise_unable_error(fieldname)
 
@@ -446,6 +447,12 @@ class HistoryDag:
         added_fields = set()
         for field in list(label_fields) + list(cls._required_label_fields.keys()):
             if field not in added_fields:
+                convert_funcs.append(find_conversion_func(field))
+                added_fields.add(field)
+
+        # also keep all existing fields not used to derive required fields:
+        for field in dag.label_fields:
+            if field not in precursor_fields and field not in added_fields:
                 convert_funcs.append(find_conversion_func(field))
                 added_fields.add(field)
 
