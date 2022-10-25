@@ -12,6 +12,7 @@ from historydag.dag import HistoryDag, HistoryDagNode, UANode, EdgeSet
 import historydag.utils
 from historydag.utils import Weight
 from historydag.compact_genome import (
+    CompactGenome,
     compact_genome_from_sequence,
     wrapped_cg_hamming_distance,
     cg_diff,
@@ -284,6 +285,7 @@ def load_MAD_protobuf(pbdata):
     `compact_genome` label attribute."""
     # use HistoryDag.__setstate__ to make this happen
     # all of a node's parent edges
+    reference = pbdata.reference_seq
     parent_edges = {node.node_id: [] for node in pbdata.node_names}
     # a list of list of a node's child edges
     child_edges = {node.node_id: [] for node in pbdata.node_names}
@@ -301,7 +303,7 @@ def load_MAD_protobuf(pbdata):
     @functools.cache
     def get_node_compact_genome(node_id):
         if node_id == ua_node_id:
-            return frozendict()
+            return CompactGenome(frozendict(), reference)
         else:
             edge = parent_edges[node_id][0]
             parent_seq = get_node_compact_genome(edge.parent_node)
@@ -384,10 +386,9 @@ def load_MAD_protobuf(pbdata):
             "label_list": label_list,
             "node_list": node_list,
             "edge_list": edge_list,
-            "attr": None,
+            "attr": {'refseqid': pbdata.reference_id},
         }
     )
-    dag.refseq = (pbdata.reference_id, pbdata.reference_seq)
     return dag
 
 
@@ -399,6 +400,7 @@ def load_MAD_protobuf_file(filename):
 
 
 ###########
+
 
 def string_seq_diff(parent_seq, child_seq):
     return (

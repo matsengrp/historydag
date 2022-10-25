@@ -390,7 +390,7 @@ class HistoryDag:
 
     @classmethod
     def from_history_dag(
-        cls, dag: "HistoryDag", label_fields: Sequence[str] = [], **kwargs
+        cls, dag: "HistoryDag", label_fields: Sequence[str] = None, **kwargs
     ):
         """Converts HistoryDag instances between subclasses of HistoryDag. No
         copy is performed, so the passed `dag` will in general be modified.
@@ -403,16 +403,32 @@ class HistoryDag:
         Returns:
             The converted HistoryDag object, carrying the type from which this static method was called.
             After conversion to the new HistoryDag subclass ``to_cls``, the following will be true about node labels:
-                * All required label fields in the static class variable ``_required_label_fields`` are present.
-                * All label fields passed to ``label_fields`` are present in the same order as passed, followed
-                  by any label fields required by the class, in the same order as they appear in
-                  ``_required_label_fields``.
-                * If passed ``label_fields`` match existing fields and all required fields are present, or if ``label_fields``
-                  is empty and existing fields contain all required label fields, the passed dag will be cast to the new
-                  subclass without any modification of node labels."""
+                * If passed ``label_fields`` is None, then existing label fields will be preserved, except that missing
+                  required label fields will be recovered if possible, and the existing label fields used to recover
+                  them will be omitted. Recovered label fields will appear before the existing label fields.
+                * If passed ``label_fields`` is not None, then it must include all fields expected in node labels
+                  in the converted history DAG object, otherwise an exception will be raised.
+                * Converted node label field order will match the order of passed ``label_fields``.
+                * All label fields passed in ``label_fields`` will be included
+                  in converted node labels, if possible. Otherwise, an exception will be raised.
+        """
+        if label_fields is not None:
+            label_fields = list(label_fields)
         required_fields_set = set(cls._required_label_fields.keys())
-        if ((tuple(label_fields) == dag.label_fields and required_fields_set.issubset(set(dag.label_fields))) or
-                (len(label_fields) == 0 and required_fields_set.issubset(set(dag.label_fields)))):
+        if label_fields is not None and (
+            not required_fields_set.issubset(set(label_fields))
+        ):
+            # This would be handled by __init__ anyway, but this prevents
+            # any changes from being applied first and provides better
+            # error message
+            raise ValueError(
+                "If passed, `label_fields` must contain all required label fields"
+                f"for {cls.__name__}: {', '.join(required_fields_set)}"
+            )
+        if label_fields == dag.label_fields or (
+            label_fields is None and required_fields_set.issubset(set(dag.label_fields))
+        ):
+            # No label modification is needed
             return cls(dag.dagroot, dag.attr)
 
         def get_existing_field(fieldname: str):
@@ -422,12 +438,21 @@ class HistoryDag:
             return get_field
 
         def raise_unable_error(fieldname: str):
-            raise TypeError(
-                f"Unable to convert {dag.__class__.__name__} with label fields {dag.label_fields} to {cls.__name__}"
-                f", which requires label field '{fieldname}'. Automatic conversion from label fields "
-                f" {' or '.join([str(converttuple[0]) for converttuple in cls._required_label_fields[fieldname]])}"
-                "is supported."
-            )
+            message = ""
+            if label_fields is not None and fieldname in label_fields:
+                message += f" Label field '{fieldname}' is not present in existing label fields."
+            else:
+                message += (
+                    f"Unable to convert {dag.__class__.__name__} with label fields {dag.label_fields} to {cls.__name__}"
+                    f", which requires label field '{fieldname}'."
+                )
+            if fieldname in required_fields_set:
+                message += (
+                    " Automatic conversion from label fields"
+                    f" {' or '.join([str(converttuple[0]) for converttuple in cls._required_label_fields[fieldname]])}"
+                    " is supported."
+                )
+            raise TypeError(message)
 
         precursor_fields = set()
 
@@ -444,17 +469,25 @@ class HistoryDag:
             raise_unable_error(fieldname)
 
         convert_funcs = []
-        added_fields = set()
-        for field in list(label_fields) + list(cls._required_label_fields.keys()):
-            if field not in added_fields:
-                convert_funcs.append(find_conversion_func(field))
-                added_fields.add(field)
 
-        # also keep all existing fields not used to derive required fields:
-        for field in dag.label_fields:
-            if field not in precursor_fields and field not in added_fields:
+        if label_fields is None:
+            # keep all existing fields, except those used to recover missing
+            # required fields:
+            added_fields = set()
+            for field in cls._required_label_fields.keys():
+                if field not in dag.label_fields and field not in added_fields:
+                    convert_funcs.append(find_conversion_func(field))
+                    added_fields.add(field)
+                else:
+                    # field will be added in next loop
+                    pass
+            for field in dag.label_fields:
+                if field not in added_fields and field not in precursor_fields:
+                    convert_funcs.append(find_conversion_func(field))
+                    added_fields.add(field)
+        else:
+            for field in label_fields:
                 convert_funcs.append(find_conversion_func(field))
-                added_fields.add(field)
 
         Label = NamedTuple(
             "Label", [(converttuple[0], Any) for converttuple in convert_funcs]
@@ -473,7 +506,7 @@ class HistoryDag:
         assert isinstance(dagroot, UANode)
         self.attr = attr
         self.dagroot = dagroot
-        self.label_fields = next(dagroot.children()).label._fields
+        self.label_fields = next(self.dagroot.children()).label._fields
         for field in self.__class__._required_label_fields:
             if field not in self.label_fields:
                 raise TypeError(
