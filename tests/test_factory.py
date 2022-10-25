@@ -1,4 +1,3 @@
-from ctypes.util import find_library
 import ete3
 import pickle
 import historydag.dag as hdag
@@ -483,6 +482,7 @@ def test_relabel():
     odag._check_valid()
     assert dag.weight_count() == odag.weight_count()
 
+
 def test_rf_rooted_distances():
     for dag in dags:
         ref_tree = dag.sample()
@@ -587,8 +587,9 @@ def test_rf_unrooted_distances():
                     print("computed RF: ", comp_dist)
                     assert False
 
+
 def test_trim_range():
-    for curr_dag in dags+cdags:
+    for curr_dag in dags + cdags:
         history_dag = curr_dag.copy()
         print("history dag contains ", history_dag.count_trees(), " trees")
         counter = history_dag.weight_count()
@@ -599,26 +600,39 @@ def test_trim_range():
         print(counter)
         print("max weight passed in:")
         print(max_weight_passed)
-        all_subtrees = history_dag.get_trees()
-        trees_to_merge = [tree.copy() for tree in history_dag if (tree.optimal_weight_annotate() <= max_weight_passed
-                                                                and tree.optimal_weight_annotate() >= min_weight_passed)]
+        trees_to_merge = [
+            tree.copy()
+            for tree in history_dag
+            if (
+                tree.optimal_weight_annotate() <= max_weight_passed
+                and tree.optimal_weight_annotate() >= min_weight_passed
+            )
+        ]
         true_subdag = hdag.history_dag_from_clade_trees(trees_to_merge)
 
-        opt_weight = history_dag.trim_within_range(min_weight=min_weight_passed, max_weight=max_weight_passed)
+        history_dag.trim_within_range(
+            min_weight=min_weight_passed, max_weight=max_weight_passed
+        )
         print("weight count after trimming:")
         print(history_dag.weight_count())
         print("weight count expected:")
         print(true_subdag.weight_count())
 
-        difference = (set(history_dag.to_newicks()) - set(true_subdag.to_newicks()))
-        print("number of subtrees included in tree after trimming but not after merging: " +str(len(difference)))
-        difference2 = (set(true_subdag.to_newicks()) - set(history_dag.to_newicks()))
-        print("number of subtrees included in tree after merging but not trimming: " + str(len(difference2)))
+        difference = set(history_dag.to_newicks()) - set(true_subdag.to_newicks())
+        print(
+            "number of subtrees included in tree after trimming but not after merging: "
+            + str(len(difference))
+        )
+        difference2 = set(true_subdag.to_newicks()) - set(history_dag.to_newicks())
+        print(
+            "number of subtrees included in tree after merging but not trimming: "
+            + str(len(difference2))
+        )
         assert set(true_subdag.to_newicks()) == set(history_dag.to_newicks())
 
 
 def test_trim_above():
-    for curr_dag in dags+cdags:
+    for curr_dag in dags + cdags:
         history_dag = curr_dag.copy()
         # print(history_dag.to_newicks())
         print("history dag contains ", history_dag.count_trees(), " trees")
@@ -629,46 +643,64 @@ def test_trim_above():
         print(counter)
         print("min weight passed in:")
         print(min_weight_passed)
-        all_subtrees = history_dag.get_trees()
-        trees_to_merge = [tree.copy() for tree in history_dag if tree.optimal_weight_annotate() >= min_weight_passed]
+        trees_to_merge = [
+            tree.copy()
+            for tree in history_dag
+            if tree.optimal_weight_annotate() >= min_weight_passed
+        ]
         true_subdag = hdag.history_dag_from_clade_trees(trees_to_merge)
 
-        opt_weight = history_dag.trim_within_range(min_weight = min_weight_passed)
+        history_dag.trim_within_range(min_weight=min_weight_passed)
         print("weight count after trimming:")
         print(history_dag.weight_count())
         print("weight count expected:")
         print(true_subdag.weight_count())
 
-        difference = (set(history_dag.to_newicks()) - set(true_subdag.to_newicks()))
-        print("number of subtrees included in tree after trimming but not after merging: " +str(len(difference)))
-        difference2 = (set(true_subdag.to_newicks()) - set(history_dag.to_newicks()))
-        print("number of subtrees included in tree after merging but not trimming: " + str(len(difference2)))
+        difference = set(history_dag.to_newicks()) - set(true_subdag.to_newicks())
+        print(
+            "number of subtrees included in tree after trimming but not after merging: "
+            + str(len(difference))
+        )
+        difference2 = set(true_subdag.to_newicks()) - set(history_dag.to_newicks())
+        print(
+            "number of subtrees included in tree after merging but not trimming: "
+            + str(len(difference2))
+        )
         assert set(true_subdag.to_newicks()) == set(history_dag.to_newicks())
 
 
 def test_trim_weight():
-    for curr_dag in dags+cdags:
+    for curr_dag in dags + cdags:
         history_dag = curr_dag.copy()
         print("history dag contains ", history_dag.count_trees(), " trees")
         counter = history_dag.weight_count()
-        max_weight_passed = list(counter.keys())[int(len(counter.keys()) / 2)] 
+        max_weight_passed = list(counter.keys())[int(len(counter.keys()) / 2)]
 
         print("weight count before trimming:")
         print(counter)
         print("max weight passed in:")
         print(max_weight_passed)
-        all_subtrees = history_dag.get_trees()
-        trees_to_merge = [tree.copy() for tree in history_dag if tree.optimal_weight_annotate() <= max_weight_passed]
+        trees_to_merge = [
+            tree.copy()
+            for tree in history_dag
+            if tree.optimal_weight_annotate() <= max_weight_passed
+        ]
         true_subdag = hdag.history_dag_from_clade_trees(trees_to_merge)
 
-        opt_weight = history_dag.trim_within_range(max_weight = max_weight_passed)
+        history_dag.trim_within_range(max_weight=max_weight_passed)
         print("weight count after trimming:")
         print(history_dag.weight_count())
         print("weight count expected:")
         print(true_subdag.weight_count())
 
-        difference = (set(history_dag.to_newicks()) - set(true_subdag.to_newicks()))
-        print("number of subtrees included in tree after trimming but not after merging: " +str(len(difference)))
-        difference2 = (set(true_subdag.to_newicks()) - set(history_dag.to_newicks()))
-        print("number of subtrees included in tree after merging but not trimming: " + str(len(difference2)))
+        difference = set(history_dag.to_newicks()) - set(true_subdag.to_newicks())
+        print(
+            "number of subtrees included in tree after trimming but not after merging: "
+            + str(len(difference))
+        )
+        difference2 = set(true_subdag.to_newicks()) - set(history_dag.to_newicks())
+        print(
+            "number of subtrees included in tree after merging but not trimming: "
+            + str(len(difference2))
+        )
         assert set(true_subdag.to_newicks()) == set(history_dag.to_newicks())

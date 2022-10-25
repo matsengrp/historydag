@@ -26,7 +26,7 @@ from copy import deepcopy
 from historydag import utils
 from historydag.utils import Weight, Label, UALabel, prod
 from historydag.counterops import counter_sum, counter_prod
-from math import log
+
 
 def _clade_union_dict(nodeseq: Sequence["HistoryDagNode"]) -> Dict:
     clade_dict: Dict[FrozenSet[Label], List[HistoryDagNode]] = {}
@@ -402,72 +402,91 @@ class HistoryDag:
         self.count_histories()
         return HistoryDag(self.dagroot._get_subhistory_by_subid(key))
 
-    def trim_within_range(self,
-                          min_weight=None,
-                          max_weight=None,
-                          start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
-                          edge_weight_func: Callable[
-                              [HistoryDagNode, HistoryDagNode], Weight
-                          ] = utils.wrapped_hamming_distance,
-                          min_possible_weight = -float('inf'),
-                          max_possible_weight = float('inf')
-                          ):
+    def trim_within_range(
+        self,
+        min_weight=None,
+        max_weight=None,
+        start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
+        edge_weight_func: Callable[
+            [HistoryDagNode, HistoryDagNode], Weight
+        ] = utils.wrapped_hamming_distance,
+        min_possible_weight=-float("inf"),
+        max_possible_weight=float("inf"),
+    ):
         if max_weight is not None:
-            self.trim_below_weight(max_weight,
-                                   start_func,
-                                   edge_weight_func,
-                                   min_possible_weight)
+            self.trim_below_weight(
+                max_weight, start_func, edge_weight_func, min_possible_weight
+            )
 
         if min_weight is not None:
-            self.trim_below_weight(-min_weight,
-                                   lambda n: -start_func(n),
-                                   lambda n1, n2: -edge_weight_func(n1, n2),
-                                   -max_possible_weight)
+            self.trim_below_weight(
+                -min_weight,
+                lambda n: -start_func(n),
+                lambda n1, n2: -edge_weight_func(n1, n2),
+                -max_possible_weight,
+            )
 
-    def trim_below_weight(self,
+    def trim_below_weight(
+        self,
         max_weight,
         start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
         edge_weight_func: Callable[
             [HistoryDagNode, HistoryDagNode], Weight
         ] = utils.wrapped_hamming_distance,
-        min_possible_weight = -float('inf'),
+        min_possible_weight=-float("inf"),
     ):
-        """Trim the dag to contain at least all the histories within the specified weight range.
+        """Trim the dag to contain at least all the histories within the
+        specified weight range.
 
-        Supports totally ordered weights, accumulated by addition. A weight type must implement
-        all ordering operators properly, as well as + and -, and addition and subtraction must
-        respect the ordering. That is, if a < b, then a + c < b + c for any c (including negative c)"""
+        Supports totally ordered weights, accumulated by addition. A
+        weight type must implement all ordering operators properly, as
+        well as + and -, and addition and subtraction must respect the
+        ordering. That is, if a < b, then a + c < b + c for any c
+        (including negative c)
+        """
+
         def trim_node(node):
             if node.is_leaf():  # base case - the node is a leaf
                 return
             else:
-                node_min_weight = node._dp_data # minimum weight of subtree under node
+                node_min_weight = node._dp_data  # minimum weight of subtree under node
                 for clade, eset in node.clades.items():
                     weightlist = []
                     for target in eset.targets:
                         edgeweight = edge_weight_func(node, target)
-                        weightlist.append((target._dp_data + edgeweight,
-                                           edgeweight,
-                                           target))
+                        weightlist.append(
+                            (target._dp_data + edgeweight, edgeweight, target)
+                        )
 
                     # By assuming a minimum weight edge is chosen for all other
                     # clades, we compute the maximum weight of a subtree below this
                     # clade
-                    min_weight_under_clade = min(minweight for minweight, _, _ in weightlist)
+                    min_weight_under_clade = min(
+                        minweight for minweight, _, _ in weightlist
+                    )
                     # The sum of minimum scores beneath all other clades is
                     # quantity in parentheses:
-                    max_weight_allowed_clade = node.maxweight - (node_min_weight - min_weight_under_clade)
+                    max_weight_allowed_clade = node.maxweight - (
+                        node_min_weight - min_weight_under_clade
+                    )
 
                     to_keep = []
-                    for minweight, edgeweight, target in weightlist: # this is looping through all the edges under clade
+                    for (
+                        minweight,
+                        edgeweight,
+                        target,
+                    ) in (
+                        weightlist
+                    ):  # this is looping through all the edges under clade
                         if minweight <= max_weight_allowed_clade:
                             targetmax = max_weight_allowed_clade - edgeweight
                             target.maxweight = max(target.maxweight, targetmax)
                             to_keep.append(target)
                     eset.set_targets(to_keep)
 
-        self.optimal_weight_annotate(start_func=start_func,
-                                     edge_weight_func=edge_weight_func)
+        self.optimal_weight_annotate(
+            start_func=start_func, edge_weight_func=edge_weight_func
+        )
 
         nl = list(reversed(list(self.postorder())))
 
