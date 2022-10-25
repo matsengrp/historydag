@@ -5,7 +5,6 @@ from math import log
 import graphviz as gv
 import ete3
 import random
-import sys
 from typing import (
     List,
     Callable,
@@ -24,13 +23,10 @@ from typing import (
 )
 from collections import Counter
 from copy import deepcopy
-
-from numpy import double
-
 from historydag import utils
 from historydag.utils import Weight, Label, UALabel, prod
 from historydag.counterops import counter_sum, counter_prod
-
+from math import log
 
 def _clade_union_dict(nodeseq: Sequence["HistoryDagNode"]) -> Dict:
     clade_dict: Dict[FrozenSet[Label], List[HistoryDagNode]] = {}
@@ -473,8 +469,6 @@ class HistoryDag:
         self.optimal_weight_annotate(start_func=start_func,
                                      edge_weight_func=edge_weight_func)
 
-        print("trimming dag with min weight ", self.dagroot._dp_data, " to contain all trees with weight less than ", max_weight)
-        print("minimum possible weight ", min_possible_weight)
         nl = list(reversed(list(self.postorder())))
 
         for node in nl:
@@ -1907,9 +1901,6 @@ class HistoryDag:
 
     # ######## End Abstract DP method derivatives ########
 
-    # def
-
-
     def trim_optimal_weight(
         self,
         start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
@@ -1942,7 +1933,6 @@ class HistoryDag:
                 one, like min.
             eq_func: A function which tests equality, taking a pair of weights and returning a bool.
         """
-        # print(max_weight)
         opt_weight = self.optimal_weight_annotate(
             start_func=start_func,
             edge_weight_func=edge_weight_func,
@@ -1950,11 +1940,7 @@ class HistoryDag:
             optimal_func=optimal_func,
         )
         for node in self.preorder():
-            print("for loop over nodes")
             for clade, eset in node.clades.items():
-                print('for loop over clades')
-                # for index, target in enumerate(eset.targets):
-                #     print("for loop over edges")
                 weightlist = [
                     (
                         accum_func([target._dp_data, edge_weight_func(node, target)]),
