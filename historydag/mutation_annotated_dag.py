@@ -31,7 +31,9 @@ pb_nuc_codes = {nuc: code for code, nuc in pb_nuc_lookup.items()}
 
 class HDagJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, frozendict):
+        if isinstance(obj, CompactGenome):
+            return dict(obj.mutations)
+        elif isinstance(obj, frozendict):
             return dict(obj)
         elif isinstance(obj, frozenset):
             return list(obj)
@@ -90,9 +92,12 @@ class CGHistoryDag(HistoryDag):
                 in the protobuf node_name field `condensed_leaves` of leaf nodes
         """
 
+        refseq = next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
+        empty_cg = CompactGenome(dict(), refseq)
+
         def mut_func(pnode, cnode):
             if pnode.is_ua_node():
-                parent_seq = frozendict()
+                parent_seq = empty_cg
             else:
                 parent_seq = pnode.label.compact_genome
             return cg_diff(parent_seq, child.label.compact_genome)
@@ -202,12 +207,44 @@ class CGHistoryDag(HistoryDag):
                 for child in eset.targets:
                     edge_list.append((node_idx, node_indices[id(child)], clade_idx))
 
+        if "refseq" in self.attr:
+            refseqid = self.attr["refseq"]
+        else:
+            refseqid = "unknown_seqid"
         return {
-            "refseq": self.refseq,
+            "refseq": (refseqid, self.get_reference_sequence()),
             "compact_genomes": compact_genome_list,
             "nodes": node_list,
             "edges": edge_list,
         }
+
+    def test_equal(self, other):
+        """Test whether two history DAGs are equal.
+
+        Compares sorted JSON representation.
+        """
+        flatdag1 = self.flatten()
+        flatdag2 = other.flatten()
+        cg_list1 = flatdag1["compact_genomes"]
+        cg_list2 = flatdag2["compact_genomes"]
+
+        def get_edge_set(flatdag):
+            edgelist = flatdag["edges"]
+            nodelist = flatdag["nodes"]
+
+            def convert_flatnode(flatnode):
+                label_idx, clade_list = flatnode
+                clades = frozenset(
+                    frozenset(label_idx_list) for label_idx_list in clade_list
+                )
+                return (label_idx, clades)
+
+            nodelist = [convert_flatnode(node) for node in nodelist]
+            return frozenset(
+                (nodelist[p_idx], nodelist[c_idx]) for p_idx, c_idx, _ in edgelist
+            )
+
+        return cg_list1 == cg_list2 and get_edge_set(flatdag1) == get_edge_set(flatdag2)
 
     def get_reference_sequence(self):
         return next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
@@ -231,16 +268,23 @@ class CGHistoryDag(HistoryDag):
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
 
 
-def unflatten(dag, flat_dag):
+def load_json_file(filename):
+    with open(filename, "r") as fh:
+        json_dict = json.load(fh)
+    return unflatten(json_dict)
+
+
+def unflatten(flat_dag):
     """Takes a dictionary like that returned by flatten, and returns a
     HistoryDag."""
+    refseqid, reference = flat_dag["refseq"]
     compact_genome_list = [
-        frozendict({idx: tuple(bases) for idx, bases in flat_cg})
+        CompactGenome({idx: tuple(bases) for idx, bases in flat_cg}, reference)
         for flat_cg in flat_dag["compact_genomes"]
     ]
     node_list = flat_dag["nodes"]
     edge_list = flat_dag["edges"]
-    Label = NamedTuple("Label", [("compact_genome", frozendict)])
+    Label = NamedTuple("Label", [("compact_genome", CompactGenome)])
 
     def unpack_cladelabellists(cladelabelsetlist):
         return [
@@ -276,7 +320,9 @@ def unflatten(dag, flat_dag):
 
     # UA node is last in postorder
     dag = CGHistoryDag(node_postorder[-1][0])
-    dag.refseq = tuple(flat_dag["refseq"])
+    dag.attr["refseq"] = refseqid
+    # This shouldn't be necessary, but appears to be
+    dag.recompute_parents()
     return dag
 
 
@@ -379,17 +425,17 @@ def load_MAD_protobuf(pbdata):
     ua_node = list(node_list[-1])
     ua_node[0] = len(label_list) - 1
     node_list[-1] = tuple(ua_node)
-    dag = CGHistoryDag(UANode(EdgeSet()))
+    dag = HistoryDag(UANode(EdgeSet()))
     dag.__setstate__(
         {
             "label_fields": ("compact_genome",),
             "label_list": label_list,
             "node_list": node_list,
             "edge_list": edge_list,
-            "attr": {'refseqid': pbdata.reference_id},
+            "attr": {"refseqid": pbdata.reference_id},
         }
     )
-    return dag
+    return CGHistoryDag.from_history_dag(dag)
 
 
 def load_MAD_protobuf_file(filename):
