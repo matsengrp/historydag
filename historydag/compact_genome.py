@@ -6,8 +6,8 @@ import historydag.utils
 class CompactGenome:
     def __init__(self, mutations: Dict, reference: str):
         """Mutations describes the difference between the reference and this
-        sequence in a dictionary, in which keys are sequence indices, and
-        values are (reference base, new base) pairs."""
+        sequence in a dictionary, in which keys are one-based sequence indices,
+        and values are (reference base, new base) pairs."""
         self.reference = reference
         self.mutations = frozendict(mutations)
 
@@ -16,6 +16,22 @@ class CompactGenome:
 
     def __eq__(self, other):
         return (self.mutations, self.reference) == (other.mutations, other.reference)
+
+    def __repr__(self):
+        return f"CompactGenome({self.mutations}, '{self.reference}')"
+
+    def __str__(self):
+        return f"CompactGenome[{', '.join(self.mutations_as_strings())}]"
+
+    def mutations_as_strings(self):
+        """Return mutations as a tuple of strings of the format '<reference
+        base><index><new base>', sorted by index."""
+        return tuple(
+            (startbase + str(index) + endbase)
+            for index, (startbase, endbase) in sorted(
+                self.mutations.items(), key=lambda t: t[0]
+            )
+        )
 
     def mutate(self, mutstring, reverse=False):
         """Apply a mutstring such as 'A110G' to this compact genome.
@@ -90,7 +106,7 @@ def cg_hamming_distance(seq1: CompactGenome, seq2: CompactGenome):
     )
 
 
-@historydag.utils.access_nodefield_default("sequence", 0)
+@historydag.utils.access_nodefield_default("compact_genome", 0)
 def wrapped_cg_hamming_distance(s1, s2) -> int:
     """The sitewise sum of base differences between sequence field contents of
     two nodes.

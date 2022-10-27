@@ -457,9 +457,10 @@ class HistoryDag:
         precursor_fields = set()
 
         def find_conversion_func(fieldname: str):
+            print(fieldname, set(dag.label_fields))
             if fieldname in dag.label_fields:
                 return (fieldname, get_existing_field(fieldname))
-            elif fieldname in cls._required_label_fields:
+            elif fieldname in required_fields_set:
                 for from_fields, conversion_func in cls._required_label_fields[
                     fieldname
                 ]:
@@ -478,9 +479,6 @@ class HistoryDag:
                 if field not in dag.label_fields and field not in added_fields:
                     convert_funcs.append(find_conversion_func(field))
                     added_fields.add(field)
-                else:
-                    # field will be added in next loop
-                    pass
             for field in dag.label_fields:
                 if field not in added_fields and field not in precursor_fields:
                     convert_funcs.append(find_conversion_func(field))
@@ -489,9 +487,12 @@ class HistoryDag:
             for field in label_fields:
                 convert_funcs.append(find_conversion_func(field))
 
+        print(convert_funcs)
         Label = NamedTuple(
             "Label", [(converttuple[0], Any) for converttuple in convert_funcs]
         )
+
+        print(dir(Label))
 
         def relabel_func(node):
             labeldata = [
@@ -499,14 +500,17 @@ class HistoryDag:
             ]
             return Label(*labeldata)
 
-        dag.relabel(relabel_func)
-        return cls(dag.dagroot, dag.attr)
+        newdag = dag.relabel(relabel_func, relax_type=True)
+        return cls(newdag.dagroot, dag.attr)
 
     def __init__(self, dagroot: HistoryDagNode, attr: Any = {}):
         assert isinstance(dagroot, UANode)
         self.attr = attr
         self.dagroot = dagroot
-        self.label_fields = next(self.dagroot.children()).label._fields
+        try:
+            self.label_fields = next(self.dagroot.children()).label._fields
+        except StopIteration:
+            self.label_fields = tuple()
         for field in self.__class__._required_label_fields:
             if field not in self.label_fields:
                 raise TypeError(
@@ -709,6 +713,7 @@ class HistoryDag:
         node_list: List[Tuple] = serial_dict["node_list"]
         edge_list: List[Tuple[int, int, float, float]] = serial_dict["edge_list"]
         label_fields: Tuple[str] = serial_dict["label_fields"]
+        self.label_fields = label_fields
         Label = NamedTuple("Label", [(label, any) for label in label_fields])  # type: ignore
 
         def unpack_labels(labelset):
@@ -803,7 +808,7 @@ class HistoryDag:
         be slightly faster, but possibly more memory intensive.
         """
         for history in self.dagroot._get_subhistories():
-            yield HistoryDag(history)
+            yield self.__class__(history)
 
     def get_trees(self) -> Generator["HistoryDag", None, None]:
         """Deprecated name for :meth:`get_histories`"""
@@ -942,12 +947,19 @@ class HistoryDag:
         ret.merge(newdag)
         return ret
 
-    def relabel(self, relabel_func: Callable[[HistoryDagNode], Label]) -> "HistoryDag":
+    def relabel(
+        self, relabel_func: Callable[[HistoryDagNode], Label], relax_type=False
+    ) -> "HistoryDag":
         """Return a new HistoryDag with labels modified according to a provided
         function.
 
-        `relabel_func` should take a node and return the new label
-        appropriate for that node.
+        Args:
+            relabel_func: A function which takes a node and returns the new label
+                appropriate for that node. The relabel_func should return a consistent
+                NamedTuple type with name Label. That is, all returned labels
+                should have matching `_fields` attribute.
+            relax_type: Whether to require the returned HistoryDag to be of the same subclass as self.
+                If True, the returned HistoryDag will be of the abstract type `HistoryDag`
         """
 
         leaf_label_dict = {leaf.label: relabel_func(leaf) for leaf in self.get_leaves()}
@@ -956,26 +968,20 @@ class HistoryDag:
                 "relabeling function maps multiple leaf nodes to the same new label"
             )
 
-        def remove_abundance_clade(old_clade):
+        def relabel_clade(old_clade):
             return frozenset(leaf_label_dict[old_label] for old_label in old_clade)
 
-        def remove_abundance_node(old_node):
+        def relabel_node(old_node):
             if old_node.is_ua_node():
                 return UANode(
                     EdgeSet(
-                        [
-                            remove_abundance_node(old_child)
-                            for old_child in old_node.children()
-                        ]
+                        [relabel_node(old_child) for old_child in old_node.children()]
                     )
                 )
             else:
                 clades = {
-                    remove_abundance_clade(old_clade): EdgeSet(
-                        [
-                            remove_abundance_node(old_child)
-                            for old_child in old_eset.targets
-                        ],
+                    relabel_clade(old_clade): EdgeSet(
+                        [relabel_node(old_child) for old_child in old_eset.targets],
                         weights=old_eset.weights,
                         probs=old_eset.probs,
                     )
@@ -983,7 +989,10 @@ class HistoryDag:
                 }
                 return HistoryDagNode(relabel_func(old_node), clades, None)
 
-        newdag = HistoryDag(remove_abundance_node(self.dagroot))
+        if relax_type:
+            newdag = HistoryDag(relabel_node(self.dagroot))
+        else:
+            newdag = self.__class__(relabel_node(self.dagroot))
         # do any necessary collapsing
         newdag = newdag.sample() | newdag
         return newdag
