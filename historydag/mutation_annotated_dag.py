@@ -82,6 +82,38 @@ class CGHistoryDag(HistoryDag):
             optimal_func=optimal_func,
         )
 
+    def trim_optimal_weight(
+        self,
+        start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
+        edge_weight_func: Callable[
+            [HistoryDagNode, HistoryDagNode], Weight
+        ] = wrapped_cg_hamming_distance,
+        accum_func: Callable[[List[Weight]], Weight] = sum,
+        optimal_func: Callable[[List[Weight]], Weight] = min,
+        eq_func: Callable[[Weight, Weight], bool] = lambda w1, w2: w1 == w2,
+    ) -> Weight:
+        return super().trim_optimal_weight(
+            start_func=start_func,
+            edge_weight_func=edge_weight_func,
+            accum_func=accum_func,
+            optimal_func=optimal_func,
+            eq_func=eq_func,
+        )
+
+    def insert_node(
+        self,
+        new_leaf_id,
+        id_name: str = "sequence",
+        dist: Callable[
+            [HistoryDagNode, HistoryDagNode], Weight
+        ] = wrapped_cg_hamming_distance,
+    ):
+        return super().insert_node(
+            new_leaf_id,
+            id_name=id_name,
+            dist=dist
+        )
+
     def to_protobuf(self, leaf_data_func=None):
         """convert a DAG with compact genome data on each node, to a MAD
         protobuf with mutation information on edges.
