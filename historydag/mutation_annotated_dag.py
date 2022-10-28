@@ -100,6 +100,25 @@ class CGHistoryDag(HistoryDag):
             eq_func=eq_func,
         )
 
+    def trim_within_range(
+        self,
+        edge_weight_func: Callable[
+            [HistoryDagNode, HistoryDagNode], Weight
+        ] = utils.wrapped_hamming_distance,
+        **kwargs,
+    ):
+        return super().trim_within_range(edge_weight_func=edge_weight_func, **kwargs)
+
+    def trim_below_weight(
+        self,
+        max_weight,
+        edge_weight_func: Callable[
+            [HistoryDagNode, HistoryDagNode], Weight
+        ] = utils.wrapped_hamming_distance,
+        **kwargs,
+    ):
+        return super().trim_below_weight(max_weight, edge_weight_func=edge_weight_func, **kwargs)
+
     def insert_node(
         self,
         new_leaf_id,
