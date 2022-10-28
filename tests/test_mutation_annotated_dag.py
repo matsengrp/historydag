@@ -30,5 +30,7 @@ def test_load_json():
 
 def test_weight_count():
     sdag = SequenceHistoryDag.from_history_dag(pbdag.copy())
-    assert pbdag.weight_count() == sdag.weight_count()
-    assert pbdag.optimal_weight_annotate() == sdag.optimal_weight_annotate()
+    cdag = pbdag.copy()
+    assert cdag.weight_count() == sdag.weight_count()
+    assert cdag.optimal_weight_annotate() == sdag.optimal_weight_annotate()
+    assert cdag.trim_optimal_weight() == sdag.trim_optimal_weight()
