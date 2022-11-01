@@ -104,7 +104,7 @@ class CGHistoryDag(HistoryDag):
         self,
         edge_weight_func: Callable[
             [HistoryDagNode, HistoryDagNode], Weight
-        ] = utils.wrapped_hamming_distance,
+        ] = wrapped_cg_hamming_distance,
         **kwargs,
     ):
         return super().trim_within_range(edge_weight_func=edge_weight_func, **kwargs)
@@ -114,7 +114,7 @@ class CGHistoryDag(HistoryDag):
         max_weight,
         edge_weight_func: Callable[
             [HistoryDagNode, HistoryDagNode], Weight
-        ] = utils.wrapped_hamming_distance,
+        ] = wrapped_cg_hamming_distance,
         **kwargs,
     ):
         return super().trim_below_weight(max_weight, edge_weight_func=edge_weight_func, **kwargs)
