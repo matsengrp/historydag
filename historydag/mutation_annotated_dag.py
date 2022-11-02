@@ -430,7 +430,7 @@ def load_MAD_protobuf(pbdata):
         node_id for node_id, eset in parent_edges.items() if len(eset) == 0
     ]
 
-    @functools.cache
+    @functools.lru_cache(maxsize=None)
     def get_node_compact_genome(node_id):
         if node_id == ua_node_id:
             return CompactGenome(frozendict(), reference)
@@ -453,7 +453,7 @@ def load_MAD_protobuf(pbdata):
             label_list.append(cg)
 
     # now build clade unions by dynamic programming:
-    @functools.cache
+    @functools.lru_cache(maxsize=None)
     def get_clade_union(node_id):
         if len(child_edges[node_id]) == 0:
             # it's a leaf node
