@@ -12,5 +12,6 @@ dependencies:
   - ete3
   - six
   - graphviz
+  - frozendict
   - pip:
     - . # installs historydag package from current directory "."
