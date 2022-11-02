@@ -5,6 +5,7 @@ from math import log
 import graphviz as gv
 import ete3
 import random
+import warnings
 from typing import (
     List,
     Callable,
@@ -385,6 +386,10 @@ class HistoryDag:
     of the subclass. Each dictionary entry shall be of the form `required_field: [(from_fields, conversion_func), ...]`, where
     the dict value is a list of tuples, with each `conversion_func` a function mapping `HistoryDagNode`s to the value of
     that node label's `required_field` field, and `from_fields` a tuple containing all label fields expected by that function.
+
+    Keyword arguments passed to :meth:`HistoryDag.from_history_dag` will be passed to conversion functions provided in the
+    appropriate subclass's `_required_label_fields` attribute. Be sure to document each subclass, including available
+    conversion functions and their keywords, in each subclass's docstring.
     """
     _required_label_fields = dict()
 
@@ -398,7 +403,8 @@ class HistoryDag:
         Args:
             dag: A HistoryDag (or subclass) instance
             label_fields: A list specifying the order of label fields in node labels on the resulting HistoryDag
-            kwargs: Any additional arguments required for label conversions
+            kwargs: Any additional arguments required for label conversions. For details, see the class docstring
+                for the subclass into which the conversion is taking place.
 
         Returns:
             The converted HistoryDag object, carrying the type from which this static method was called.
@@ -932,7 +938,7 @@ class HistoryDag:
         """Sets all internal node labels to be identical, and merges nodes so
         that all histories in the DAG have unique topologies."""
 
-        newdag = self.copy()
+        newdag = HistoryDag.from_history_dag(self.copy())
         model_label = next(self.preorder(skip_ua_node=True)).label
         # initialize empty/default value for each item in model_label
         field_values = tuple(type(item)() for item in model_label)
@@ -1688,6 +1694,15 @@ class HistoryDag:
             counter_sum,
             lambda x: counter_prod(x, accum_func),
         )
+
+    def hamming_parsimony_count(self):
+        """Deprecated in favor of
+        :meth:`sequence_dag.SequenceHistoryDag.hamming_parsimony_count`."""
+        warnings.warn(
+            "`HistoryDag.hamming_parsimony_count` is deprecated in favor of"
+            " `sequence_dag.SequenceHistoryDag.hamming_parsimony_count`."
+        )
+        return self.weight_count()
 
     def to_newicks(self, **kwargs):
         """Returns a list of extended newick strings formed with label fields.

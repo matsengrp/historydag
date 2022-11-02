@@ -25,8 +25,15 @@ from typing import (
     NamedTuple,
 )
 
-pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
-pb_nuc_codes = {nuc: code for code, nuc in pb_nuc_lookup.items()}
+_pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
+_pb_nuc_codes = {nuc: code for code, nuc in _pb_nuc_lookup.items()}
+
+
+def _pb_mut_to_str(mut):
+    """Unpack protobuf-encoded mutation into 1-indexed mutations string."""
+    return (
+        _pb_nuc_lookup[mut.par_nuc] + str(mut.position) + _pb_nuc_lookup[mut.mut_nuc[0]]
+    )
 
 
 class HDagJSONEncoder(json.JSONEncoder):
@@ -41,6 +48,19 @@ class HDagJSONEncoder(json.JSONEncoder):
 
 
 class CGHistoryDag(HistoryDag):
+    """A HistoryDag subclass with node labels containing CompactGenome objects.
+
+    The constructor for this class requires that each node label contain a 'compact_genome'
+    field, which is expected to hold a :class:`compact_genome.CompactGenome` object.
+
+    A HistoryDag containing 'sequence' node label fields may be automatically converted to
+    this subclass by calling the class method :meth:`CGHistoryDag.from_dag`, providing the
+    HistoryDag object to be converted, and the reference sequence to the keyword argument
+    'reference'.
+
+    This subclass provides specialized methods for interfacing with Larch's MADAG protobuf format
+    """
+
     _required_label_fields = {
         "compact_genome": [
             (
@@ -51,6 +71,8 @@ class CGHistoryDag(HistoryDag):
             )
         ]
     }
+
+    # #### Overridden Methods ####
 
     def weight_count(
         self,
@@ -117,7 +139,9 @@ class CGHistoryDag(HistoryDag):
         ] = wrapped_cg_hamming_distance,
         **kwargs,
     ):
-        return super().trim_below_weight(max_weight, edge_weight_func=edge_weight_func, **kwargs)
+        return super().trim_below_weight(
+            max_weight, edge_weight_func=edge_weight_func, **kwargs
+        )
 
     def insert_node(
         self,
@@ -127,11 +151,9 @@ class CGHistoryDag(HistoryDag):
             [HistoryDagNode, HistoryDagNode], Weight
         ] = wrapped_cg_hamming_distance,
     ):
-        return super().insert_node(
-            new_leaf_id,
-            id_name=id_name,
-            dist=dist
-        )
+        return super().insert_node(new_leaf_id, id_name=id_name, dist=dist)
+
+    # #### CGHistoryDag-Specific Methods ####
 
     def to_protobuf(self, leaf_data_func=None):
         """convert a DAG with compact genome data on each node, to a MAD
@@ -181,8 +203,8 @@ class CGHistoryDag(HistoryDag):
                     for par_nuc, child_nuc, idx in mut_func(node, child):
                         mut = edge.edge_mutations.add()
                         mut.position = idx
-                        mut.par_nuc = pb_nuc_codes[par_nuc.upper()]
-                        mut.mut_nuc.append(pb_nuc_codes[child_nuc.upper()])
+                        mut.par_nuc = _pb_nuc_codes[par_nuc.upper()]
+                        mut.mut_nuc.append(_pb_nuc_codes[child_nuc.upper()])
         data.reference_seq = self.get_reference_sequence()
         data.reference_id = (
             self.attr["refseqid"] if "refseqid" in self.attr else "unknown_seqid"
@@ -190,6 +212,8 @@ class CGHistoryDag(HistoryDag):
         return data
 
     def to_protobuf_file(self, filename, leaf_data_func=None):
+        """Write this CGHistoryDag to a Mutation Annotated DAG protobuf for use
+        with Larch."""
         data = self.to_protobuf(leaf_data_func=leaf_data_func)
         with open(filename, "wb") as fh:
             fh.write(data.SerializeToString())
@@ -298,6 +322,11 @@ class CGHistoryDag(HistoryDag):
         return cg_list1 == cg_list2 and get_edge_set(flatdag1) == get_edge_set(flatdag2)
 
     def get_reference_sequence(self):
+        """Return the reference sequence for this CGHistoryDag.
+
+        This is the sequence with respect to which all node label
+        CompactGenomes record mutations.
+        """
         return next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
 
     def _check_valid(self, *args, **kwargs):
@@ -310,16 +339,20 @@ class CGHistoryDag(HistoryDag):
                 )
 
     def to_json(self, sort_compact_genomes=False):
+        """Write this history DAG to a JSON object."""
         return json.dumps(
             self.flatten(sort_compact_genomes=sort_compact_genomes), cls=HDagJSONEncoder
         )
 
     def to_json_file(self, filename, sort_compact_genomes=False):
+        """Write this history DAG to a JSON file."""
         with open(filename, "w") as fh:
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
 
 
 def load_json_file(filename):
+    """Load a Mutation Annotated DAG stored in a JSON file and return a
+    CGHistoryDag."""
     with open(filename, "r") as fh:
         json_dict = json.load(fh)
     return unflatten(json_dict)
@@ -378,7 +411,7 @@ def unflatten(flat_dag):
 
 
 def load_MAD_protobuf(pbdata):
-    """Convert a MAD protobuf to a history DAG with compact genomes in the
+    """Convert a MAD protobuf to a CGHistoryDag with compact genomes in the
     `compact_genome` label attribute."""
     # use HistoryDag.__setstate__ to make this happen
     # all of a node's parent edges
@@ -404,7 +437,7 @@ def load_MAD_protobuf(pbdata):
         else:
             edge = parent_edges[node_id][0]
             parent_seq = get_node_compact_genome(edge.parent_node)
-            str_mutations = tuple(pb_mut_to_str(mut) for mut in edge.edge_mutations)
+            str_mutations = tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
             return parent_seq.apply_muts(str_mutations)
 
     label_list = []
@@ -490,24 +523,9 @@ def load_MAD_protobuf(pbdata):
 
 
 def load_MAD_protobuf_file(filename):
+    """Load a mutation annotated DAG protobuf file and return a
+    CGHistoryDag."""
     with open(filename, "rb") as fh:
         pb_data = dpb.data()
         pb_data.ParseFromString(fh.read())
     return load_MAD_protobuf(pb_data)
-
-
-###########
-
-
-def string_seq_diff(parent_seq, child_seq):
-    return (
-        (par_nuc, child_nuc, zero_idx + 1)
-        for zero_idx, (par_nuc, child_nuc) in enumerate(zip(parent_seq, child_seq))
-        if par_nuc != child_nuc
-    )
-
-
-def pb_mut_to_str(mut):
-    return (
-        pb_nuc_lookup[mut.par_nuc] + str(mut.position) + pb_nuc_lookup[mut.mut_nuc[0]]
-    )
