@@ -6,8 +6,7 @@ install:
 	pip install -e .
 
 test:
-	export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
-	pytest
+	pytest tests/
 
 format:
 	black historydag
