@@ -463,7 +463,6 @@ class HistoryDag:
         precursor_fields = set()
 
         def find_conversion_func(fieldname: str):
-            print(fieldname, set(dag.label_fields))
             if fieldname in dag.label_fields:
                 return (fieldname, get_existing_field(fieldname))
             elif fieldname in required_fields_set:
@@ -493,12 +492,9 @@ class HistoryDag:
             for field in label_fields:
                 convert_funcs.append(find_conversion_func(field))
 
-        print(convert_funcs)
         Label = NamedTuple(
             "Label", [(converttuple[0], Any) for converttuple in convert_funcs]
         )
-
-        print(dir(Label))
 
         def relabel_func(node):
             labeldata = [
