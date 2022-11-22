@@ -590,24 +590,32 @@ def test_rf_unrooted_distances():
                     assert False
 
 def test_sum_rf_distance():
-    for ref_tree in reversed(dags):
-        for dag in ref_tree:
-            dag = ref_tree[1] # remove after testing
+    for ref_dag in reversed(dags):
+        for tree in ref_dag:
+            # First let's just make sure that when the ref_dag is just a single
+            # tree, sum_rf_distance agrees with normal rf_distance.
+            single_tree_dag = ref_dag[0]
+            # Here we get all the distances between trees in 'single_tree_dag' and the
+            # reference tree 'tree' (there's only one, since 'single_tree_dag'
+            # only contains one tree:
+            expected = single_tree_dag.count_rf_distances(tree)
+            expected_sum = sum(expected.elements())
+            calculated_sum = tree.sum_rf_distance(single_tree_dag)
+            assert calculated_sum == expected_sum
             
-            # Calculate expected summed wait using make_rfdistance_countfuncs (already tested)
-            # weight_kwargs = dagutils.make_rfdistance_countfuncs(dag, rooted=True)
-            # expected  = ref_tree.weight_count(**weight_kwargs)
-            expected = ref_tree.count_rf_distances(dag)
-            print(ref_tree.count_histories())
-            expected_sum = 0
-            print(expected)
-            for i in expected.items():
-                expected_sum = expected_sum + (i[0] * i[1])
-           
-            # Calculate summed weight calculated by sum_rf_distance
-            calculated_sum = dag.sum_rf_distance(ref_tree)
-            # kwargs = dagutils.sum_rfdistance_funcs(ref_tree)
-            # calculated_sum = dag.weight_count(**kwargs)
+
+            # Now let's try computing the summed rf distance on tree relative
+            # to ref_dag...
+
+            # Here we get all the distances between trees in 'dag' and the
+            # reference tree 'tree':
+            expected = dag.count_rf_distances(tree)
+            # Here we sum all elements in the counter, with multiplicity:
+            # in other words we sum all distances from trees in 'dag' to 'tree'
+            expected_sum = sum(expected.elements())
+            # This should calculate the sum RF distance from 'tree' to all
+            # trees in 'dag':
+            calculated_sum = tree.sum_rf_distance(dag)
             assert calculated_sum == expected_sum
 
 

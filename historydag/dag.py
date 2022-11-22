@@ -1702,13 +1702,14 @@ class HistoryDag:
                 clade union sets.
 
         Returns:
-            A dicitonary mapping each node in the DAG to the number of trees
+            A dictionary mapping each node in the DAG to the number of trees
             that it takes part in.
         """
         node2count = {}
         node2stats = {}
 
         self.count_histories()
+        self.recompute_parents()
         reverse_postorder = reversed(list(self.postorder()))
         for node in reverse_postorder:
             below = node._dp_data
@@ -1735,8 +1736,8 @@ class HistoryDag:
             node2count[node] = above * below
             node2stats[node] = [above, below]
 
-        collapsed_n2c = {}
         if collapse:
+            collapsed_n2c = {}
             for node in node2count.keys():
                 clade = node.clade_union()
                 if clade not in collapsed_n2c:
@@ -1746,7 +1747,6 @@ class HistoryDag:
             return collapsed_n2c
         else:
             return node2count
-        return node2count
 
     def count_edges(
         self, collapsed=False
@@ -1754,13 +1754,14 @@ class HistoryDag:
         """Counts the number of trees each edge takes part in.
 
         Returns:
-            A dicitonary mapping each edge in the DAG to the number of trees
+            A dictionary mapping each edge in the DAG to the number of trees
             that it takes part in.
         """
         edge2count = {}
         node2stats = {}
 
         self.count_histories()
+        self.recompute_parents()
         reverse_postorder = reversed(list(self.postorder()))
         for node in reverse_postorder:
             below = node._dp_data

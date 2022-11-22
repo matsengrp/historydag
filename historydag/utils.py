@@ -443,7 +443,12 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     num_trees = reference_dag.count_histories() # is this the right function to use here? 
     
     def edge_func(n1, n2):
-        return (( 3 * N[n2.clade_union()] ) - num_trees)
+        clade = n2.clade_union()
+        if clade in N:
+            return (( 3 * N[n2.clade_union()] ) - num_trees)
+        else:
+            # This clade's count should then just be 0:
+            return -num_trees
         
     kwargs = AddFuncDict(
         {
