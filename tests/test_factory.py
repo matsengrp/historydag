@@ -598,7 +598,7 @@ def test_sum_rf_distance():
             # Here we get all the distances between trees in 'single_tree_dag' and the
             # reference tree 'tree' (there's only one, since 'single_tree_dag'
             # only contains one tree:
-            expected = single_tree_dag.count_rf_distances(tree)
+            expected = single_tree_dag.count_rf_distances(tree, rooted=True)
             expected_sum = sum(expected.elements())
             calculated_sum = tree.sum_rf_distance(single_tree_dag)
             assert calculated_sum == expected_sum
@@ -609,7 +609,7 @@ def test_sum_rf_distance():
 
             # Here we get all the distances between trees in 'dag' and the
             # reference tree 'tree':
-            expected = dag.count_rf_distances(tree)
+            expected = dag.count_rf_distances(tree, rooted=True)
             # Here we sum all elements in the counter, with multiplicity:
             # in other words we sum all distances from trees in 'dag' to 'tree'
             expected_sum = sum(expected.elements())
