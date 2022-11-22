@@ -589,6 +589,31 @@ def test_rf_unrooted_distances():
                     print("computed RF: ", comp_dist)
                     assert False
 
+def test_sum_rf_distance():
+    for ref_tree in reversed(dags):
+        for dag in ref_tree:
+            dag = ref_tree[1] # remove after testing
+            
+            # Calculate expected summed wait using make_rfdistance_countfuncs (already tested)
+            # weight_kwargs = dagutils.make_rfdistance_countfuncs(dag, rooted=True)
+            # expected  = ref_tree.weight_count(**weight_kwargs)
+            expected = ref_tree.count_rf_distances(dag)
+            print(ref_tree.count_histories())
+            expected_sum = 0
+            print(expected)
+            for i in expected.items():
+                expected_sum = expected_sum + (i[0] * i[1])
+           
+            # Calculate summed weight calculated by sum_rf_distance
+            calculated_sum = dag.sum_rf_distance(ref_tree)
+            # kwargs = dagutils.sum_rfdistance_funcs(ref_tree)
+            # calculated_sum = dag.weight_count(**kwargs)
+            assert calculated_sum == expected_sum
+
+
+# def test_optimal_rf_distance():
+#     for reference_dag in dags + cdags:
+#         assert 1 == 1
 
 def test_trim_range():
     for curr_dag in dags + cdags:

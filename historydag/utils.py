@@ -419,6 +419,42 @@ node_countfuncs = AddFuncDict(
 """Provides functions to count the number of nodes in trees.
 For use with :meth:`historydag.HistoryDag.weight_count`."""
 
+# TODO implement using intstate
+# TODO: Is the rooted parameter relevant here? 
+# ------Based on the comment for make_rfdistance_countfuncs, it looks like that is relevant here, and would affect how the edge function is calculated?
+def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
+    """Provides functions to compute RF distances of trees in a DAG, relative
+    to a fixed reference tree.
+
+    Args:
+        ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.
+        rooted: If False, use edges' splits for RF distance computation. Otherwise, use
+            the clade below each edge.
+
+    The reference tree must have the same taxa as all the trees in the DAG.
+
+    The edge weight is computed using the expression 3 * N[c_e] - |T| where c_e is the clade under
+    the relevant edge, and |T| is the number of trees in the reference dag. 
+
+    TODO: The weights are shifted by a constant K, which is the sum of number of clades in each tree in the DAG
+    """
+    N = reference_dag.count_nodes(collapse=True) # keys are clade unions
+    print(len(N))
+    num_trees = reference_dag.count_histories() # is this the right function to use here? 
+    
+    def edge_func(n1, n2):
+        return (( 3 * N[n2.clade_union()] ) - num_trees)
+        
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda n: 0,
+            "edge_weight_func": edge_func,
+            "accum_func": sum # summation over edge weights
+        },
+        name="RF_unrooted_sum",
+    )
+    return kwargs
+
 
 def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     """Provides functions to compute Robinson-Foulds (RF) distances of trees in

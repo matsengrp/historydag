@@ -1940,6 +1940,30 @@ class HistoryDag:
             ).values()
         )[0]
 
+    def sum_rf_distance(
+        self,
+        reference_dag: "HistoryDag", # reference tree
+        # rooted: bool = False,
+    ):
+        ## would be more efficient to compute in the sum_rfdistance_funcs
+        N = reference_dag.count_nodes(collapse=True)
+        K = sum(N.values())
+        # ---
+
+        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        return self.optimal_weight_annotate(**kwargs) + K # optimal_weight_annotate or weight_count?
+
+    def trim_optimal_rf_distance( # ? 
+        self,
+        reference_dag: "HistoryDag", # reference tree
+    ):
+        N = reference_dag.count_nodes(collapse=True)
+        K = sum(N.values())
+
+        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        return self.trim_optimal_weight(**kwargs) + K
+
+
     def optimal_rf_distance(
         self,
         history: "HistoryDag",
