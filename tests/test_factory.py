@@ -590,8 +590,10 @@ def test_rf_unrooted_distances():
                     assert False
 
 def test_sum_rf_distance():
-    for ref_dag in reversed(dags):
-        for tree in ref_dag:
+    for dag_idx, ref_dag in enumerate(dags):
+        print('dagnum ', dag_idx)
+        for tree_idx, tree in enumerate(ref_dag):
+            print('treenum ', tree_idx)
             # First let's just make sure that when the ref_dag is just a single
             # tree, sum_rf_distance agrees with normal rf_distance.
             single_tree_dag = ref_dag[0]

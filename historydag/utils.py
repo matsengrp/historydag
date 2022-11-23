@@ -439,16 +439,18 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     TODO: The weights are shifted by a constant K, which is the sum of number of clades in each tree in the DAG
     """
     N = reference_dag.count_nodes(collapse=True) # keys are clade unions
-    print(len(N))
     num_trees = reference_dag.count_histories() # is this the right function to use here? 
     
     def edge_func(n1, n2):
-        clade = n2.clade_union()
-        if clade in N:
-            return (( 3 * N[n2.clade_union()] ) - num_trees)
+        if n1.is_ua_node():
+            return 0
         else:
-            # This clade's count should then just be 0:
-            return -num_trees
+            clade = n2.clade_union()
+            if clade in N:
+                return num_trees - (2 * N[n2.clade_union()])
+            else:
+                # This clade's count should then just be 0:
+                return num_trees
         
     kwargs = AddFuncDict(
         {
@@ -456,7 +458,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
             "edge_weight_func": edge_func,
             "accum_func": sum # summation over edge weights
         },
-        name="RF_unrooted_sum",
+        name="RF_rooted_sum",
     )
     return kwargs
 
@@ -558,8 +560,6 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
             taxa,
         }
         shift = len(ref_cus)
-        print(ref_cus)
-        print(shift)
 
         def make_intstate(n):
             return IntState(n + shift, state=n)
