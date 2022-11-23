@@ -589,11 +589,12 @@ def test_rf_unrooted_distances():
                     print("computed RF: ", comp_dist)
                     assert False
 
+
 def test_sum_rf_distance():
     for dag_idx, ref_dag in enumerate(dags):
-        print('dagnum ', dag_idx)
-        for tree_idx, tree in enumerate(ref_dag):
-            print('treenum ', tree_idx)
+        print("dagnum ", dag_idx)
+        for tree_idx, tree in zip(range(3), ref_dag):
+            print("treenum ", tree_idx)
             # First let's just make sure that when the ref_dag is just a single
             # tree, sum_rf_distance agrees with normal rf_distance.
             single_tree_dag = ref_dag[0]
@@ -604,7 +605,6 @@ def test_sum_rf_distance():
             expected_sum = sum(expected.elements())
             calculated_sum = tree.sum_rf_distance(single_tree_dag)
             assert calculated_sum == expected_sum
-            
 
             # Now let's try computing the summed rf distance on tree relative
             # to ref_dag...
@@ -624,6 +624,7 @@ def test_sum_rf_distance():
 # def test_optimal_rf_distance():
 #     for reference_dag in dags + cdags:
 #         assert 1 == 1
+
 
 def test_trim_range():
     for curr_dag in dags + cdags:

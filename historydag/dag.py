@@ -1943,17 +1943,15 @@ class HistoryDag:
 
     def sum_rf_distance(
         self,
-        reference_dag: "HistoryDag", # reference tree
+        reference_dag: "HistoryDag",  # reference tree
         # rooted: bool = False,
     ):
         n_histories = reference_dag.count_histories()
-        ## would be more efficient to compute in the sum_rfdistance_funcs
+        # ## would be more efficient to compute in the sum_rfdistance_funcs
         N = reference_dag.count_nodes(collapse=True)
         # adjust clade union counts appearing on tree root nodes
         for child in reference_dag.dagroot.children():
             N[child.clade_union()] -= n_histories
-        
-
 
         # Remove the UA node clade union from N
         try:
@@ -1964,18 +1962,19 @@ class HistoryDag:
         # ---
 
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
-        return self.optimal_weight_annotate(**kwargs) + K # optimal_weight_annotate or weight_count?
+        return (
+            self.optimal_weight_annotate(**kwargs) + K
+        )  # optimal_weight_annotate or weight_count?
 
-    def trim_optimal_rf_distance( # ? 
+    def trim_optimal_rf_distance(  # ?
         self,
-        reference_dag: "HistoryDag", # reference tree
+        reference_dag: "HistoryDag",  # reference tree
     ):
         N = reference_dag.count_nodes(collapse=True)
         K = sum(N.values())
 
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
         return self.trim_optimal_weight(**kwargs) + K
-
 
     def optimal_rf_distance(
         self,
