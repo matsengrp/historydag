@@ -593,6 +593,7 @@ def test_rf_unrooted_distances():
 def test_sum_rf_distance():
     for dag_idx, ref_dag in enumerate(dags):
         print("dagnum ", dag_idx)
+        # let's just do this test for three trees in each dag:
         for tree_idx, tree in zip(range(3), ref_dag):
             print("treenum ", tree_idx)
             # First let's just make sure that when the ref_dag is just a single
