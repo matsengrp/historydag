@@ -538,6 +538,10 @@ class HistoryDag:
         self.count_histories()
         return self.__class__(self.dagroot._get_subhistory_by_subid(key))
 
+    def get_label_type(self) -> type:
+        """Return the type for labels on this dag's nodes."""
+        return type(next(self.dagroot.children()).label)
+
     def trim_within_range(
         self,
         min_weight=None,
