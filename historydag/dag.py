@@ -1329,7 +1329,9 @@ class HistoryDag:
                 return len(list(zip([1, 2], expand_node_func(node)))) > 1
 
         else:
-            is_ambiguous = lambda node: expandable_func(node.label)
+
+            def is_ambiguous(node):
+                return expandable_func(node.label)
 
         self.recompute_parents()
         nodedict = {node: node for node in self.postorder()}
