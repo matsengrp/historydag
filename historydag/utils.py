@@ -421,10 +421,6 @@ For use with :meth:`historydag.HistoryDag.weight_count`."""
 
 
 # TODO implement using intstate
-# TODO: Is the rooted parameter relevant here?
-# ------Based on the comment for make_rfdistance_countfuncs,
-# it looks like that is relevant here, and would affect how
-# the edge function is calculated?
 def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     """Provides functions to compute RF distances of trees in a DAG, relative
     to a fixed reference tree.
@@ -436,32 +432,49 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
 
     The reference tree must have the same taxa as all the trees in the DAG.
 
-    The edge weight is computed using the expression 3 * N[c_e] - |T| where c_e is the clade under
+    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under
     the relevant edge, and |T| is the number of trees in the reference dag.
 
-    TODO: The weights are shifted by a constant K, which is the sum of number of clades in each tree in the DAG
+    The weights are shifted by a constant K, which is the sum of number of clades in each tree in the DAG
     """
-    N = reference_dag.count_nodes(collapse=True)  # keys are clade unions
+    n_histories = reference_dag.count_histories()
+    # ## would be more efficient to compute in the sum_rfdistance_funcs
+    N = reference_dag.count_nodes(collapse=True)
+    # adjust clade union counts appearing on tree root nodes
+    for child in reference_dag.dagroot.children():
+        N[child.clade_union()] -= n_histories
+
+    # Remove the UA node clade union from N
+    try:
+        N.pop(frozenset())
+    except KeyError:
+        pass
+    K = sum(N.values())
+
     num_trees = (
         reference_dag.count_histories()
-    )  # is this the right function to use here?
+    ) 
+
+    def make_intstate(n):
+        return IntState(n + K, state=n)
 
     def edge_func(n1, n2):
         if n1.is_ua_node():
-            return 0
+            return make_intstate(0)
         else:
             clade = n2.clade_union()
             if clade in N:
-                return num_trees - (2 * N[n2.clade_union()])
+                weight = (num_trees - (2 * N[n2.clade_union()]))
             else:
                 # This clade's count should then just be 0:
-                return num_trees
+                weight = num_trees
+            return make_intstate(weight)
 
     kwargs = AddFuncDict(
         {
-            "start_func": lambda n: 0,
+            "start_func": lambda n: make_intstate(0),
             "edge_weight_func": edge_func,
-            "accum_func": sum,  # summation over edge weights
+            "accum_func": lambda wlist: make_intstate(sum(w.state for w in wlist))  # summation over edge weights
         },
         name="RF_rooted_sum",
     )
