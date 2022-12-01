@@ -1871,9 +1871,10 @@ class HistoryDag:
         expand_func: Callable[[Label], Iterable[Label]] = utils.sequence_resolutions,
     ):
         r"""Template method for counting tree weights in the DAG, with exploded
-        labels. Like :meth:`HistoryDag.weight_count`, but creates dictionaries of Counter
-        objects at each node, keyed by possible sequences at that node.
-        Analogous to :meth:`HistoryDag.count_histories` with `expand_func` provided.
+        labels. Like :meth:`HistoryDag.weight_count`, but creates dictionaries
+        of Counter objects at each node, keyed by possible sequences at that
+        node. Analogous to :meth:`HistoryDag.count_histories` with
+        `expand_func` provided.
 
         Weights must be hashable.
 
