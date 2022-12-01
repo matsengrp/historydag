@@ -1367,9 +1367,7 @@ class HistoryDag:
                 node.remove_node(nodedict=nodedict)
         return len(new_nodes)
 
-    def leaf_path_uncertainty_dag(
-        self, terminal_node, node_data_func=lambda n: n
-    ):
+    def leaf_path_uncertainty_dag(self, terminal_node, node_data_func=lambda n: n):
         """Create a DAG of possible paths leading to `terminal_node`
 
         Args:
@@ -1419,7 +1417,7 @@ class HistoryDag:
             node_label_func: A function accepting an object of the type returned
                 by `node_data_func`, and returning a label to be displayed on the
                 corresponding node.
-            """
+        """
         total_trees = self.count_histories()
         G = gv.Digraph("Path DAG to leaf", node_attr={})
         child_d = self.leaf_path_uncertainty_dag(
@@ -2329,24 +2327,26 @@ class HistoryDag:
                     return False
                 return True
 
+            leaf_dict = {n.label: n for n in self.get_leaves()}
+
             def incompatible_set(node, nodeset):
                 """Returns the set of all nodes incompatible to `node` that
-                satisfy the conditions: 1.
+                satisfy the conditions:
 
-                incompatible nodes lie in the path between the leaf
-                nodes reachable by arg `node` and the UA, 2. only the
-                subset of incompatible nodes that are also in the set of
-                nodes arg `nodeset`
+                1. incompatible nodes lie in the path between the leaf
+                nodes reachable by arg `node` and the UA,
+                2. only the subset of incompatible nodes that are also in
+                the set of nodes arg `nodeset`
                 """
-                for leaf in node.clade_union():
-                    pathdag = [
+                self.recompute_parents()
+                for leaf_label in node.clade_union():
+                    yield from (
                         n
-                        for n in self.leaf_path_uncertainty_dag(
-                            leaf, format_as_nodes=True
+                        for n in self.postorder_above(
+                            leaf_dict[leaf_label], recompute_parents=False
                         )
                         if (n in nodeset and incompatible(n, node))
-                    ]
-                    yield from pathdag
+                    )
 
             self.recompute_parents()
             new_node = empty_node(
@@ -2397,9 +2397,6 @@ class HistoryDag:
         edge directions. With respect to standard edge directions (pointing
         towards leaves), the traversal order guarantees that all of a node's
         parents will be visited before the node itself.
-
-        Warning: This method requires nodes' parent sets to be correct,
-        but does not enforce this. A call to `HistoryDag.recompute_parents`
 
         Args:
             terminal_node: The node whose ancestors should be included in the
