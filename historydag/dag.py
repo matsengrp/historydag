@@ -527,8 +527,8 @@ class HistoryDag:
         raise NotImplementedError
 
     def __getitem__(self, key) -> "HistoryDag":
-        r"""Returns the sub-history below the current history dag corresponding
-        to the given index."""
+        r"""Returns the history (tree-shaped sub-history DAG) in the current
+        history dag corresponding to the given index."""
         length = self.count_histories()
         if key < 0:
             key = length + key
@@ -804,10 +804,10 @@ class HistoryDag:
         return pickle.dumps(self.__getstate__())
 
     def get_histories(self) -> Generator["HistoryDag", None, None]:
-        """Return a generator containing all internally labeled trees in the
-        history DAG.
+        """Return a generator containing all histories in the history DAG.
 
-        Note that each history is a history DAG, containing a UA node.
+        Note that each history is a tree-shaped history DAG, containing a UA node,
+        which exists as a subgraph of the history DAG.
 
         The order of these histories does not necessarily match the order of
         indexing. That is, ``dag.get_histories()`` and ``history for history in

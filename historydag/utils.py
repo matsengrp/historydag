@@ -421,8 +421,11 @@ For use with :meth:`historydag.HistoryDag.weight_count`."""
 
 
 def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
-    """Provides functions to compute RF distances of trees in a DAG, relative
+    """Provides functions to compute Robinson-Foulds (RF) distances of trees in a DAG, relative
     to a fixed reference tree.
+
+    We use :meth:`ete3.TreeNode.robinson_foulds` as the reference implementation for both
+    rooted and unrooted RF distance.
 
     Args:
         ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.
