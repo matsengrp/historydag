@@ -1367,7 +1367,7 @@ class HistoryDag:
                 node.remove_node(nodedict=nodedict)
         return len(new_nodes)
 
-    def leaf_path_uncertainty_dag_general(
+    def leaf_path_uncertainty_dag(
         self, terminal_node, node_data_func=lambda n: n
     ):
         """Create a DAG of possible paths leading to `terminal_node`
@@ -1387,7 +1387,7 @@ class HistoryDag:
         edge_counts = self.count_edges()
         child_dictionary = {node_data_func(terminal_node): dict()}
 
-        for node in self.postorder_above(terminal_node):
+        for node in self.postorder_above(terminal_node, skip_ua_node=True):
             # Traversal has not visited node, or any of its children yet!
             node_key = node_data_func(node)
             child_dictionary[node_key] = dict()
@@ -1402,15 +1402,27 @@ class HistoryDag:
 
         return child_dictionary
 
-    def leaf_path_uncertainty_graphviz_general(
+    def leaf_path_uncertainty_graphviz(
         self,
         terminal_node,
         node_data_func=lambda n: n,
         node_label_func=lambda n: str(n.label),
     ):
+        """Create a graphviz DAG of possible paths leading to `terminal_node`
+
+        Args:
+            terminal_node: The returned path DAG will contain all paths from the
+                UA node ending at this node.
+            node_data_func: A function accepting a HistoryDagNode and returning
+                data for the corresponding node in the path dag. Return type must
+                be a valid dictionary key.
+            node_label_func: A function accepting an object of the type returned
+                by `node_data_func`, and returning a label to be displayed on the
+                corresponding node.
+            """
         total_trees = self.count_histories()
         G = gv.Digraph("Path DAG to leaf", node_attr={})
-        child_d = self.leaf_path_uncertainty_dag_general(
+        child_d = self.leaf_path_uncertainty_dag(
             terminal_node, node_data_func=node_data_func
         )
 
@@ -2406,9 +2418,10 @@ class HistoryDag:
 
         def traverse(node: HistoryDagNode):
             visited.add(id(node))
-            for parent in node.parents():
+            for parent in node.parents:
                 if not id(parent) in visited:
-                    yield from traverse(parent)
+                    if (not skip_ua_node) or (not parent.is_ua_node()):
+                        yield from traverse(parent)
             yield node
 
         yield from traverse(terminal_node)
