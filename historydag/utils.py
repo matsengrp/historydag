@@ -434,7 +434,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     This calculation relies on the observation that the symmetric distance between
     the splits A in a tree in the DAG, and the splits B in the reference tree, can
     be computed as:
-    |A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|
+    ``|A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|``
 
     As long as tree edges are in bijection with splits, this can be computed without
     constructing the set A by considering each edge's split independently.
