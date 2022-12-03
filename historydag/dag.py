@@ -1943,37 +1943,27 @@ class HistoryDag:
 
     def optimal_sum_rf_distance(
         self,
-        reference_dag: "HistoryDag",  # reference tree
+        reference_dag: "HistoryDag",
+        optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
-        n_histories = reference_dag.count_histories()
-        # ## would be more efficient to compute in the sum_rfdistance_funcs
-        N = reference_dag.count_nodes(collapse=True)
-        # adjust clade union counts appearing on tree root nodes
-        for child in reference_dag.dagroot.children():
-            N[child.clade_union()] -= n_histories
-
-        # Remove the UA node clade union from N
-        try:
-            N.pop(frozenset())
-        except KeyError:
-            pass
-        K = sum(N.values())
-        # ---
+        """Returns the optimal (min or max) summed rooted RF distance to a given history"""
 
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
-        return (
-            self.optimal_weight_annotate(**kwargs) 
-        )  # optimal_weight_annotate or weight_count?
+        return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
-    def trim_optimal_rf_distance(  # ?
+    def trim_optimal_sum_rf_distance(
         self,
-        reference_dag: "HistoryDag",  # reference tree
+        reference_dag: "HistoryDag",
+        optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
-        N = reference_dag.count_nodes(collapse=True)
-        K = sum(N.values())
+        """Trims the DAG to contain the optimal (min or max)
+        sum rooted RF distance to the given reference DAG.
 
+        Trimming to the minimum sum RF distance is equivalent to finding 'median' topologies,
+        and trimming to maximum sum rf distance is equivalent to finding topological outliers.
+        """
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
-        return self.trim_optimal_weight(**kwargs) + K
+        return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
 
     def optimal_rf_distance(
         self,
