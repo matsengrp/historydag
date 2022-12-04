@@ -622,11 +622,6 @@ def test_optimal_sum_rf_distance():
             assert calculated_sum == expected_sum
 
 
-# def test_optimal_rf_distance():
-#     for reference_dag in dags + cdags:
-#         assert 1 == 1
-
-
 def test_trim_range():
     for curr_dag in dags + cdags:
         history_dag = curr_dag.copy()

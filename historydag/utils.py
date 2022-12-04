@@ -429,8 +429,9 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
 
     The reference tree must have the same taxa as all the trees in the DAG.
 
-    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under
-    the relevant edge, and |T| is the number of trees in the reference dag.
+    The edge weight is comp,,,,,uted using the expression 2 * N[c_e] - |T| where c_e is the clade under
+    the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF
+    distances, meaning that the clade below each edge is used for RF distance computation.
 
     The weights are represented by an IntState object and are shifted by a constant K,
     which is the sum of number of clades in each tree in the DAG.

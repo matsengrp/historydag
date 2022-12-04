@@ -1946,8 +1946,14 @@ class HistoryDag:
         reference_dag: "HistoryDag",
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
-        """Returns the optimal (min or max) summed rooted RF distance to a given history"""
+        """Returns the optimal (min or max) summed rooted RF distance to a given history
 
+        The given history must be on the same taxa as all trees in the DAG.
+        Since computing reference splits is expensive, it is better to use
+        :meth:``optimal_weight_annotate`` and :meth:``utils.make_rfdistance_countfuncs``
+        instead of making multiple calls to this method with the same reference
+        history.
+        """
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
@@ -1961,6 +1967,12 @@ class HistoryDag:
 
         Trimming to the minimum sum RF distance is equivalent to finding 'median' topologies,
         and trimming to maximum sum rf distance is equivalent to finding topological outliers.
+
+        The given history must be on the same taxa as all trees in the DAG.
+        Since computing reference splits is expensive, it is better to use
+        :meth:``trim_optimal_weight`` and :meth:``utils.sum_rfdistance_funcs``
+        instead of making multiple calls to this method with the same reference
+        history.
         """
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
         return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
