@@ -421,15 +421,17 @@ For use with :meth:`historydag.HistoryDag.weight_count`."""
 
 
 def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
-    """Provides functions to compute the sum of rooted RF distances of trees in a DAG,
-    relative to a fixed reference tree.
+    """Provides functions to compute the sum over all histories in the provided reference DAG,
+    of rooted RF distances to those histories.
 
     Args:
-        reference_dag: A DAG with respect to which Robinson-Foulds distance will be computed.
+        reference_dag: The reference DAG. The sum will be computed over all RF
+            distances to histories in this DAG
 
-    The reference tree must have the same taxa as all the trees in the DAG.
+    The reference DAG must have the same taxa as all the trees in the DAG on which these count
+    functions are used.
 
-    The edge weight is comp,,,,,uted using the expression 2 * N[c_e] - |T| where c_e is the clade under
+    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under
     the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF
     distances, meaning that the clade below each edge is used for RF distance computation.
 
