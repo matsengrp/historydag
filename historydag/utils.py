@@ -421,8 +421,8 @@ For use with :meth:`historydag.HistoryDag.weight_count`."""
 
 
 def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
-    """Provides functions to compute the sum over all histories in the provided reference DAG,
-    of rooted RF distances to those histories.
+    """Provides functions to compute the sum over all histories in the provided
+    reference DAG, of rooted RF distances to those histories.
 
     Args:
         reference_dag: The reference DAG. The sum will be computed over all RF
