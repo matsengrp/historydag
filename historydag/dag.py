@@ -1963,7 +1963,7 @@ class HistoryDag:
         reference_dag: "HistoryDag",
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
-        """Trims the DAG to contain only histories wiht the optimal (min or
+        """Trims the DAG to contain only histories with the optimal (min or
         max) sum rooted RF distance to the given reference DAG.
 
         Trimming to the minimum sum RF distance is equivalent to finding 'median' topologies,
