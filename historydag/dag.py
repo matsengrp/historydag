@@ -1090,35 +1090,47 @@ class HistoryDag:
         """
         return pickle.loads(pickle.dumps(self))
 
-    def history_intersect(self, other_dag: "HistoryDag", key=lambda n: n):
+    def history_intersect(self, reference_dag: "HistoryDag", key=lambda n: n):
         """Modify this HistoryDag to contain only the histories which are also
-        contained in ``other_dag``.
+        contained in ``reference_dag``.
 
         Args:
-            other_dag: The history DAG with which this one will be intersected. ``other_dag``
+            reference_dag: The history DAG with which this one will be intersected. ``reference_dag``
                 will not be modified.
             key: A function accepting a node and returning a value which will be used to compare
                 nodes.
         """
 
-        edge_set = set(
-            (key(n), key(c)) for n in other_dag.preorder() for c in n.children()
-        )
-
-        def edge_weight_func(n1, n2):
-            return int((key(n1), key(n2)) not in edge_set)
+        count_funcs = utils.edge_difference_funcs(reference_dag, key=key)
 
         min_weight = self.trim_optimal_weight(
-            edge_weight_func=edge_weight_func,
-            accum_func=sum,
             optimal_func=min,
-            start_func=lambda n: 0,
+            **count_funcs,
         )
         if min_weight > 0:
             raise IntersectionError(
                 "Provided history DAGs have no histories in common,"
                 " and a history DAG must contain at least one history."
             )
+
+    def shared_history_count(self, reference_dag: "HistoryDag", key=lambda n: n) -> int:
+        """Count the histories which are also contained in ``reference_dag``.
+
+        Args:
+            reference_dag: The history DAG with which this one will be intersected. ``reference_dag``
+                will not be modified.
+            key: A function accepting a node and returning a value which will be used to compare
+                nodes.
+        Returns:
+            The number of histories shared between this history DAG and the reference.
+        """
+        count_funcs = utils.edge_difference_funcs(reference_dag, key=key)
+        optimal_count = self.count_optimal_histories(**count_funcs, optimal_func=min)
+        if optimal_count.state > 0:
+            # There are no histories whose edges are all in reference_dag
+            return 0
+        else:
+            return int(optimal_count)
 
     def merge(self, trees: Union["HistoryDag", Sequence["HistoryDag"]]):
         r"""Graph union this history DAG with all those in a list of history
@@ -1684,9 +1696,23 @@ class HistoryDag:
         eq_func: Callable[[Weight, Weight], bool] = lambda w1, w2: w1 == w2,
         **kwargs,
     ):
-        """Count the number of histories which would be left if the DAG were trimmed.
+        """Count the number of histories which would be left if the DAG were
+        trimmed.
 
-        That is, how many histories would be left if :meth:`HistoryDag.trim_optimal_weight` were called with the same arguments?"""
+        That is, how many histories would be left if :meth:`HistoryDag.trim_optimal_weight`
+        were called with the same arguments?
+
+        Args:
+            All arguments are the same as :meth:`HistoryDag.trim_optimal_weight`.
+
+        Returns:
+            A :class:`utils.IntState` object containing the number of optimal histories
+            in the DAG, with ``state`` attribute containing their (optimal) weight.
+
+            As a side-effect, each node's ``_dp_data`` attribute is populated with
+            IntState objects containing the number of optimal sub-histories rooted at that
+            node, and the weight of those sub-histories.
+        """
 
         def _start_func(node):
             return utils.IntState(1, state=start_func(node))
@@ -1697,13 +1723,14 @@ class HistoryDag:
         def _between_clade_accum(clade_weight_list):
             return utils.IntState(
                 prod(clade_weight_list),
-                state=accum_func([el.state for el in clade_weight_list])
+                state=accum_func([el.state for el in clade_weight_list]),
             )
 
         def _within_clade_accum(subtree_weight_list):
             optimal_weight = optimal_func([el.state for el in subtree_weight_list])
-            count = sum(el for el in subtree_weight_list
-                        if eq_func(optimal_weight, el.state))
+            count = sum(
+                el for el in subtree_weight_list if eq_func(optimal_weight, el.state)
+            )
             return utils.IntState(count, state=optimal_weight)
 
         return self.postorder_history_accum(
@@ -2274,7 +2301,9 @@ class HistoryDag:
             - 2 * intersection_term
         )
 
-    def average_pairwise_rf_distance(self, reference_dag: "HistoryDag" = None, non_identical=True):
+    def average_pairwise_rf_distance(
+        self, reference_dag: "HistoryDag" = None, non_identical=True
+    ):
         """Return the average Robinson-Foulds distance between pairs of
         histories.
 
@@ -2296,13 +2325,16 @@ class HistoryDag:
             # zeros:
             n1 = self.count_histories()
             n2 = n1
+
             def compute_intersection_size():
                 return n1
+
         else:
             n1 = self.count_histories()
             n2 = reference_dag.count_histories()
+
             def compute_intersection_size():
-                return (self & reference_dag).count_histories()
+                return self.shared_history_count(reference_dag)
 
         if non_identical:
             normalize_num = (n1 * n2) - compute_intersection_size()
