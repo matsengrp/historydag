@@ -998,7 +998,9 @@ class HistoryDag:
         newdag = HistoryDag.from_history_dag(self.copy())
         model_label = next(self.preorder(skip_ua_node=True)).label
         # initialize empty/default value for each item in model_label
-        field_values = tuple(type(item)() for item in model_label)
+        # Use placeholder Ellipsis, since None could have interpretation
+        # in context of label field type.
+        field_values = tuple(Ellipsis for _ in model_label)
         internal_label = type(model_label)(*field_values)
         for node in newdag.preorder(skip_ua_node=True):
             if not node.is_leaf():
@@ -1671,6 +1673,46 @@ class HistoryDag:
             accum_func,
         )
 
+    def count_optimal_histories(
+        self,
+        start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
+        edge_weight_func: Callable[
+            ["HistoryDagNode", "HistoryDagNode"], Weight
+        ] = utils.wrapped_hamming_distance,
+        accum_func: Callable[[List[Weight]], Weight] = sum,
+        optimal_func: Callable[[List[Weight]], Weight] = min,
+        eq_func: Callable[[Weight, Weight], bool] = lambda w1, w2: w1 == w2,
+        **kwargs,
+    ):
+        """Count the number of histories which would be left if the DAG were trimmed.
+
+        That is, how many histories would be left if :meth:`HistoryDag.trim_optimal_weight` were called with the same arguments?"""
+
+        def _start_func(node):
+            return utils.IntState(1, state=start_func(node))
+
+        def _edge_weight_func(parent, child):
+            return utils.IntState(1, state=edge_weight_func(parent, child))
+
+        def _between_clade_accum(clade_weight_list):
+            return utils.IntState(
+                prod(clade_weight_list),
+                state=accum_func([el.state for el in clade_weight_list])
+            )
+
+        def _within_clade_accum(subtree_weight_list):
+            optimal_weight = optimal_func([el.state for el in subtree_weight_list])
+            count = sum(el for el in subtree_weight_list
+                        if eq_func(optimal_weight, el.state))
+            return utils.IntState(count, state=optimal_weight)
+
+        return self.postorder_history_accum(
+            _start_func,
+            _edge_weight_func,
+            _within_clade_accum,
+            _between_clade_accum,
+        )
+
     def weight_count(
         self,
         start_func: Callable[["HistoryDagNode"], Weight] = lambda n: 0,
@@ -2232,35 +2274,39 @@ class HistoryDag:
             - 2 * intersection_term
         )
 
-    def average_pairwise_rf_distance(self, reference_dag: "HistoryDag" = None):
+    def average_pairwise_rf_distance(self, reference_dag: "HistoryDag" = None, non_identical=True):
         """Return the average Robinson-Foulds distance between pairs of
         histories.
 
         Args:
             reference_dag: A history DAG from which to take the second history in
                 each pair. If None, ``self`` will be used as the reference.
+            non_identical: If True, mean divisor will be the number of non-identical pairs.
 
         Returns:
             The average rf-distance between pairs of histories, where the first history
             comes from this DAG, and the second comes from ``reference_dag``. The normalization
-            constant is the product of the number of histories in the two DAGs.
-
-            If ``reference_dag`` is ``None`, then this method returns the average distance
-            between pairs of non-identical histories in ``self``. Since identical pairs are
-            excluded in this case, ``dag.average_pairwise_distance()`` will not match
-            (and should in general be greater than)
-            ``dag.average_pairwise_distance(reference_dag=dag)``.
+            constant is the product of the number of histories in the two DAGs, unless
+            ``non_identical`` is True, in which case the number of histories which appear
+            in both DAGs is subtracted from this constant.
         """
         sum_pairwise_distance = self.sum_rf_distances(reference_dag=reference_dag)
         if reference_dag is None:
             # ignore the diagonal in the distance matrix, since it contains
             # zeros:
-            n = self.count_histories()
-            normalize_num = n * (n - 1)
+            n1 = self.count_histories()
+            n2 = n1
+            def compute_intersection_size():
+                return n1
         else:
-            # cannot ignore diagonal:
             n1 = self.count_histories()
             n2 = reference_dag.count_histories()
+            def compute_intersection_size():
+                return (self & reference_dag).count_histories()
+
+        if non_identical:
+            normalize_num = (n1 * n2) - compute_intersection_size()
+        else:
             normalize_num = n1 * n2
         return sum_pairwise_distance / max(1, normalize_num)
 
