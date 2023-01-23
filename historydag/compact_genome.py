@@ -141,6 +141,15 @@ class CompactGenome:
         return "".join(newseq)
 
     def mask_sites(self, sites, one_based=True):
+        """Remove any mutations on sites in `sites`, leaving the reference
+        sequence unchanged.
+
+        Args:
+            sites: A collection of sites to be masked
+            one_based: If True, the provided sites will be interpreted as one-based sites. Otherwise,
+                they will be interpreted as 0-based sites.
+        """
+        sites = set(sites)
         if one_based:
 
             def site_translate(site):

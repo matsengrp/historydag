@@ -1117,9 +1117,9 @@ class HistoryDag:
         field_dict = {field: index for index, field in enumerate(label_type._fields)}
         try:
             update_indices = (field_dict[field] for field in field_names)
-        except KeyError as e:
+        except KeyError:
             raise KeyError(
-                f"One of the field names you provided does not appear on node labels."
+                "One of the field names you provided does not appear on node labels."
             )
 
         def update_fields(node):
