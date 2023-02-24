@@ -2,7 +2,8 @@
 
 import pickle
 from functools import wraps
-from math import log
+import scipy
+from math import log, exp
 import graphviz as gv
 import ete3
 import random
@@ -291,7 +292,9 @@ class HistoryDagNode:
             node.add_child(child.to_ete_recursive(name_func, feature_funcs, sort_func))
         return node
 
-    def _sample(self, edge_selector=lambda n: True) -> "HistoryDagNode":
+    def _sample(
+        self, edge_selector=lambda n: True, log_probabilities=False
+    ) -> "HistoryDagNode":
         r"""Samples a history (a sub-history DAG containing the root and all
         leaf nodes).
 
@@ -300,9 +303,12 @@ class HistoryDagNode:
         sample = self.empty_copy()
         for clade, eset in self.clades.items():
             mask = [edge_selector((self, target)) for target in eset.targets]
-            sampled_target, target_weight = eset.sample(mask=mask)
+            sampled_target, target_weight = eset.sample(
+                mask=mask, log_probabilities=log_probabilities
+            )
             sampled_target_subsample = sampled_target._sample(
-                edge_selector=edge_selector
+                edge_selector=edge_selector,
+                log_probabilities=log_probabilities,
             )
             sampled_target_subsample.parents = set([self])
             sample.clades[clade].add_to_edgeset(
@@ -984,7 +990,9 @@ class HistoryDag:
         except StopIteration:
             raise ValueError("No matching node found.")
 
-    def sample(self, edge_selector=lambda e: True) -> "HistoryDag":
+    def sample(
+        self, edge_selector=lambda e: True, log_probabilities=False
+    ) -> "HistoryDag":
         r"""Samples a history from the history DAG. (A history is a sub-history
         DAG containing the root and all leaf nodes) For reproducibility, set
         ``random.seed`` before sampling.
@@ -994,7 +1002,11 @@ class HistoryDag:
 
         Returns a new HistoryDag object.
         """
-        return self.__class__(self.dagroot._sample(edge_selector=edge_selector))
+        return self.__class__(
+            self.dagroot._sample(
+                edge_selector=edge_selector, log_probabilities=log_probabilities
+            )
+        )
 
     def nodes_above_node(self, node) -> Set[HistoryDagNode]:
         """Return a set of nodes from which the passed node is reachable along
@@ -1545,19 +1557,6 @@ class HistoryDag:
         # Exclude root:
         return cumsum / float(n - 1)
 
-    def make_uniform(self):
-        """Adjust edge probabilities so that the DAG expresses a uniform
-        distribution on expressed trees.
-
-        The probability assigned to each edge below a clade is
-        proportional to the number of subtrees possible below that edge.
-        """
-        self.count_histories()
-        for node in self.postorder():
-            for clade, eset in node.clades.items():
-                for i, target in enumerate(eset.targets):
-                    eset.probs[i] = target._dp_data
-
     def explode_nodes(
         self,
         expand_func: Callable[
@@ -1716,7 +1715,7 @@ class HistoryDag:
         return G
 
     def summary(self):
-        """Print nicely formatted summary about the history DAG."""
+        """Print summary info about the history DAG."""
         print(type(self))
         print(f"Nodes:\t{self.num_nodes()}")
         print(f"Edges:\t{self.num_edges()}")
@@ -1764,6 +1763,8 @@ class HistoryDag:
         accum_within_clade: Callable[[List[Weight]], Weight],
         accum_between_clade: Callable[[List[Weight]], Weight],
         accum_above_edge: Optional[Callable[[Weight, Weight], Weight]] = None,
+        compute_edge_probabilities: bool = False,
+        normalize_edgeweights: Callable[[List[Weight]], Weight] = None,
     ) -> Weight:
         """A template method for leaf-to-root dynamic programming.
 
@@ -1783,6 +1784,9 @@ class HistoryDag:
             accum_above_edge: A function which adds the weight for a subtree to the weight
                 of the edge above it. If `None`, this function will be inferred from
                 `accum_between_clade`. The edge weight is the second argument.
+            compute_edge_probabilities: If True, compute downward-conditional edge probabilities,
+                proportional to aggregated subtree weights below and including each edge
+                descending from a node-clade pair.
 
         Returns:
             The resulting weight computed for the History DAG UA (root) node.
@@ -1794,23 +1798,49 @@ class HistoryDag:
 
             accum_above_edge = default_accum_above_edge
 
+        if compute_edge_probabilities:
+            if normalize_edgeweights is None:
+
+                def accum_from_clade(node, clade):
+                    edge_weights = [
+                        accum_above_edge(target._dp_data, edge_func(node, target))
+                        for target in node.children(clade=clade)
+                    ]
+                    accumulated = accum_within_clade(edge_weights)
+                    node.clades[clade].set_edge_stats(
+                        probs=[wt / accumulated for wt in edge_weights]
+                    )
+                    return accumulated
+
+            else:
+
+                def accum_from_clade(node, clade):
+                    edge_weights = [
+                        accum_above_edge(target._dp_data, edge_func(node, target))
+                        for target in node.children(clade=clade)
+                    ]
+                    accumulated = accum_within_clade(edge_weights)
+                    node.clades[clade].set_edge_stats(
+                        probs=normalize_edgeweights(edge_weights)
+                    )
+                    return accumulated
+
+        else:
+
+            def accum_from_clade(node, clade):
+                edge_weights = [
+                    accum_above_edge(target._dp_data, edge_func(node, target))
+                    for target in node.children(clade=clade)
+                ]
+                return accum_within_clade(edge_weights)
+
         for node in self.postorder():
             if node.is_leaf():
                 node._dp_data = leaf_func(node)
             else:
                 node._dp_data = accum_between_clade(
-                    [
-                        accum_within_clade(
-                            [
-                                accum_above_edge(
-                                    target._dp_data,
-                                    edge_func(node, target),
-                                )
-                                for target in node.children(clade=clade)
-                            ]
-                        )
-                        for clade in node.clades
-                    ]
+                    # sum over clades below node
+                    [accum_from_clade(node, clade) for clade in node.clades]
                 )
         return self.dagroot._dp_data
 
@@ -2077,7 +2107,87 @@ class HistoryDag:
             lambda parent, child: expand_count_func(child.label),
             sum,
             prod,
+            compute_edge_probabilities=True,
         )
+
+    def preorder_history_accum(
+        self,
+        leaf_func: Callable[["HistoryDagNode"], Weight],
+        edge_func: Callable[["HistoryDagNode", "HistoryDagNode"], Weight],
+        accum_within_clade: Callable[[List[Weight]], Weight],
+        accum_between_clade: Callable[[List[Weight]], Weight],
+        ua_start_val: Weight,
+        accum_above_edge: Optional[Callable[[Weight, Weight], Weight]] = None,
+    ) -> Tuple[Mapping[HistoryDagNode, Weight], Mapping[HistoryDagNode, Weight]]:
+        """A template method for leaf-to-root and root-to-leaf dynamic
+        programming.
+
+        Args:
+            leaf_func: A function to assign weights to leaf nodes
+            edge_func: A function to assign weights to edges. The parent node will
+                always be the first argument.
+            accum_within_clade: A function which accumulates a list of weights of subtrees
+                below a single clade. That is, the weights are for alternative trees.
+            accum_between_clade: A function which accumulates a list of weights of subtrees
+                below different clades. That is, the weights are for different parts of the
+                same tree.
+            accum_above_edge: A function which adds the weight for a subtree to the weight
+                of the edge above it. If `None`, this function will be inferred from
+                `accum_between_clade`. The edge weight is the second argument.
+
+        Returns:
+            Two dictionaries: One describing downward weights below each node,
+            and another describing upward weights above each node
+        """
+        if accum_above_edge is None:
+
+            def default_accum_above_edge(subtree_weight, edge_weight):
+                return accum_between_clade([subtree_weight, edge_weight])
+
+            accum_above_edge = default_accum_above_edge
+
+        downward_weights = {}
+        upward_weights = {}
+
+        self.recompute_parents()
+        self.postorder_history_accum(
+            leaf_func=leaf_func,
+            edge_func=edge_func,
+            accum_within_clade=accum_within_clade,
+            accum_between_clade=accum_between_clade,
+            accum_above_edge=accum_above_edge,
+        )
+
+        for node in reversed(self.postorder()):
+            downward_weights[node] = node._dp_data
+            if node.is_ua_node():
+                above = ua_start_val
+            else:
+                curr_clade = node.clade_union()
+                above = accum_between_clade(
+                    # for each parent, add the edge weight to that parent to
+                    # the above tree weight
+                    accum_above_edge(
+                        # accumulate between parents of this node
+                        accum_between_clade(
+                            # accumulate weights of clades other than the one that
+                            # matches this node's clade union
+                            accum_within_clade(
+                                # aggregate over alternative children below each
+                                # clade
+                                accum_above_edge(child._dp_data, edge_func(node, child))
+                                for child in parent.children(clade=clade)
+                            )
+                            for clade in parent.clades
+                            if clade != curr_clade
+                        ),
+                        edge_func(parent, node),
+                    )
+                    for parent in node.parents
+                )
+            upward_weights[node] = above
+
+        return downward_weights, upward_weights
 
     def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
@@ -2455,8 +2565,6 @@ class HistoryDag:
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
         return self.weight_count(**kwargs)
 
-    # ######## End Abstract DP method derivatives ########
-
     def sum_rf_distances(self, reference_dag: "HistoryDag" = None):
         r"""Computes the sum of all Robinson-Foulds distances between a history
         in this DAG and a history in the reference DAG.
@@ -2667,6 +2775,262 @@ class HistoryDag:
             ),
             optimal_func=min_func,
         )
+
+    # ######## End Abstract DP method derivatives ########
+
+    # ######## Methods for computing probabilities: ########
+
+    def export_edge_probabilities(self):
+        """Return a dictionary keyed by (parent, child) :class:`HistoryDagNode`
+        pairs, with downward conditional edge probabilities as values."""
+        edge_dict = {}
+        for node in self.preorder():
+            for clade, eset in node.clades.items():
+                for child, _, probability in eset:
+                    edge_dict[(node, child)] = probability
+        return edge_dict
+
+    def get_probability_countfuncs(
+        self, log_probabilities=False, edge_probabilities=None
+    ):
+        """Produce a :meth:`historydag.utils.AddFuncDict` containing functions
+        to compute history probabilities using e.g.
+        :meth:`HistoryDag.optimal_weight_annotate`.
+
+        If no edge probabilities are provided, a method like :meth:`HistoryDag.probability_annotate`
+        should be called to set edge annotations correctly.
+
+        Args:
+            log_probabilities: If True, interpret all edge probabilities as log-probabilities
+            edge_probabilities: A dictionary containing conditional edge probabilities for each
+                edge in the DAG. If not provided, edge probabilities are recovered from edge
+                annotations.
+
+        Returns:
+            :meth:`historydag.utils.AddFuncDict` containing functions to compute
+            history probabilities using e.g. :meth:`HistoryDag.optimal_weight_annotate`
+        """
+        if edge_probabilities is None:
+            edge_dict = self.export_edge_probabilities()
+        else:
+            edge_dict = edge_probabilities
+
+        def edge_weight_func(n1, n2):
+            return edge_dict[(n1, n2)]
+
+        if log_probabilities:
+            accum_func = sum
+
+            def start_func(n):
+                return 0
+
+        else:
+            accum_func = prod
+
+            def start_func(n):
+                return 1
+
+        return utils.AddFuncDict(
+            {
+                "edge_weight_func": edge_weight_func,
+                "accum_func": accum_func,
+                "start_func": start_func,
+            },
+            name="DagConditionalProbability",
+        )
+
+    def sum_probability(self, log_probabilities=False):
+        """Compute the total probability of all histories in the DAG, using
+        downward conditional edge probabilities.
+
+        Immediately after computing downward conditional probabilities, this should always return 1.
+
+        However, after trimming, this method returns the probability that a history in the trimmed
+        DAG would be sampled from the original DAG.
+
+        Args:
+            log_probabilities: If True, interpret conditional edge probabilities as log-probabilities.
+                In this case, the return value is a log-probability as well.
+        """
+        kwargs = self.get_probability_countfuncs(
+            self, log_probabilities=log_probabilities
+        )
+        if log_probabilities:
+            aggregate_func = scipy.special.logsumexp
+        else:
+            aggregate_func = sum
+        return self.optimal_weight_annotate(**kwargs, optimal_func=aggregate_func)
+
+    def node_probabilities(
+        self,
+        log_probabilities=True,
+        edge_weight_func=None,
+        normalize_edgeweights=None,
+        accum_func=None,
+        aggregate_func=None,
+        start_func=None,
+        ua_node_val=None,
+        collapse_key=None,
+        **kwargs,
+    ):
+        """Compute the probability of each node in the DAG.
+
+        Args:
+            log_probabilities: If True, all probabilities, and the values from ``edge_weight_func``, will
+                be treated as log values.
+            edge_weight_func: A function accepting a parent node and a child node and returning the
+                weight associated to that edge. If not provided, it is assumed that correct edge probability
+                annotations are already populated by a method such as :meth:`HistoryDag.probability_annotate`.
+            normalize_edgeweights: A function taking a list of weights and returning a normalized list of
+                downward-conditional edge probabilities. The default is determined by ``log_probabilities``.
+            accum_func: A function taking a list of probabilities for parts of a sub-history, and returning
+                a probability for that sub-history. The default is determined by ``log_probabilities``.
+            aggregate_func: A function taking a list of probabilities for alternative sub-histories, and
+                returning the aggregated probability of all sub-histories. The default is determined by ``log_probabilities``.
+            start_func: A function taking a leaf node and returning its starting weight. The default is
+                determined by ``log_probabilities``.
+            ua_node_val: The probability value for the UA node. If not provided, the default value is
+                determined by ``log_probabilities``.
+            collapse_key: A function accepting a :class:`HistoryDagNode` and returning a key with respect
+                to which node probabilities should be collapsed. The return type is the key type for the
+                dictionary returned by this method. For example, to compute probabilities of each clade observed
+                in the DAG, use ``collapse_key=HistoryDagNode.clade_union``.
+
+        Returns:
+            A dictionary keyed by :class:`HistoryDagNode` objects (or the return values of ``collapse_key`` if provided)
+            whose values are probabilities according to the distribution induced by downward-conditional edge
+            probabilities in the DAG.
+        """
+        if edge_weight_func is not None:
+            self.probability_annotate(
+                edge_weight_func,
+                log_probabilities=log_probabilities,
+                normalize_edgeweights=normalize_edgeweights,
+                accum_func=accum_func,
+                aggregate_func=aggregate_func,
+                start_func=start_func,
+            )
+
+        def get_option(argument, if_log, if_not_log):
+            if argument is not None:
+                return argument
+            else:
+                if log_probabilities:
+                    return if_log
+                else:
+                    return if_not_log
+
+        ua_node_val = get_option(ua_node_val, 0, 1)
+        accum_func = get_option(accum_func, sum, prod)
+        aggregate_func = get_option(aggregate_func, scipy.special.logsumexp, sum)
+
+        self.recompute_parents()
+        node_probs = {self.dagroot: ua_node_val}
+        for node in reversed(list(self.postorder())):
+            this_prob = node_probs[node]
+            for clade, eset in node.clades.items():
+                for child, _, prob in eset:
+                    if child in node_probs:
+                        this_val = node_probs[child]
+                        node_probs[child] = aggregate_func(
+                            [this_val, accum_func([this_prob, prob])]
+                        )
+                    else:
+                        node_probs[child] = accum_func([this_prob, prob])
+
+        if collapse_key is not None:
+            collapsed_probs = {}
+            for node, prob in node_probs.items():
+                key = collapse_key(node)
+                if key not in collapsed_probs:
+                    collapsed_probs[key] = prob
+                else:
+                    val = collapsed_probs[key]
+                    collapsed_probs[key] = aggregate_func([val, prob])
+            return collapsed_probs
+        else:
+            return node_probs
+
+    def probability_annotate(
+        self,
+        edge_weight_func,
+        log_probabilities=True,
+        normalize_edgeweights=None,
+        accum_func=None,
+        aggregate_func=None,
+        start_func=None,
+        **kwargs,
+    ):
+        """Uses the supplied edge weight function to compute conditional
+        probabilities on edges.
+
+        Conditional probabilities are annotated on the DAG's edges, so that future calls to e.g.
+        :meth:`HistoryDag.sample` use the probability distribution determined by them.
+
+        Args:
+            edge_weight_func: A function accepting a parent node and a child node and returning the
+                weight associated to that edge.
+            log_probabilities: If True, all probabilities, and the values from ``edge_weight_func``, will
+                be treated as log values.
+            normalize_edgeweights: A function taking a list of weights and returning a normalized list of
+                downward-conditional edge probabilities. The default is determined by ``log_probabilities``.
+            accum_func: A function taking a list of probabilities for parts of a sub-history, and returning
+                a probability for that sub-history. The default is determined by ``log_probabilities``.
+            aggregate_func: A function taking a list of probabilities for alternative sub-histories, and
+                returning the aggregated probability of all sub-histories. The default is determined by ``log_probabilities``.
+            start_func: A function taking a leaf node and returning its starting weight. The default is
+                determined by ``log_probabilities``.
+
+        Returns:
+            The sum of un-normalized probabilities, according to the provided edge_weight_func. This value can be used
+            to normalize history probabilities computed with the same ``edge_weight_func`` provided to this method
+            (for example, weights returned by :meth:`HistoryDag.weight_count`).
+        """
+
+        def get_option(argument, if_log, if_not_log):
+            if argument is not None:
+                return argument
+            else:
+                if log_probabilities:
+                    return if_log
+                else:
+                    return if_not_log
+
+        def normalize_log_edgeweights(weightlist):
+            normalization = scipy.special.logsumexp(weightlist)
+            res = [weight - normalization for weight in weightlist]
+            return res
+
+        normalize_edgeweights = get_option(
+            normalize_edgeweights, normalize_log_edgeweights, None
+        )
+        accum_func = get_option(accum_func, sum, prod)
+        aggregate_func = get_option(aggregate_func, scipy.special.logsumexp, sum)
+        start_func = get_option(start_func, lambda n: 0, lambda n: 1)
+
+        return self.postorder_history_accum(
+            start_func,
+            edge_weight_func,
+            aggregate_func,
+            accum_func,
+            compute_edge_probabilities=True,
+            normalize_edgeweights=normalize_edgeweights,
+        )
+
+    def uniform_annotate(self):
+        """Adjust edge probabilities so that the DAG expresses a uniform
+        distribution on expressed trees.
+
+        The probability assigned to each edge below a clade is
+        proportional to the number of subtrees possible below that edge.
+        """
+        self.probability_annotate(lambda n1, n2: 1, log_probabilities=False)
+
+    def make_uniform(self):
+        """Deprecated name for :meth:`HistoryDag.uniform_annotate`"""
+        return self.uniform_annotate()
+
+    # #### End probability methods ####
 
     def recompute_parents(self):
         """Repopulate ``HistoryDagNode.parent`` attributes."""
@@ -3148,16 +3512,24 @@ class EdgeSet:
             self.weights.pop(idx_to_remove)
             self._targetset = set(self.targets)
 
-    def sample(self, mask=None) -> Tuple[HistoryDagNode, float]:
+    def sample(
+        self, mask=None, log_probabilities=False
+    ) -> Tuple[HistoryDagNode, float]:
         """Returns a randomly sampled child edge, and its corresponding weight.
 
         When possible, only edges pointing to child nodes on which
         ``selection_function`` evaluates to True will be sampled.
         """
-        if sum(mask) == 0:
-            weights = self.probs
+        if log_probabilities:
+            weights = [exp(weight) for weight in self.probs]
         else:
-            weights = [factor * prob for factor, prob in zip(mask, self.probs)]
+            weights = self.probs
+
+        if mask is None or sum(mask) == 0:
+            pass
+        else:
+            weights = [factor * prob for factor, prob in zip(mask, weights)]
+
         index = random.choices(list(range(len(self.targets))), weights=weights, k=1)[0]
         return (self.targets[index], self.weights[index])
 
