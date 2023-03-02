@@ -3,12 +3,12 @@ import pickle
 import historydag
 import historydag.dag as hdag
 import historydag.utils as dagutils
+from historydag.utils import logsumexp
 from collections import Counter, namedtuple
 import pytest
 import random
 from historydag import parsimony_utils
 from math import exp
-from scipy.special import logsumexp
 
 
 def normalize_counts(counter):

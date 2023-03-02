@@ -1,7 +1,7 @@
 """Utility functions and classes for working with HistoryDag objects."""
 
 import ete3
-from math import log
+from math import log, exp, isfinite
 from collections import Counter
 from functools import wraps
 import operator
@@ -826,6 +826,17 @@ def prod(ls: list):
     else:
         accum = 1
     return accum
+
+
+def logsumexp(ls: List[float]):
+    """An implementation of logsumexp, similar to Scipy's."""
+    max_log = max(ls)
+    if not isfinite(max_log):
+        max_log = 0
+
+    exponentiated = [exp(a - max_log) for a in ls]
+    shifted_log_sum = log(sum(exponentiated))
+    return shifted_log_sum + max_log
 
 
 # Unfortunately these can't be made with a class factory (just a bit too meta for Python)

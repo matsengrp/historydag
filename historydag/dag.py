@@ -2,7 +2,6 @@
 
 import pickle
 from functools import wraps
-import scipy
 from math import log, exp
 import graphviz as gv
 import ete3
@@ -2856,7 +2855,7 @@ class HistoryDag:
             self, log_probabilities=log_probabilities
         )
         if log_probabilities:
-            aggregate_func = scipy.special.logsumexp
+            aggregate_func = utils.logsumexp
         else:
             aggregate_func = sum
         return self.optimal_weight_annotate(**kwargs, optimal_func=aggregate_func)
@@ -2922,7 +2921,7 @@ class HistoryDag:
 
         ua_node_val = get_option(ua_node_val, 0, 1)
         accum_func = get_option(accum_func, sum, prod)
-        aggregate_func = get_option(aggregate_func, scipy.special.logsumexp, sum)
+        aggregate_func = get_option(aggregate_func, utils.logsumexp, sum)
 
         self.recompute_parents()
         node_probs = {self.dagroot: ua_node_val}
@@ -2997,7 +2996,7 @@ class HistoryDag:
                     return if_not_log
 
         def normalize_log_edgeweights(weightlist):
-            normalization = scipy.special.logsumexp(weightlist)
+            normalization = utils.logsumexp(weightlist)
             res = [weight - normalization for weight in weightlist]
             return res
 
@@ -3005,7 +3004,7 @@ class HistoryDag:
             normalize_edgeweights, normalize_log_edgeweights, None
         )
         accum_func = get_option(accum_func, sum, prod)
-        aggregate_func = get_option(aggregate_func, scipy.special.logsumexp, sum)
+        aggregate_func = get_option(aggregate_func, utils.logsumexp, sum)
         start_func = get_option(start_func, lambda n: 0, lambda n: 1)
 
         return self.postorder_history_accum(
