@@ -46,6 +46,16 @@ def _clade_union_dict(nodeseq: Sequence["HistoryDagNode"]) -> Dict:
     return clade_dict
 
 
+def _none_override_ternary(value, condition, if_true, if_false):
+    if value is not None:
+        return value
+    else:
+        if condition:
+            return if_true
+        else:
+            return if_false
+
+
 class HistoryDagNode:
     r"""A recursive representation of a history DAG object.
 
@@ -956,6 +966,21 @@ class HistoryDag:
         for parent in self.preorder(skip_ua_node=skip_ua_node):
             for child in parent.children():
                 yield (parent, child)
+
+    def get_annotated_edges(
+        self, skip_ua_node=False
+    ) -> Generator[Tuple["HistoryDagNode", "HistoryDagNode"], None, None]:
+        """Return a generator containing all edges in the history DAG, and
+        their weights and downward conditional edge probabilities.
+
+        Yields ((parent, child), weight, probability) for each edge.
+
+        Edges' parent nodes will be in preorder.
+        """
+        for parent in self.preorder(skip_ua_node=skip_ua_node):
+            for _, eset in parent.clades.items():
+                for child, weight, prob in eset:
+                    yield ((parent, child), weight, prob)
 
     def num_edges(self, skip_ua_node=False) -> int:
         """Return the number of edges in the DAG, including edges descending
@@ -2191,6 +2216,9 @@ class HistoryDag:
     def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
 
+        For node supports with respect to a uniform distribution on trees, use
+        :meth:`HistoryDag.uniform_annotate` and :meth:`HistoryDag.node_probabilities`.
+
         Args:
             collapse: A flag that when set to true, treats nodes as clade unions and
                 ignores label information. Then, the returned dictionary is keyed by
@@ -2838,7 +2866,7 @@ class HistoryDag:
             name="DagConditionalProbability",
         )
 
-    def sum_probability(self, log_probabilities=False):
+    def sum_probability(self, log_probabilities=False, **kwargs):
         """Compute the total probability of all histories in the DAG, using
         downward conditional edge probabilities.
 
@@ -2850,10 +2878,14 @@ class HistoryDag:
         Args:
             log_probabilities: If True, interpret conditional edge probabilities as log-probabilities.
                 In this case, the return value is a log-probability as well.
+            kwargs: The :class:`utils.AddFuncDict` containing keyword arguments for counting probabilities
+                returned from :meth:`HistoryDag.get_probability_countfuncs`. If not provided, conditional
+                edge probabilities annotated on the DAG will be used.
         """
-        kwargs = self.get_probability_countfuncs(
-            self, log_probabilities=log_probabilities
-        )
+        if len(kwargs) == 0:
+            kwargs = self.get_probability_countfuncs(
+                log_probabilities=log_probabilities
+            )
         if log_probabilities:
             aggregate_func = utils.logsumexp
         else:
@@ -2910,33 +2942,31 @@ class HistoryDag:
                 start_func=start_func,
             )
 
-        def get_option(argument, if_log, if_not_log):
-            if argument is not None:
-                return argument
-            else:
-                if log_probabilities:
-                    return if_log
-                else:
-                    return if_not_log
-
-        ua_node_val = get_option(ua_node_val, 0, 1)
-        accum_func = get_option(accum_func, sum, prod)
-        aggregate_func = get_option(aggregate_func, utils.logsumexp, sum)
+        ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
+        accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
+        aggregate_func = _none_override_ternary(
+            aggregate_func, log_probabilities, utils.logsumexp, sum
+        )
 
         self.recompute_parents()
         node_probs = {self.dagroot: ua_node_val}
+        node_above_probs = {}
         for node in reversed(list(self.postorder())):
-            this_prob = node_probs[node]
+            # All parents have been visited, so this_node_prob can be computed
+            if not node.is_ua_node():
+                this_node_prob = aggregate_func(node_above_probs[node])
+                node_probs[node] = this_node_prob
+            else:
+                this_node_prob = ua_node_val
+            # Now add this node's probability to node_above_probs for all
+            # children.
             for clade, eset in node.clades.items():
                 for child, _, prob in eset:
-                    if child in node_probs:
-                        this_val = node_probs[child]
-                        node_probs[child] = aggregate_func(
-                            [this_val, accum_func([this_prob, prob])]
-                        )
-                    else:
-                        node_probs[child] = accum_func([this_prob, prob])
+                    child_above_probs = node_above_probs.setdefault(child, [])
+                    child_above_probs.append(accum_func([this_node_prob, prob]))
 
+        # This must be done separately because otherwise we have no reverse
+        # postorder guarantee on keys in node_probs.
         if collapse_key is not None:
             collapsed_probs = {}
             for node, prob in node_probs.items():
@@ -2949,6 +2979,42 @@ class HistoryDag:
             return collapsed_probs
         else:
             return node_probs
+
+    def edge_probabilities(
+        self,
+        log_probabilities=True,
+        edge_weight_func=None,
+        normalize_edgeweights=None,
+        accum_func=None,
+        aggregate_func=None,
+        start_func=None,
+        ua_node_val=None,
+        collapse_key=lambda edge: edge,
+        **kwargs,
+    ):
+        node_probabilities = self.node_probabilities(
+            log_probabilities=log_probabilities,
+            edge_weight_func=edge_weight_func,
+            normalize_edgeweights=normalize_edgeweights,
+            accum_func=accum_func,
+            aggregate_func=aggregate_func,
+            start_func=start_func,
+            ua_node_val=ua_node_val,
+            **kwargs,
+        )
+
+        aggregate_func = _none_override_ternary(
+            aggregate_func, log_probabilities, utils.logsumexp, sum
+        )
+        accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
+
+        edge_probabilities = {}
+        for edge, _, prob in self.get_annotated_edges():
+            key = collapse_key(edge)
+            prob_list = edge_probabilities.setdefault(key, [])
+            prob_list.append(accum_func([node_probabilities[edge[0]], prob]))
+
+        return {key: aggregate_func(val) for key, val in edge_probabilities.items()}
 
     def probability_annotate(
         self,
@@ -2986,26 +3052,21 @@ class HistoryDag:
             (for example, weights returned by :meth:`HistoryDag.weight_count`).
         """
 
-        def get_option(argument, if_log, if_not_log):
-            if argument is not None:
-                return argument
-            else:
-                if log_probabilities:
-                    return if_log
-                else:
-                    return if_not_log
-
         def normalize_log_edgeweights(weightlist):
             normalization = utils.logsumexp(weightlist)
             res = [weight - normalization for weight in weightlist]
             return res
 
-        normalize_edgeweights = get_option(
-            normalize_edgeweights, normalize_log_edgeweights, None
+        normalize_edgeweights = _none_override_ternary(
+            normalize_edgeweights, log_probabilities, normalize_log_edgeweights, None
         )
-        accum_func = get_option(accum_func, sum, prod)
-        aggregate_func = get_option(aggregate_func, utils.logsumexp, sum)
-        start_func = get_option(start_func, lambda n: 0, lambda n: 1)
+        accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
+        aggregate_func = _none_override_ternary(
+            aggregate_func, log_probabilities, utils.logsumexp, sum
+        )
+        start_func = _none_override_ternary(
+            start_func, log_probabilities, lambda n: 0, lambda n: 1
+        )
 
         return self.postorder_history_accum(
             start_func,
@@ -3016,14 +3077,38 @@ class HistoryDag:
             normalize_edgeweights=normalize_edgeweights,
         )
 
-    def uniform_annotate(self):
+    def natural_distribution_annotate(self, log_probabilities=False):
+        if log_probabilities:
+
+            def edgeweights(weightlist):
+                n = len(weightlist)
+                val = -log(n)
+                return [val] * n
+
+        else:
+
+            def edgeweights(weightlist):
+                n = len(weightlist)
+                val = 1 / n
+                return [val] * n
+
+        self.probability_annotate(
+            lambda n1, n2: 1,
+            normalize_edgeweights=edgeweights,
+            log_probabilities=log_probabilities,
+        )
+
+    def uniform_annotate(self, log_probabilities=False):
         """Adjust edge probabilities so that the DAG expresses a uniform
         distribution on expressed trees.
 
         The probability assigned to each edge below a clade is
         proportional to the number of subtrees possible below that edge.
         """
-        self.probability_annotate(lambda n1, n2: 1, log_probabilities=False)
+        val = int(not log_probabilities)
+        self.probability_annotate(
+            lambda n1, n2: val, log_probabilities=log_probabilities
+        )
 
     def make_uniform(self):
         """Deprecated name for :meth:`HistoryDag.uniform_annotate`"""

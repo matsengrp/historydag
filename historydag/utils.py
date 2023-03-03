@@ -829,7 +829,9 @@ def prod(ls: list):
 
 
 def logsumexp(ls: List[float]):
-    """An implementation of logsumexp, similar to Scipy's."""
+    """A numerically stable implementation of logsumexp, similar to Scipy's."""
+    if len(ls) == 1:
+        return ls[0]
     max_log = max(ls)
     if not isfinite(max_log):
         max_log = 0

@@ -896,3 +896,37 @@ def test_node_support():
             tree.optimal_weight_annotate(**check_kwargs),
             tol=0.00001,
         )
+
+
+def test_count_nodes():
+    dag = dags[-1].copy()
+    node_counts = dag.count_nodes()
+    dag.uniform_annotate(log_probabilities=False)
+    node_supports = dag.node_probabilities(log_probabilities=False)
+    n_histories = dag.count_histories()
+    for node in node_counts:
+        assert node_counts[node] == round(node_supports[node] * n_histories)
+
+    edge_supports = dag.edge_probabilities(log_probabilities=False)
+    edge_counts = dag.count_edges()
+    for edge in edge_counts:
+        assert edge_counts[edge] == round(edge_supports[edge] * n_histories)
+
+    # now with some collapsing
+    dag = dags[-1].copy()
+    node_counts = dag.count_nodes(collapse=True)
+    dag.uniform_annotate(log_probabilities=False)
+    node_supports = dag.node_probabilities(
+        log_probabilities=False, collapse_key=hdag.HistoryDagNode.clade_union
+    )
+    n_histories = dag.count_histories()
+    for node in node_counts:
+        assert node_counts[node] == round(node_supports[node] * n_histories)
+
+    edge_supports = dag.edge_probabilities(
+        log_probabilities=False,
+        collapse_key=lambda edge: (edge[0].clade_union(), edge[1].clade_union()),
+    )
+    edge_counts = dag.count_edges(collapsed=True)
+    for edge in edge_counts:
+        assert edge_counts[edge] == round(edge_supports[edge] * n_histories)
