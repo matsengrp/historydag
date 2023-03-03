@@ -901,7 +901,7 @@ def test_node_support():
 def test_count_nodes():
     dag = dags[-1].copy()
     node_counts = dag.count_nodes()
-    dag.uniform_annotate(log_probabilities=False)
+    dag.uniform_distribution_annotate(log_probabilities=False)
     node_supports = dag.node_probabilities(log_probabilities=False)
     n_histories = dag.count_histories()
     for node in node_counts:
@@ -915,7 +915,7 @@ def test_count_nodes():
     # now with some collapsing
     dag = dags[-1].copy()
     node_counts = dag.count_nodes(collapse=True)
-    dag.uniform_annotate(log_probabilities=False)
+    dag.uniform_distribution_annotate(log_probabilities=False)
     node_supports = dag.node_probabilities(
         log_probabilities=False, collapse_key=hdag.HistoryDagNode.clade_union
     )

@@ -2217,7 +2217,7 @@ class HistoryDag:
         """Counts the number of trees each node takes part in.
 
         For node supports with respect to a uniform distribution on trees, use
-        :meth:`HistoryDag.uniform_annotate` and :meth:`HistoryDag.node_probabilities`.
+        :meth:`HistoryDag.uniform_distribution_annotate` and :meth:`HistoryDag.node_probabilities`.
 
         Args:
             collapse: A flag that when set to true, treats nodes as clade unions and
@@ -3078,6 +3078,12 @@ class HistoryDag:
         )
 
     def natural_distribution_annotate(self, log_probabilities=False):
+        """Set edge probabilities to 1/n, where n is the count of edges
+        descending from the corresponding node-clade pair.
+
+        This induces the 'natural' distribution on histories, determined
+        by the topology of the dag.
+        """
         if log_probabilities:
 
             def edgeweights(weightlist):
@@ -3098,7 +3104,7 @@ class HistoryDag:
             log_probabilities=log_probabilities,
         )
 
-    def uniform_annotate(self, log_probabilities=False):
+    def uniform_distribution_annotate(self, log_probabilities=False):
         """Adjust edge probabilities so that the DAG expresses a uniform
         distribution on expressed trees.
 
@@ -3111,8 +3117,9 @@ class HistoryDag:
         )
 
     def make_uniform(self):
-        """Deprecated name for :meth:`HistoryDag.uniform_annotate`"""
-        return self.uniform_annotate()
+        """Deprecated name for
+        :meth:`HistoryDag.uniform_distribution_annotate`"""
+        return self.uniform_distribution_annotate()
 
     # #### End probability methods ####
 
