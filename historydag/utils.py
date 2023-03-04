@@ -7,6 +7,7 @@ from functools import wraps
 import operator
 from collections import UserDict
 from decimal import Decimal
+from warnings import warn
 from typing import (
     List,
     Any,
@@ -964,3 +965,15 @@ def load_fasta(fastapath):
             else:
                 fasta_records[-1][-1] += line.strip()
     return dict(fasta_records)
+
+
+def _deprecate_message(message):
+    def _deprecate(func):
+        @wraps(func)
+        def deprecated(*args, **kwargs):
+            warn(message)
+            return func(*args, **kwargs)
+
+        return deprecated
+
+    return _deprecate

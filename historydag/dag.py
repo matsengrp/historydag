@@ -2095,9 +2095,9 @@ class HistoryDag:
         """
         return self.unlabel().count_histories()
 
-    def count_trees(self):
+    def count_trees(self, *args, **kwargs):
         """Deprecated name for :meth:`count_histories`"""
-        return self.count_histories()
+        return self.count_histories(*args, **kwargs)
 
     def count_histories(
         self,
