@@ -2894,7 +2894,7 @@ class HistoryDag:
 
     def node_probabilities(
         self,
-        log_probabilities=True,
+        log_probabilities=False,
         edge_weight_func=None,
         normalize_edgeweights=None,
         accum_func=None,
@@ -2982,7 +2982,7 @@ class HistoryDag:
 
     def edge_probabilities(
         self,
-        log_probabilities=True,
+        log_probabilities=False,
         edge_weight_func=None,
         normalize_edgeweights=None,
         accum_func=None,
@@ -3019,7 +3019,7 @@ class HistoryDag:
     def probability_annotate(
         self,
         edge_weight_func,
-        log_probabilities=True,
+        log_probabilities=False,
         normalize_edgeweights=None,
         accum_func=None,
         aggregate_func=None,
