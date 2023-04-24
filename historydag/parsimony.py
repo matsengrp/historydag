@@ -54,6 +54,110 @@ def make_weighted_hamming_count_funcs(
     )
 
 
+def my_test():
+    print("Yes it works")
+
+
+def sankoff_postorder_iter_accum_with_multiplicity(
+    postorder_iter, node_clade_function, child_cost_function
+):
+    """this is a re-take of :meth:`postorder_history_accum` that is altered so
+    that it does not require a complete DAG, and simplified for the specific
+    Sankoff algorithm + modification.
+
+    Args:
+        postorder_iter: iterable of nodes to traverse.
+        node_clade_function: function to combine results for a given clade.
+        child_node_function: function that is applied to children for a given node.
+    """
+    if any(postorder_iter):
+        for node in postorder_iter:
+            if node.is_leaf():
+                node._dp_data = {
+                    "cost_vectors": child_cost_function(node),
+                    "multiplicity_vectors":,
+                    "subtree_cost": 0,
+                }
+            else:
+                node._dp_data = node_clade_function(
+                    [
+                        [
+                            child_cost_function(target)
+                            for target in node.children(clade=clade)
+                        ]
+                        for clade in node.clades
+                    ]
+                )
+        return node._dp_data
+    return {"cost_vectors": [], "subtree_cost": 0}
+
+def sankoff_upward_multiplicity(leaf_dag, seq_len, sequence_attr_name="sequence"):
+    """returns best parsimony score on a leaf-labelled DAG and the number of
+    histories (internal labellings) that achieve this best parsimony score, by
+    computing Sankoff cost vectors at nodes in a postorder traversal."""
+    
+    if isinstance(leaf_dag, HistoryDag):
+        node_list = list(leaf_dag.postorder())
+    if isinstance(node_list, list):
+        sequence_attr_idx = node_list[0].label._fields.index(sequence_attr_name)
+        max_transition_cost = np.amax(adj_arr) * seq_len
+
+        def children_cost(child_cost_vectors):
+            costs = []
+            for c in child_cost_vectors:
+                cost = adj_arr + np.stack((c,) * len(transition_model.bases), axis=1)
+                costs.append(np.min(cost, axis=2))
+            return np.sum(costs, axis=0)
+
+        def cost_vector(node):
+            if node.is_leaf():
+                return [
+                    np.array(
+                        [
+                            transition_model.mask_vectors[base].copy()
+                            for base in node.label[sequence_attr_idx]
+                        ]
+                    )
+                ]
+            elif isinstance(node._dp_data, dict):
+                return node._dp_data["cost_vectors"]
+            else:
+                return [
+                    np.array(
+                        [
+                            transition_model.mask_vectors[base].copy()
+                            for base in node.label[sequence_attr_idx]
+                        ]
+                    )
+                ]
+
+        def accum_between_clade(list_of_clade_cvs):
+            cost_vectors = []
+            min_cost = float("inf")
+            # choose a child under each clade
+            for choice in product(*list_of_clade_cvs):
+                # combine cost vectors of chosen children combination
+                for cost_vector_combination in product(*[c for c in choice]):
+                    cv = children_cost(cost_vector_combination)
+                    cost = np.sum(np.min(cv, axis=1))
+                    if (cost + max_transition_cost) < min_cost:
+                        min_cost = cost
+                        cost_vectors = [cv]
+                    elif cost <= (min_cost + max_transition_cost) and not any(
+                        [np.array_equal(cv, other_cv) for other_cv in cost_vectors]
+                    ):
+                        min_cost = min(cost, min_cost)
+                        cost_vectors.append(cv)
+            return {"cost_vectors": cost_vectors, "subtree_cost": min_cost}
+
+        compute_val = sankoff_postorder_iter_accum(
+            node_list, accum_between_clade, cost_vector
+        )
+        return compute_val["subtree_cost"]
+    else:
+        raise ValueError("node_list type not correct")
+
+
 def sankoff_postorder_iter_accum(
     postorder_iter, node_clade_function, child_node_function
 ):
@@ -85,17 +189,6 @@ def sankoff_postorder_iter_accum(
                 )
         return node._dp_data
     return {"cost_vectors": [], "subtree_cost": 0}
-
-
-def my_test():
-    print("Yes it works")
-
-
-def sankoff_upward_multiplicity(leaf_dag, seq_len, sequence_attr_name="sequence"):
-    """returns best parsimony score on a leaf-labelled DAG and the number of
-    histories (internal labellings) that achieve this best parsimony score, by
-    computing Sankoff cost vectors at nodes in a postorder traversal."""
-    pass
 
 
 def sankoff_upward(
@@ -192,7 +285,9 @@ def sankoff_upward(
         def accum_between_clade(list_of_clade_cvs):
             cost_vectors = []
             min_cost = float("inf")
+            # choose a child under each clade
             for choice in product(*list_of_clade_cvs):
+                # combine cost vectors of chosen children combination
                 for cost_vector_combination in product(*[c for c in choice]):
                     cv = children_cost(cost_vector_combination)
                     cost = np.sum(np.min(cv, axis=1))
