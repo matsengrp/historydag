@@ -216,7 +216,9 @@ class TransitionModel:
         ambiguity_map: AmbiguityMap = None,
     ):
         self.bases = tuple(bases)
-        self.base_indices = frozendict({base: idx for idx, base in enumerate(bases)})
+        self.num_bases = len(bases)
+        self.base_indices = frozendict(
+            {base: idx for idx, base in enumerate(bases)})
         self.yey = np.array(
             [[i != j for i in range(len(self.bases))] for j in range(len(self.bases))]
         )
