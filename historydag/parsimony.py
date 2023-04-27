@@ -25,7 +25,27 @@ class LeadingMonomial(NamedTuple):
     def __str__(self):
         return f"Monomial in t: {self.coeff}*t**{self.power}"
     
+    def __eq__(self, other):
+        if not isinstance(other, LeadingMonomial):
+            return False
+        # other is a LeadingMonomial
+        if self.coeff == other.coeff:
+            if self.coeff == 0:
+                # both self and other are zero
+                return True
+            else:
+                # check powers
+                return self.power == other.power
+        else:
+            return False
+        
     def __add__(self, other):
+        # check whether leading coeffs are zero
+        if other.coeff == 0:
+            return self
+        if self.coeff == 0:
+            return other
+        # both have nnozero coeffs
         if self.power < other.power:
             return self
         elif other.power < self.power:
