@@ -28,11 +28,11 @@ class HistoryDagNode:
 
     def __init__(self, label: Label, clades: dict, attr: Any):
         self.clades = clades
+        # If passed a nonempty dictionary, need to add self to children's parents
         self.label = label
         self.parents: Set[HistoryDagNode] = set()
         self.attr = attr
         self._dp_data: Any = None
-        # If passed a nonempty dictionary, need to add self to children's parents
         if self.clades:
             for _, edgeset in self.clades.items():
                 edgeset.parent = self
