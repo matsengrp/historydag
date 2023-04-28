@@ -9,13 +9,14 @@ from math import prod
 from historydag.dag import (
     history_dag_from_histories,
     history_dag_from_etes,
+    history_dag_from_trees,
     HistoryDag,
     utils,
 )
 import historydag.parsimony_utils as parsimony_utils
 
 class LeadingMonomial(NamedTuple):
-    """a class for recording a term like 7*(eps)**3, where eps is 
+    """a class for recording a term like 7 * (eps)**3, where eps is 
     infinitesimally small. Supports addition and multiplication of terms"""
     coeff: int
     power: int
@@ -24,7 +25,7 @@ class LeadingMonomial(NamedTuple):
         return f"LeadingMonomial({self.coeff}, {self.power})"
     
     def __str__(self):
-        return f"Monomial in t: {self.coeff}*t**{self.power}"
+        return f"Monomial in t: {self.coeff} * t**{self.power}"
     
     def __eq__(self, other):
         if not isinstance(other, LeadingMonomial):
@@ -106,10 +107,6 @@ def make_weighted_hamming_count_funcs(
     )
 
 
-def my_test():
-    print("Yes it works")
-
-
 def sankoff_postorder_iter_accum_with_multiplicity(
     postorder_iter, 
     node_clade_function, 
@@ -158,8 +155,12 @@ def sankoff_postorder_iter_accum_with_multiplicity(
         "subtree_cost": 0}
 
 def mytest():
-    t = ete3.Tree("(AA,(CA,(GA,TA)));")
-    print(sankoff_upward_with_multiplicity(t, 2, "name"))
+    t = ete3.Tree("(AAC,(CGA,(GTA,TCA)));")
+    dag = history_dag_from_trees([t], ["name"])
+    print("new version of sankoff:")
+    print("  ", sankoff_upward_with_multiplicity(dag, 3, "name"))
+    print("old version of sankoff:")
+    print("  ", sankoff_upward(dag, 3, "name"))
 
 def sankoff_upward_with_multiplicity(
     leaf_dag, 
@@ -196,7 +197,6 @@ def sankoff_upward_with_multiplicity(
                     [LeadingMonomial(1,0) for _ in range(num_bases)]
                     for _ in range(seq_len)
                 ]
-                child_costs = []
                 for child in node.children:
                     total_cost = [
                         [
@@ -216,16 +216,9 @@ def sankoff_upward_with_multiplicity(
                             temp_cost = sum(
                                 [total_cost[site][i][j] for j in range(num_bases)])
                             node_cost[site][i] *= temp_cost
-                    min_cost = [
-                        [
-                            sum(total_cost[site][i][j] for j in range(num_bases))
-                            for i in range(num_bases)
-                        ] for site in range(seq_len)
-                    ]
-                    child_costs.append(min_cost)
                 node.cost_vector = node_cost
         print(
-            "final step-- return product of followign list:\n",
+            "final step-- return product of following list:\n",
             [sum(leaf_dag.cost_vector[site][i] for i in range(num_bases)) for site in range(seq_len)])
         return prod(
             [sum(leaf_dag.cost_vector[site][i] for i in range(num_bases)) for site in range(seq_len)],
@@ -244,23 +237,30 @@ def sankoff_upward_with_multiplicity(
         max_transition_cost = np.amax(adj_arr) * seq_len
 
         def children_cost(child_cost_vectors):
-            costs = []
-            for c in child_cost_vectors:
-                cost = adj_arr + np.stack(
-                    (c,) * transition_model.num_bases, axis=1)
-                cost = [[[None] * num_bases] * num_bases] * seq_len
-                for site in seq_len:
-                    for i in num_bases:
-                        for j in num_bases:
-                            cost[site][i][j] = adj_arr_monomials[0][i][j] + c[site][i]
-                min_cost = [
-                    [
-                        min([cost[site][i][j] for j in range(num_bases)])
-                        for i in range(num_bases)
-                    ] for site in range(seq_len)
+            node_cost = [
+                [LeadingMonomial(1,0) for _ in range(num_bases)]
+                for _ in range(seq_len)
+            ]
+            for child_cost in child_cost_vectors:
+                # total_cost = adj_arr + np.stack(
+                #     (c,) * transition_model.num_bases, axis=1)
+                total_cost = [
+                    [[None] * num_bases for _ in range(num_bases)] 
+                    for _ in range(seq_len)
                 ]
-                costs.append(np.min(cost, axis=2))
-            return np.sum(costs, axis=0)
+                for site in range(seq_len):
+                    for i in range(num_bases):
+                        for j in range(num_bases):
+                            fa = LeadingMonomial(1, adj_arr[0][i][j])
+                            fb = child_cost[site][j]
+                            if not isinstance(fb, LeadingMonomial):
+                                fb = LeadingMonomial(1, fb)
+                            f = fa * fb
+                            total_cost[site][i][j] = f
+                        temp_cost = sum(
+                            [total_cost[site][i][j] for j in range(num_bases)])
+                        node_cost[site][i] *= temp_cost
+            return node_cost
 
         def cost_vector(node):
             if isinstance(node._dp_data, dict) and not node.is_leaf():
@@ -278,21 +278,31 @@ def sankoff_upward_with_multiplicity(
 
         def accum_between_clade(list_of_clade_cvs):
             cost_vectors = []
-            min_cost = float("inf")
+            min_cost = LeadingMonomial(1, float("inf"))
             # choose a child under each clade
             for choice in product(*list_of_clade_cvs):
                 # combine cost vectors of chosen children combination
                 for cost_vector_combination in product(*[c for c in choice]):
                     cv = children_cost(cost_vector_combination)
-                    cost = np.sum(np.min(cv, axis=1))
-                    if (cost + max_transition_cost) < min_cost:
+                    cost = prod(
+                        [
+                            sum([cv[site][i] for i in range(num_bases)]) 
+                            for site in range(seq_len)
+                        ],
+                        start=LeadingMonomial(1, 0)
+                    )
+                    if (cost.power + max_transition_cost) < min_cost.power:
                         min_cost = cost
                         cost_vectors = [cv]
-                    elif cost <= (min_cost + max_transition_cost) and not any(
-                        [np.array_equal(cv, other_cv) for other_cv in cost_vectors]
-                    ):
-                        min_cost = min(cost, min_cost)
+                    elif cost.power <= (min_cost.power + max_transition_cost):
+                        #and not any([np.array_equal(cv, other_cv) for other_cv in cost_vectors]):
+                        if cost.power < min_cost.power:
+                            min_cost = cost
                         cost_vectors.append(cv)
+            ## debugging
+            print("assigning cost_vectors =", cost_vectors)
+            print("  at subtree", )
+            ##
             return {
                 "cost_vectors": cost_vectors, 
                 "subtree_cost": min_cost}
@@ -302,7 +312,7 @@ def sankoff_upward_with_multiplicity(
             accum_between_clade, 
             cost_vector, 
         )
-        return (compute_val["subtree_cost"], compute_val["subtree_mult"])
+        return (compute_val["subtree_cost"])
     else:
         raise ValueError("node_list type not correct")
 
