@@ -5,6 +5,7 @@ import numpy as np
 from itertools import product
 from typing import NamedTuple
 from copy import deepcopy
+from math import prod
 from historydag.dag import (
     history_dag_from_histories,
     history_dag_from_etes,
@@ -53,6 +54,12 @@ class LeadingMonomial(NamedTuple):
         # else: both have same power
         return LeadingMonomial(self.coeff + other.coeff, self.power)
     
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            raise NotImplementedError()
+        
     def __mul__(self, other):
         return LeadingMonomial(
             self.coeff * other.coeff, 
@@ -150,9 +157,13 @@ def sankoff_postorder_iter_accum_with_multiplicity(
         "multiplicity_vectors": [],
         "subtree_cost": 0}
 
+def mytest():
+    t = ete3.Tree("(AA,(CA,(GA,TA)));")
+    print(sankoff_upward_with_multiplicity(t, 2, "name"))
+
 def sankoff_upward_with_multiplicity(
     leaf_dag, 
-    seq_len, 
+    seq_len=1, 
     sequence_attr_name="sequence",
     transition_model=parsimony_utils.default_nt_transitions,
 ):
@@ -161,39 +172,108 @@ def sankoff_upward_with_multiplicity(
     computing Sankoff cost vectors at nodes in a postorder traversal."""
     
     adj_arr = transition_model.get_adjacency_array(seq_len)
+    num_bases = transition_model.num_bases
+    adj_arr_monomials = [
+        [
+            [LeadingMonomial(1, power) for power in row]
+            for row in site
+        ]
+        for site in adj_arr
+    ]
+
+    if isinstance(leaf_dag, ete3.TreeNode):
+        # First pass of Sankoff: compute cost vectors
+        for node in leaf_dag.traverse(strategy="postorder"):
+            node.add_feature(
+                "cost_vector",
+                [
+                    transition_model.mask_vectors[base].copy()
+                    for base in getattr(node, sequence_attr_name)
+                ],
+            )
+            if not node.is_leaf():
+                node_cost = [
+                    [LeadingMonomial(1,0) for _ in range(num_bases)]
+                    for _ in range(seq_len)
+                ]
+                child_costs = []
+                for child in node.children:
+                    total_cost = [
+                        [
+                            [None for _ in range(num_bases)] 
+                            for _ in range(num_bases)
+                        ] for _ in range(seq_len)
+                    ]
+                    for site in range(seq_len):
+                        for i in range(num_bases):
+                            for j in range(num_bases):
+                                fa = LeadingMonomial(1, adj_arr[0][i][j])
+                                fb = child.cost_vector[site][j]
+                                if not isinstance(fb, LeadingMonomial):
+                                    fb = LeadingMonomial(1, fb)
+                                f = fa * fb
+                                total_cost[site][i][j] = f
+                            temp_cost = sum(
+                                [total_cost[site][i][j] for j in range(num_bases)])
+                            node_cost[site][i] *= temp_cost
+                    min_cost = [
+                        [
+                            sum(total_cost[site][i][j] for j in range(num_bases))
+                            for i in range(num_bases)
+                        ] for site in range(seq_len)
+                    ]
+                    child_costs.append(min_cost)
+                node.cost_vector = node_cost
+        print(
+            "final step-- return product of followign list:\n",
+            [sum(leaf_dag.cost_vector[site][i] for i in range(num_bases)) for site in range(seq_len)])
+        return prod(
+            [sum(leaf_dag.cost_vector[site][i] for i in range(num_bases)) for site in range(seq_len)],
+            start=LeadingMonomial(1,0)
+        )
+    
     if isinstance(leaf_dag, HistoryDag):
         node_list = list(leaf_dag.postorder())
     if isinstance(node_list, list):
-        sequence_attr_idx = node_list[0].label._fields.index(sequence_attr_name)
+        sequence_attr_idx = (
+            node_list[0]
+            .label
+            ._fields
+            .index(sequence_attr_name)
+        )
         max_transition_cost = np.amax(adj_arr) * seq_len
 
         def children_cost(child_cost_vectors):
             costs = []
             for c in child_cost_vectors:
-                cost = adj_arr + np.stack((c,) * len(transition_model.bases), axis=1)
+                cost = adj_arr + np.stack(
+                    (c,) * transition_model.num_bases, axis=1)
+                cost = [[[None] * num_bases] * num_bases] * seq_len
+                for site in seq_len:
+                    for i in num_bases:
+                        for j in num_bases:
+                            cost[site][i][j] = adj_arr_monomials[0][i][j] + c[site][i]
+                min_cost = [
+                    [
+                        min([cost[site][i][j] for j in range(num_bases)])
+                        for i in range(num_bases)
+                    ] for site in range(seq_len)
+                ]
                 costs.append(np.min(cost, axis=2))
             return np.sum(costs, axis=0)
 
         def cost_vector(node):
-            if node.is_leaf():
-                return [
-                    np.array(
-                        [
-                            transition_model.mask_vectors[base].copy()
-                            for base in node.label[sequence_attr_idx]
-                        ]
-                    )
-                ]
-            elif isinstance(node._dp_data, dict):
+            if isinstance(node._dp_data, dict) and not node.is_leaf():
                 return node._dp_data["cost_vectors"]
-            else:
+            else: # node.is_leaf() or not isinstance(node._dp_data, dict):
                 return [
-                    np.array(
+                    [
                         [
-                            transition_model.mask_vectors[base].copy()
-                            for base in node.label[sequence_attr_idx]
+                            LeadingMonomial(1, x) 
+                            for x in transition_model.mask_vectors[base].copy()
                         ]
-                    )
+                        for base in node.label[sequence_attr_idx]
+                    ]
                 ]
 
         def accum_between_clade(list_of_clade_cvs):
@@ -215,14 +295,12 @@ def sankoff_upward_with_multiplicity(
                         cost_vectors.append(cv)
             return {
                 "cost_vectors": cost_vectors, 
-                "mult_vectors": mult_vectors,
                 "subtree_cost": min_cost}
 
-        compute_val = sankoff_postorder_iter_accum_with_multiplicity(
+        compute_val = sankoff_postorder_iter_accum(
             node_list, 
             accum_between_clade, 
             cost_vector, 
-            mult_vector
         )
         return (compute_val["subtree_cost"], compute_val["subtree_mult"])
     else:
