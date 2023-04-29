@@ -1,9 +1,9 @@
 """A module implementing Sankoff Algorithm."""
 import random
 import ete3
+import pickle
 import numpy as np
 from itertools import product
-from typing import NamedTuple
 from copy import deepcopy
 from math import prod
 from historydag.dag import (
@@ -13,58 +13,8 @@ from historydag.dag import (
     HistoryDag,
     utils,
 )
+from historydag.utils import LeadingMonomial
 import historydag.parsimony_utils as parsimony_utils
-
-class LeadingMonomial(NamedTuple):
-    """a class for recording a term like 7 * (eps)**3, where eps is 
-    infinitesimally small. Supports addition and multiplication of terms"""
-    coeff: int
-    power: int
-
-    def __repr__(self):
-        return f"LeadingMonomial({self.coeff}, {self.power})"
-    
-    def __str__(self):
-        return f"Monomial in t: {self.coeff} * t**{self.power}"
-    
-    def __eq__(self, other):
-        if not isinstance(other, LeadingMonomial):
-            return False
-        # other is a LeadingMonomial
-        if self.coeff == other.coeff:
-            if self.coeff == 0:
-                # both self and other are zero
-                return True
-            else:
-                # check powers
-                return self.power == other.power
-        else:
-            return False
-        
-    def __add__(self, other):
-        # check whether leading coeffs are zero
-        if other.coeff == 0:
-            return self
-        if self.coeff == 0:
-            return other
-        # both have nnozero coeffs
-        if self.power < other.power:
-            return self
-        elif other.power < self.power:
-            return other
-        # else: both have same power
-        return LeadingMonomial(self.coeff + other.coeff, self.power)
-    
-    def __radd__(self, other):
-        if other == 0:
-            return self
-        else:
-            raise NotImplementedError()
-        
-    def __mul__(self, other):
-        return LeadingMonomial(
-            self.coeff * other.coeff, 
-            self.power + other.power)
 
 def replace_label_attr(original_label, list_of_replacements={}):
     """Generalizes :meth: ``_replace()`` for namedtuple datatype to replace
@@ -106,54 +56,6 @@ def make_weighted_hamming_count_funcs(
         name="WeightedParsimony",
     )
 
-
-def sankoff_postorder_iter_accum_with_multiplicity(
-    postorder_iter, 
-    node_clade_function, 
-    child_cost_function,
-    child_mult_function
-):
-    """this is a re-take of :meth:`postorder_history_accum` that is altered so
-    that it does not require a complete DAG, and simplified for the specific
-    Sankoff algorithm + modification.
-
-    Args:
-        postorder_iter: iterable of nodes to traverse.
-        node_clade_function: function to combine results for a given clade.
-        child_node_function: function that is applied to children for a given node.
-        child_mult_function: 
-    """
-    if any(postorder_iter):
-        for node in postorder_iter:
-            if node.is_leaf():
-                node._dp_data = {
-                    "cost_vectors": child_cost_function(node),
-                    "multiplicity_vectors": child_mult_function(node),
-                    "subtree_cost": 0,
-                }
-            else:
-                node._dp_data = node_clade_function(
-                    [
-                        [
-                            child_cost_function(child)
-                            for child in node.children(clade=clade)
-                        ]
-                        for clade in node.clades
-                    ],
-                    [
-                        [
-                            child_mult_function(child)
-                            for child in node.children(clade=clade)
-                        ]
-                        for clade in node.clades
-                    ]
-                )
-        return node._dp_data
-    return {
-        "cost_vectors": [], 
-        "multiplicity_vectors": [],
-        "subtree_cost": 0}
-
 def mytest():
     t = ete3.Tree("(AAC,(CGA,(GTA,TCA)));")
     dag = history_dag_from_trees([t], ["name"])
@@ -161,6 +63,15 @@ def mytest():
     print("  ", sankoff_upward_with_multiplicity(dag, 3, "name"))
     print("old version of sankoff:")
     print("  ", sankoff_upward(dag, 3, "name"))
+    print("number of histories:", dag.count_histories())
+    with open('sample_data/toy_trees.p', 'rb') as fh:
+        ete_trees = pickle.load(fh)
+
+    # Build the DAG, specifying to only use the `sequence` attribute for node
+    # labels (in general, one could use other attributes as well).
+    dag = history_dag_from_trees(ete_trees, ['sequence'])
+    print(dag.count_histories())  # 1041
+    print(sankoff_upward_with_multiplicity(dag, 264, "sequence"))
 
 def sankoff_upward_with_multiplicity(
     leaf_dag, 
@@ -299,10 +210,6 @@ def sankoff_upward_with_multiplicity(
                         if cost.power < min_cost.power:
                             min_cost = cost
                         cost_vectors.append(cv)
-            ## debugging
-            print("assigning cost_vectors =", cost_vectors)
-            print("  at subtree", )
-            ##
             return {
                 "cost_vectors": cost_vectors, 
                 "subtree_cost": min_cost}

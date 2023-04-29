@@ -994,3 +994,54 @@ def _deprecate_message(message):
         return deprecated
 
     return _deprecate
+
+class LeadingMonomial(NamedTuple):
+    """a class for recording a term like 7 * (eps)**3, where eps is 
+    infinitesimally small. Supports addition and multiplication of terms"""
+    coeff: int
+    power: int
+
+    def __repr__(self):
+        return f"LeadingMonomial({self.coeff}, {self.power})"
+    
+    def __str__(self):
+        return f"Monomial in t: {self.coeff} * t**{self.power}"
+    
+    def __eq__(self, other):
+        if not isinstance(other, LeadingMonomial):
+            return False
+        # other is a LeadingMonomial
+        if self.coeff == other.coeff:
+            if self.coeff == 0:
+                # both self and other are zero
+                return True
+            else:
+                # check powers
+                return self.power == other.power
+        else:
+            return False
+        
+    def __add__(self, other):
+        # check whether leading coeffs are zero
+        if other.coeff == 0:
+            return self
+        if self.coeff == 0:
+            return other
+        # both have nnozero coeffs
+        if self.power < other.power:
+            return self
+        elif other.power < self.power:
+            return other
+        # else: both have same power
+        return LeadingMonomial(self.coeff + other.coeff, self.power)
+    
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            raise NotImplementedError()
+        
+    def __mul__(self, other):
+        return LeadingMonomial(
+            self.coeff * other.coeff, 
+            self.power + other.power)
