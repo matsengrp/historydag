@@ -217,7 +217,7 @@ def _cli_parsimony_score_from_files(
 @_cli.command("summarize-dag")
 @click.argument("dagpath")
 def _cli_summarize_dag(dagpath):
-    """print summary information about the provided history DAG."""
+    """Print summary information about the provided history DAG."""
     with open(dagpath, "rb") as fh:
         dag = pickle.load(fh)
     pars.summarize_dag(dag)
