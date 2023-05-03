@@ -597,6 +597,54 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     return kwargs
 
 
+def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
+    """Provides functions to compute the one sided RF distance to a reference tree.
+    In other words, the number of clades in a tree that are not in the reference tree.
+    Args:
+        reference_dag: The reference DAG. The distance will be computed in relation
+            to this DAG
+    The reference DAG must have the same taxa as all the trees in the DAG on which these count
+    functions are used.
+    The edge weight is computed using the expression |T| - N[c_e] where c_e is the clade under
+    the relevant edge, and |T| is the number of trees in the reference dag. This provides rooted RF
+    distances, meaning that the clade below each edge is used for RF distance computation.
+    The weights are represented by an IntState object.
+    """
+    # count the number of trees each node takes part in
+    counts = reference_dag.count_nodes(collapse=True)
+
+    # Remove the UA node clade union from counts
+    try:
+        counts.pop(frozenset())
+    except KeyError:
+        pass
+
+    num_trees = reference_dag.count_histories()
+
+    def make_intstate(n):
+        return IntState(n, state=n)
+
+    def edge_func(n1, n2):
+        clade = n2.clade_union()
+        if clade in counts:
+            weight = num_trees - (1 * counts[n2.clade_union()])
+        else:
+            # This clade's count should then just be 0:
+            weight = num_trees
+        return make_intstate(weight)
+
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda n: make_intstate(0),
+            "edge_weight_func": edge_func,
+            "accum_func": lambda wlist: make_intstate(
+                sum(w.state for w in wlist)
+            ),  # summation over edge weights
+        },
+        name="one_sided_RF_rooted_sum",
+    )
+    return kwargs
+
 def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     """Provides functions to compute Robinson-Foulds (RF) distances of trees in
     a DAG, relative to a fixed reference tree.
