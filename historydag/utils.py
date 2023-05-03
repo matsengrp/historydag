@@ -575,7 +575,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     def make_intstate(n):
         return IntState(n + K, state=n)
 
-    def edge_func(n1, n2):
+    def edge_func(_, n2):
         clade = n2.clade_union()
         if clade in N:
             weight = num_trees - (2 * N[n2.clade_union()])
@@ -621,25 +621,20 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
 
     num_trees = reference_dag.count_histories()
 
-    def make_intstate(n):
-        return IntState(n, state=n)
-
-    def edge_func(n1, n2):
+    def edge_func(_, n2):
         clade = n2.clade_union()
         if clade in counts:
             weight = num_trees - (1 * counts[n2.clade_union()])
         else:
             # This clade's count should then just be 0:
             weight = num_trees
-        return make_intstate(weight)
+        return weight
 
     kwargs = AddFuncDict(
         {
-            "start_func": lambda n: make_intstate(0),
+            "start_func": lambda _: 0,
             "edge_weight_func": edge_func,
-            "accum_func": lambda wlist: make_intstate(
-                sum(w.state for w in wlist)
-            ),  # summation over edge weights
+            "accum_func": sum,  # summation over edge weights
         },
         name="one_sided_RF_rooted_sum",
     )
