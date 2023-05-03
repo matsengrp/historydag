@@ -2,6 +2,7 @@
 
 import ete3
 from math import log, exp, isfinite
+from fractions import Fraction
 from collections import Counter
 from functools import wraps
 import operator
@@ -572,9 +573,6 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
 
     num_trees = reference_dag.count_histories()
 
-    def make_intstate(n):
-        return IntState(n + K, state=n)
-
     def edge_func(_, n2):
         clade = n2.clade_union()
         if clade in N:
@@ -582,15 +580,14 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
         else:
             # This clade's count should then just be 0:
             weight = num_trees
-        return make_intstate(weight)
+        return K + weight
 
     kwargs = AddFuncDict(
         {
-            "start_func": lambda n: make_intstate(0),
+            "start_func": lambda _: K,
             "edge_weight_func": edge_func,
-            "accum_func": lambda wlist: make_intstate(
-                sum(w.state for w in wlist)
-            ),  # summation over edge weights
+            "accum_func": lambda wlist: K + sum(w - K for w in wlist)
+            # summation over edge weights
         },
         name="RF_rooted_sum",
     )
@@ -662,7 +659,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     This calculation relies on the observation that the symmetric distance between
     the splits A in a tree in the DAG, and the splits B in the reference tree, can
     be computed as:
-    ``|A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|``
+    ``|A ^ B| = |A U B| - |A n B| = |B| + |A - B| - |A n B|``
 
     As long as tree edges are in bijection with splits, this can be computed without
     constructing the set A by considering each edge's split independently.
@@ -679,6 +676,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
+        name = "RF_unrooted_distance"
 
         def split(node):
             cu = node.clade_union()
@@ -696,68 +694,58 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         def is_history_root(n):
             return len(list(n.clade_union())) == n_taxa
 
-        def sign(n):
-            return (-1) * (n < 0) + (n > 0)
-
-        def summer(tupseq):
-            a, b = 0, 0
-            for ia, ib in tupseq:
-                a += ia
-                b += ib
-            return (a, b)
-
-        def make_intstate(tup):
-            return IntState(tup[0] + shift + sign(tup[1]), state=tup)
-
         def edge_func(n1, n2):
             spl = split(n2)
             if n1.is_ua_node():
-                return make_intstate((0, 0))
+                return shift
             if len(n1.clades) == 2 and is_history_root(n1):
                 if spl in ref_splits:
-                    return make_intstate((0, -1))
+                    return shift - Fraction(1, 2)
                 else:
-                    return make_intstate((0, 1))
+                    return shift + Fraction(1, 2)
             else:
                 if spl in ref_splits:
-                    return make_intstate((-1, 0))
+                    return shift - 1
                 else:
-                    return make_intstate((1, 0))
+                    return shift + 1
 
-        kwargs = AddFuncDict(
-            {
-                "start_func": lambda n: make_intstate((0, 0)),
-                "edge_weight_func": edge_func,
-                "accum_func": lambda wlist: make_intstate(
-                    summer(w.state for w in wlist)
-                ),
-            },
-            name="RF_unrooted_distance",
-        )
+        # convert whole fraction Fraction(a, 1) to integer a
+        def try_int(frac):
+            if frac == int(frac):
+                return int(frac)
+            else:
+                return frac
+
+        def accum_func(wlist):
+            return try_int(shift + sum(w - shift for w in wlist))
+
     else:
+        name = "RF_rooted_distance"
+
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
         )
 
         shift = len(ref_cus)
 
-        def make_intstate(n):
-            return IntState(n + shift, state=n)
-
-        def edge_func(n1, n2):
+        def edge_func(_, n2):
             if n2.clade_union() in ref_cus:
-                return make_intstate(-1)
+                return shift - 1
             else:
-                return make_intstate(1)
+                return shift + 1
+        
+        def accum_func(wlist):
+            return shift + sum(w - shift for w in wlist)
+        
 
-        kwargs = AddFuncDict(
-            {
-                "start_func": lambda n: make_intstate(0),
-                "edge_weight_func": edge_func,
-                "accum_func": lambda wlist: make_intstate(sum(w.state for w in wlist)),
-            },
-            name="RF_rooted_distance",
-        )
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: shift,
+            "edge_weight_func": edge_func,
+            "accum_func": accum_func,
+        },
+        name=name,
+    )
 
     return kwargs
 
