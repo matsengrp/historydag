@@ -560,23 +560,23 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     The weights are represented by an IntState object and are shifted by a constant K,
     which is the sum of number of clades in each tree in the DAG.
     """
-    N = reference_dag.count_nodes(collapse=True)
+    counts = reference_dag.count_nodes(collapse=True)
 
     # Remove the UA node clade union from N
     try:
-        N.pop(frozenset())
+        counts.pop(frozenset())
     except KeyError:
         pass
 
     # K is the constant that the weights are shifted by
-    K = sum(N.values())
+    K = sum(counts.values())
 
     num_trees = reference_dag.count_histories()
 
-    def edge_func(_, n2):
-        clade = n2.clade_union()
-        if clade in N:
-            weight = num_trees - (2 * N[n2.clade_union()])
+    def edge_func(_, child):
+        clade = child.clade_union()
+        if clade in counts:
+            weight = num_trees - (2 * counts[child.clade_union()])
         else:
             # This clade's count should then just be 0:
             weight = num_trees
@@ -593,6 +593,14 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     )
     return kwargs
 
+def rf_difference_funcs(reference_tree: "HistoryDag"):
+    """Provides functions to compute the number of clades in the reference tree
+    that are not in the DAG tree.
+    Args:
+        reference_tree: A history, a tree-shaped DAG.
+    The reference tree must have the same taxa as all the trees in the DAG on 
+    which these count functions are used."""
+    pass
 
 def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
@@ -605,7 +613,6 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     The edge weight is computed using the expression |T| - N[c_e] where c_e is the clade under
     the relevant edge, and |T| is the number of trees in the reference dag. This provides rooted RF
     distances, meaning that the clade below each edge is used for RF distance computation.
-    The weights are represented by an IntState object.
     """
     # count the number of trees each node takes part in
     counts = reference_dag.count_nodes(collapse=True)
@@ -618,10 +625,10 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
 
     num_trees = reference_dag.count_histories()
 
-    def edge_func(_, n2):
-        clade = n2.clade_union()
+    def edge_func(_, child):
+        clade = child.clade_union()
         if clade in counts:
-            weight = num_trees - (1 * counts[n2.clade_union()])
+            weight = num_trees - (1 * counts[child.clade_union()])
         else:
             # This clade's count should then just be 0:
             weight = num_trees
