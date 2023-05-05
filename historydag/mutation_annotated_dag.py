@@ -344,9 +344,8 @@ class CGHistoryDag(HistoryDag):
             # Returns a value in [0, 1] that indicates the correct adjustment
             if log_probabilities:
 
-                def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
-                    print("parent:", len(parent.clade_union()), "child:", len(child.clade_union()))
-                    if parent.is_root():
+                def adjust_func(parent, child):
+                    if parent.is_root() or child.is_leaf():
                         return 0
                     else:
                         diff = [
@@ -370,8 +369,8 @@ class CGHistoryDag(HistoryDag):
 
             else:
 
-                def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
-                    if parent.is_root():
+                def adjust_func(parent, child):
+                    if parent.is_root() or child.is_leaf():
                         return 1
                     else:
                         diff = [
