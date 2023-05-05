@@ -35,6 +35,8 @@ from historydag.dag_node import (
     EdgeSet,
     empty_node,
 )
+# from historydag.mutation_annotated_dag import CGHistoryDag    # NOTE: Causes circular import
+from historydag.compact_genome import cg_diff
 
 
 class IntersectionError(ValueError):
@@ -2596,6 +2598,238 @@ class HistoryDag:
             aggregate_func = sum
         return self.optimal_weight_annotate(**kwargs, optimal_func=aggregate_func)
 
+
+    # def node_probabilities_old(
+    #     self,
+    #     log_probabilities=False,
+    #     edge_weight_func=None,
+    #     normalize_edgeweights=None,
+    #     accum_func=None,
+    #     aggregate_func=None,
+    #     start_func=None,
+    #     ua_node_val=None,
+    #     collapse_key=None,
+    #     **kwargs,
+    # ):
+    #     """Compute the probability of each node in the DAG.
+
+    #     Args:
+    #         log_probabilities: If True, all probabilities, and the values from ``edge_weight_func``, will
+    #             be treated as log values.
+    #         edge_weight_func: A function accepting a parent node and a child node and returning the
+    #             weight associated to that edge. If not provided, it is assumed that correct edge probability
+    #             annotations are already populated by a method such as :meth:`HistoryDag.probability_annotate`.
+    #         normalize_edgeweights: A function taking a list of weights and returning a normalized list of
+    #             downward-conditional edge probabilities. The default is determined by ``log_probabilities``.
+    #         accum_func: A function taking a list of probabilities for parts of a sub-history, and returning
+    #             a probability for that sub-history. The default is determined by ``log_probabilities``.
+    #         aggregate_func: A function taking a list of probabilities for alternative sub-histories, and
+    #             returning the aggregated probability of all sub-histories. The default is determined by ``log_probabilities``.
+    #         start_func: A function taking a leaf node and returning its starting weight. The default is
+    #             determined by ``log_probabilities``.
+    #         ua_node_val: The probability value for the UA node. If not provided, the default value is
+    #             determined by ``log_probabilities``.
+    #         collapse_key: A function accepting a :class:`HistoryDagNode` and returning a key with respect
+    #             to which node probabilities should be collapsed. The return type is the key type for the
+    #             dictionary returned by this method. For example, to compute probabilities of each clade observed
+    #             in the DAG, use ``collapse_key=HistoryDagNode.clade_union``.
+
+    #     Returns:
+    #         A dictionary keyed by :class:`HistoryDagNode` objects (or the return values of ``collapse_key`` if provided)
+    #         whose values are probabilities according to the distribution induced by downward-conditional edge
+    #         probabilities in the DAG.
+    #     """
+    #     if edge_weight_func is not None:
+    #         self.probability_annotate(
+    #             edge_weight_func,
+    #             log_probabilities=log_probabilities,
+    #             normalize_edgeweights=normalize_edgeweights,
+    #             accum_func=accum_func,
+    #             aggregate_func=aggregate_func,
+    #             start_func=start_func,
+    #         )
+
+    #     ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
+    #     accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
+    #     aggregate_func = _none_override_ternary(
+    #         aggregate_func, log_probabilities, utils.logsumexp, sum
+    #     )
+
+    #     self.recompute_parents()
+    #     node_probs = {self.dagroot: ua_node_val}
+    #     node_above_probs = {}   # Maps node to list of all parent node probabilities
+
+    #     for node in reversed(list(self.postorder())):
+    #         # All parents have been visited, so this_node_prob can be computed
+    #         if not node.is_ua_node():
+    #             this_node_prob = aggregate_func(node_above_probs[node])
+    #             node_probs[node] = this_node_prob
+
+    #         else:
+    #             this_node_prob = ua_node_val
+    #         # Now add this node's probability to node_above_probs for all
+    #         # children.
+    #         for clade, eset in node.clades.items():
+    #             for child, _, prob in eset:
+    #                 child_above_probs = node_above_probs.setdefault(child, [])
+    #                 child_above_probs.append(accum_func([this_node_prob, prob]))
+
+    #     # This must be done separately because otherwise we have no reverse
+    #     # postorder guarantee on keys in node_probs.
+    #     if collapse_key is not None:
+    #         collapsed_probs = {}
+    #         for node, prob in node_probs.items():
+    #             key = collapse_key(node)
+    #             if key not in collapsed_probs:
+    #                 collapsed_probs[key] = prob
+    #             else:
+    #                 val = collapsed_probs[key]
+    #                 collapsed_probs[key] = aggregate_func([val, prob])
+    #         return collapsed_probs
+    #     else:
+    #         return node_probs
+
+
+    # William's first stab
+    # def node_probabilities(
+    #     self,
+    #     log_probabilities=False,
+    #     edge_weight_func=None,
+    #     normalize_edgeweights=None,
+    #     accum_func=None,
+    #     aggregate_func=None,
+    #     start_func=None,
+    #     ua_node_val=None,
+    #     collapse_key=None,
+    #     adjust_probs=False,
+    #     **kwargs,
+    # ):
+    #     """Compute the probability of each node in the DAG.
+
+    #     Args:
+    #         log_probabilities: If True, all probabilities, and the values from ``edge_weight_func``, will
+    #             be treated as log values.
+    #         edge_weight_func: A function accepting a parent node and a child node and returning the
+    #             weight associated to that edge. If not provided, it is assumed that correct edge probability
+    #             annotations are already populated by a method such as :meth:`HistoryDag.probability_annotate`.
+    #         normalize_edgeweights: A function taking a list of weights and returning a normalized list of
+    #             downward-conditional edge probabilities. The default is determined by ``log_probabilities``.
+    #         accum_func: A function taking a list of probabilities for parts of a sub-history, and returning
+    #             a probability for that sub-history. The default is determined by ``log_probabilities``.
+    #         aggregate_func: A function taking a list of probabilities for alternative sub-histories, and
+    #             returning the aggregated probability of all sub-histories. The default is determined by ``log_probabilities``.
+    #         start_func: A function taking a leaf node and returning its starting weight. The default is
+    #             determined by ``log_probabilities``.
+    #         ua_node_val: The probability value for the UA node. If not provided, the default value is
+    #             determined by ``log_probabilities``.
+    #         collapse_key: A function accepting a :class:`HistoryDagNode` and returning a key with respect
+    #             to which node probabilities should be collapsed. The return type is the key type for the
+    #             dictionary returned by this method. For example, to compute probabilities of each clade observed
+    #             in the DAG, use ``collapse_key=HistoryDagNode.clade_union``.
+    #         adjust_probs: If True, all node probabilities will be adjusted by a factor dependent on
+    #             the frequency of mutations supporting the target node. Requires that the dag is an
+    #             instance of ``CGHistoryDAG``.
+
+    #     Returns:
+    #         A dictionary keyed by :class:`HistoryDagNode` objects (or the return values of ``collapse_key`` if provided)
+    #         whose values are probabilities according to the distribution induced by downward-conditional edge
+    #         probabilities in the DAG.
+    #     """
+
+    #     # NOTE: Can't check this here due to circular import issues
+    #     # if adjust_probs and not isinstance(self, CGHistoryDag):
+    #     #     raise Exception("Have not implemented support adjustment for non-CG DAGs")
+    
+    #     if edge_weight_func is not None:
+    #         self.probability_annotate(
+    #             edge_weight_func,
+    #             log_probabilities=log_probabilities,
+    #             normalize_edgeweights=normalize_edgeweights,
+    #             accum_func=accum_func,
+    #             aggregate_func=aggregate_func,
+    #             start_func=start_func,
+    #         )
+
+    #     ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
+    #     accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
+    #     aggregate_func = _none_override_ternary(
+    #         aggregate_func, log_probabilities, utils.logsumexp, sum
+    #     )
+
+
+    #     self.recompute_parents()
+    #     node_probs = {self.dagroot: ua_node_val}
+    #     node_above_probs = {}   # Maps node to list of all parent node probabilities
+
+    #     mut_freq = {}   # (parent_nuc, child_nuc, sequence_index) -> frequency
+    #     total_muts = 0
+    #     for child in reversed(list(self.postorder())):
+    #         if not child.is_root():
+    #             for parent in child.parents:
+    #                 if parent.is_root():
+    #                     continue
+    #                 muts = cg_diff(parent.label.compact_genome, child.label.compact_genome)
+    #                 for mut in muts:
+    #                     if mut not in mut_freq:
+    #                         mut_freq[mut] = 0
+    #                     mut_freq[mut] += 1
+    #                     total_muts += 1
+    #     for mut in mut_freq.keys():
+    #         mut_freq[mut] /= total_muts
+    #         assert mut_freq[mut] <= 1 and mut_freq[mut] >= 1 / total_muts
+
+    #     # TODO: Inspect this further to gather stats about what type of mutations are most common
+    #     # print(mut_freq)
+
+    #     adj_node_probs = {self.dagroot: ua_node_val}
+    
+    #     # Returns a value in [0, 1] that indicates the correct adjustment
+    #     def adj_func(parent, child):
+    #         if parent.is_root():
+    #             return 1
+    #         else:
+    #             return 1 - prod([mut_freq[mut] for mut in cg_diff(parent.label.compact_genome, child.label.compact_genome)])
+
+    #     # Returns the aggregation of parent node probabilities taking the adjustment into account
+    #     adj_agg_func = lambda child: aggregate_func([node_probs[parent] * adj_func(parent, child) for parent in child.parents])
+
+    #     for node in reversed(list(self.postorder())):
+    #         # All parents have been visited, so this_node_prob can be computed
+    #         if not node.is_ua_node():
+    #             this_node_prob = aggregate_func(node_above_probs[node])
+    #             node_probs[node] = this_node_prob
+
+    #             if adjust_probs:
+    #                 this_adj_node_prob = adj_agg_func(node)
+    #                 adj_node_probs[node] = this_adj_node_prob
+
+    #         else:
+    #             this_node_prob = ua_node_val
+    #         # Now add this node's probability to node_above_probs for all
+    #         # children.
+    #         for clade, eset in node.clades.items():
+    #             for child, _, prob in eset:
+    #                 child_above_probs = node_above_probs.setdefault(child, [])
+    #                 child_above_probs.append(accum_func([this_node_prob, prob]))
+
+    #     if adjust_probs:
+    #         node_probs = adj_node_probs
+        
+    #     # This must be done separately because otherwise we have no reverse
+    #     # postorder guarantee on keys in node_probs.
+    #     if collapse_key is not None:
+    #         collapsed_probs = {}
+    #         for node, prob in node_probs.items():
+    #             key = collapse_key(node)
+    #             if key not in collapsed_probs:
+    #                 collapsed_probs[key] = prob
+    #             else:
+    #                 val = collapsed_probs[key]
+    #                 collapsed_probs[key] = aggregate_func([val, prob])
+    #         return collapsed_probs
+    #     else:
+    #         return node_probs
+
     def node_probabilities(
         self,
         log_probabilities=False,
@@ -2606,10 +2840,10 @@ class HistoryDag:
         start_func=None,
         ua_node_val=None,
         collapse_key=None,
+        adjust_func: Callable[[HistoryDagNode, HistoryDagNode], float] = None,
         **kwargs,
     ):
         """Compute the probability of each node in the DAG.
-
         Args:
             log_probabilities: If True, all probabilities, and the values from ``edge_weight_func``, will
                 be treated as log values.
@@ -2630,7 +2864,8 @@ class HistoryDag:
                 to which node probabilities should be collapsed. The return type is the key type for the
                 dictionary returned by this method. For example, to compute probabilities of each clade observed
                 in the DAG, use ``collapse_key=HistoryDagNode.clade_union``.
-
+            adjust_func: A function accepting an edge, and returning a factor by which to adjust confidence in the
+                edge's child node contributed by trees containing that edge.
         Returns:
             A dictionary keyed by :class:`HistoryDagNode` objects (or the return values of ``collapse_key`` if provided)
             whose values are probabilities according to the distribution induced by downward-conditional edge
@@ -2646,6 +2881,11 @@ class HistoryDag:
                 start_func=start_func,
             )
 
+        if adjust_func is None:
+
+            def adjust_func(parent, child):
+                return 1
+
         ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
         accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
         aggregate_func = _none_override_ternary(
@@ -2653,27 +2893,36 @@ class HistoryDag:
         )
 
         self.recompute_parents()
-        node_probs = {self.dagroot: ua_node_val}
+        # first value is true probability, and second value is adjusted
+        node_probs = {self.dagroot: (ua_node_val, ua_node_val)}
+        # first value is vector of true probabilities, and second value is adjusted
         node_above_probs = {}
         for node in reversed(list(self.postorder())):
             # All parents have been visited, so this_node_prob can be computed
             if not node.is_ua_node():
-                this_node_prob = aggregate_func(node_above_probs[node])
-                node_probs[node] = this_node_prob
+                this_node_prob = aggregate_func(node_above_probs[node][0])
+                adjusted_this_node_prob = aggregate_func(node_above_probs[node][1])
+                node_probs[node] = (this_node_prob, adjusted_this_node_prob)
             else:
                 this_node_prob = ua_node_val
             # Now add this node's probability to node_above_probs for all
             # children.
             for clade, eset in node.clades.items():
                 for child, _, prob in eset:
-                    child_above_probs = node_above_probs.setdefault(child, [])
+                    (
+                        child_above_probs,
+                        child_above_adjusted_probs,
+                    ) = node_above_probs.setdefault(child, ([], []))
                     child_above_probs.append(accum_func([this_node_prob, prob]))
+                    child_above_adjusted_probs.append(
+                        accum_func([this_node_prob, prob, adjust_func(node, child)])
+                    )
 
         # This must be done separately because otherwise we have no reverse
         # postorder guarantee on keys in node_probs.
         if collapse_key is not None:
             collapsed_probs = {}
-            for node, prob in node_probs.items():
+            for node, (_, prob) in node_probs.items():
                 key = collapse_key(node)
                 if key not in collapsed_probs:
                     collapsed_probs[key] = prob
@@ -2682,7 +2931,8 @@ class HistoryDag:
                     collapsed_probs[key] = aggregate_func([val, prob])
             return collapsed_probs
         else:
-            return node_probs
+            return {node: prob for node, (_, prob) in node_probs.items()}
+        
 
     def edge_probabilities(
         self,
