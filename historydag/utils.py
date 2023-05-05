@@ -557,7 +557,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF
     distances, meaning that the clade below each edge is used for RF distance computation.
 
-    The weights are represented by an IntState object and are shifted by a constant K,
+    The weights are integers shifted by a constant K,
     which is the sum of number of clades in each tree in the DAG.
     """
     counts = reference_dag.count_nodes(collapse=True)
@@ -592,15 +592,6 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
         name="RF_rooted_sum",
     )
     return kwargs
-
-def rf_difference_funcs(reference_tree: "HistoryDag"):
-    """Provides functions to compute the number of clades in the reference tree
-    that are not in the DAG tree.
-    Args:
-        reference_tree: A history, a tree-shaped DAG.
-    The reference tree must have the same taxa as all the trees in the DAG on 
-    which these count functions are used."""
-    pass
 
 def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
@@ -644,6 +635,74 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     )
     return kwargs
 
+def rf_difference_funcs(
+    reference_tree: "HistoryDag",
+    rooted: bool=False
+):
+    """Provides functions to compute the resolution difference, i.e.
+    number of clades in the reference tree that are not in the DAG trees.
+    Args:
+        reference_tree: A history, a tree-shaped DAG.
+    The reference tree must have the same taxa as all the trees in the DAG on 
+    which these count functions are used."""
+    pass
+    if not rooted:
+        name = "unrooted_resolution_difference"
+        taxa = frozenset(n.label for n in ref_tree.get_leaves())
+        def split(node):
+            cu = node.clade_union()
+            return frozenset({cu, taxa - cu})
+
+        ref_splits = frozenset(
+            split(node) for node in ref_tree.preorder()
+        )
+        # Remove above-root split, which doesn't map to any tree edge:
+        ref_splits = ref_splits - {
+            frozenset({taxa, frozenset()}),
+        }
+        shift = len(ref_splits)
+
+        n_taxa = len(taxa)
+
+        def is_history_root(n):
+            return len(n.clade_union()) == n_taxa
+
+        def edge_func(n1, n2):
+            spl = split(n2)
+            if n1.is_ua_node():
+                return shift
+            if len(n1.clades) == 2 and is_history_root(n1):
+                if spl in ref_splits:
+                    return shift - Fraction(1, 2)
+                else:
+                    return shift
+            else:
+                if spl in ref_splits:
+                    return shift - 1
+                else:
+                    return shift
+
+        # convert whole fraction Fraction(a, 1) to integer a
+        def try_int(frac):
+            if frac == int(frac):
+                return int(frac)
+            else:
+                return frac
+
+        def accum_func(wlist):
+            return try_int(shift + sum(w - shift for w in wlist))
+    else:
+        pass
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: shift,
+            "edge_weight_func": edge_func,
+            "accum_func": accum_func,  # summation over edge weights
+        },
+        name="one_sided_RF_rooted_sum",
+    )
+    return kwargs
+
 def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     """Provides functions to compute Robinson-Foulds (RF) distances of trees in
     a DAG, relative to a fixed reference tree.
@@ -672,24 +731,24 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     constructing the set A by considering each edge's split independently.
 
     In order to accommodate multiple edges with the same split in a tree with root
-    bifurcation, we keep track of the contribution of such edges separately.
+    bifurcation, we keep track of the contribution of such edges differently.
+    For most edges, the contribution to the weight is either `1` or `-1`, but 
+    for edges which are part of a root bifurcation, the contribution is instead 
+    `1/2` or `-1/2`. The weight type is either an int or a Fraction. 
 
-    The weight type is a tuple wrapped in an IntState object. The first tuple value `a` is the
-    contribution of edges which are not part of a root bifurcation, where edges whose splits are in B
-    contribute `-1`, and edges whose splits are not in B contribute `-1`, and the second tuple
-    value `b` is the contribution of the edges which are part of a root bifurcation. The value
-    of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
-    taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
         name = "RF_unrooted_distance"
 
+        taxa = frozenset(n.label for n in ref_tree.get_leaves())
         def split(node):
             cu = node.clade_union()
             return frozenset({cu, taxa - cu})
 
-        ref_splits = frozenset(split(node) for node in ref_tree.preorder())
+        ref_splits = frozenset(
+            split(node) for node in ref_tree.preorder()
+        )
         # Remove above-root split, which doesn't map to any tree edge:
         ref_splits = ref_splits - {
             frozenset({taxa, frozenset()}),
@@ -699,7 +758,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         n_taxa = len(taxa)
 
         def is_history_root(n):
-            return len(list(n.clade_union())) == n_taxa
+            return len(n.clade_union()) == n_taxa
 
         def edge_func(n1, n2):
             spl = split(n2)
@@ -743,7 +802,6 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         
         def accum_func(wlist):
             return shift + sum(w - shift for w in wlist)
-        
 
     kwargs = AddFuncDict(
         {
@@ -753,7 +811,6 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         },
         name=name,
     )
-
     return kwargs
 
 
@@ -898,30 +955,30 @@ def _remstate(kwargs):
     return intkwargs
 
 
-class IntState(int):
-    """A subclass of int, with arbitrary, mutable state.
+# class IntState(int):
+#     """A subclass of int, with arbitrary, mutable state.
 
-    State is provided to the constructor as the keyword argument
-    ``state``. All other arguments will be passed to ``int``
-    constructor. Instances should be functionally indistinguishable from
-    ``int``.
-    """
+#     State is provided to the constructor as the keyword argument
+#     ``state``. All other arguments will be passed to ``int``
+#     constructor. Instances should be functionally indistinguishable from
+#     ``int``.
+#     """
 
-    def __new__(cls, *args, **kwargs):
-        intkwargs = _remstate(kwargs)
-        return super(IntState, cls).__new__(cls, *args, **intkwargs)
+#     def __new__(cls, *args, **kwargs):
+#         intkwargs = _remstate(kwargs)
+#         return super(IntState, cls).__new__(cls, *args, **intkwargs)
 
-    def __init__(self, *args, **kwargs):
-        self.state = kwargs["state"]
+#     def __init__(self, *args, **kwargs):
+#         self.state = kwargs["state"]
 
-    def __copy__(self):
-        return IntState(int(self), state=self.state)
+#     def __copy__(self):
+#         return IntState(int(self), state=self.state)
 
-    def __getstate__(self):
-        return {"val": int(self), "state": self.state}
+#     def __getstate__(self):
+#         return {"val": int(self), "state": self.state}
 
-    def __setstate__(self, statedict):
-        self.state = statedict["state"]
+#     def __setstate__(self, statedict):
+#         self.state = statedict["state"]
 
 
 class FloatState(float):
