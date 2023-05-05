@@ -295,11 +295,28 @@ class CGHistoryDag(HistoryDag):
         with open(filename, "w") as fh:
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
 
+    def get_mutations(self, parent, child, mut_type="parent_child_site"):
+        """
+        Helper method for adjusted node probabilities. Returns a list of the mutations on this
+        branch, where `mut_type` offers flexibility about what counts as a unique mutation.
+        """
+        muts = list(cg_diff(
+                        parent.label.compact_genome, child.label.compact_genome
+        ))
+        if mut_type == "child_site":
+            muts = [(mut[1], mut[2]) for mut in muts]
+        elif mut_type == "site":
+            muts = [(mut[2]) for mut in muts]
+        
+        return muts
+        
+
     def adjusted_node_probabilities(
         self,
         log_probabilities=False,
         ua_node_val=None,
         adjust_func: Callable[[HistoryDagNode, HistoryDagNode], float] = None,
+        mut_type="parent_child_site",
         **kwargs,
     ):
         """Compute the probability of each node in the DAG, adjusted based on
@@ -317,9 +334,7 @@ class CGHistoryDag(HistoryDag):
                     for parent in child.parents:
                         if parent.is_root() or child.is_leaf():
                             continue
-                        muts = list(cg_diff(
-                            parent.label.compact_genome, child.label.compact_genome
-                        ))
+                        muts = self.get_mutations(parent, child, mut_type)
                         if len(muts) == 0:
                             uncollapsed = True
                     
@@ -350,13 +365,7 @@ class CGHistoryDag(HistoryDag):
                     if parent.is_root() or child.is_leaf():
                         return 0
                     else:
-                        diff = [
-                            mut for mut in 
-                                cg_diff(
-                                    parent.label.compact_genome,
-                                    child.label.compact_genome
-                                    )
-                        ]
+                        diff = self.get_mutations(parent, child, mut_type)
                         if len(diff) == 0:
                             return log(eps * min_mut_freq)
                         else:
@@ -375,13 +384,7 @@ class CGHistoryDag(HistoryDag):
                     if parent.is_root() or child.is_leaf():
                         return 1
                     else:
-                        diff = [
-                            mut for mut in 
-                                cg_diff(
-                                    parent.label.compact_genome,
-                                    child.label.compact_genome
-                                    )
-                        ]
+                        diff = self.get_mutations(parent, child, mut_type)
                         if len(diff) == 0:
                             return eps * min_mut_freq
                         return 1 - historydag.utils.prod(
