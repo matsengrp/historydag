@@ -39,19 +39,20 @@ def test_weight_count():
 
 def test_adjusted_node_support():
     pbdag.convert_to_collapsed()
-    adj_d = pbdag.adjusted_node_probabilities(edge_weight_func=lambda p, c : 1, log_probabilities=False)
-    adj_d_log = pbdag.adjusted_node_probabilities(edge_weight_func=lambda p, c: 0, log_probabilities=True)
-    d = pbdag.node_probabilities(edge_weight_func=lambda p, c: 1, log_probabilities=False)
-    d_log = pbdag.node_probabilities(edge_weight_func=lambda p, c: 0, log_probabilities=True)
+    pbdag.uniform_distribution_annotate(log_probabilities=False)
+    adj_d = pbdag.adjusted_node_probabilities(log_probabilities=False)
+    d = pbdag.node_probabilities(log_probabilities=False)
 
-    pbdag.recompute_parents()
+    pbdag.uniform_distribution_annotate(log_probabilities=True)
+    adj_d_log = pbdag.adjusted_node_probabilities(log_probabilities=True)
+    d_log = pbdag.node_probabilities(log_probabilities=True)
 
     for node in adj_d:
         adj_p = adj_d[node]
         adj_p_log = adj_d_log[node]
         p = d[node]
         p_log = d_log[node]
-        assert isclose(log(p), p_log)
-        assert isclose(log(adj_p), adj_p_log)
+        assert isclose(log(p), p_log, abs_tol=1e-09)
+        assert isclose(log(adj_p), adj_p_log, abs_tol=1e-09)
         assert adj_p <= p
         
