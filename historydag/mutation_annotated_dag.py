@@ -23,6 +23,7 @@ import historydag.dag_pb2 as dpb
 import json
 from math import log
 from typing import NamedTuple, Callable
+import warnings
 
 
 _pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
@@ -316,10 +317,8 @@ class CGHistoryDag(HistoryDag):
                     for parent in child.parents:
                         if parent.is_root():
                             continue
-                        muts = cg_diff(
-                            parent.label.compact_genome, child.label.compact_genome
-                        )
-                        if len(muts) == 0:
+                        muts = [mut for mut in cg_diff(parent.label.compact_genome, child.label.compact_genome)]
+                        if len(muts) == 0 and not parent.is_root():
                             uncollapsed = True
                     
                         for mut in muts:
@@ -329,7 +328,7 @@ class CGHistoryDag(HistoryDag):
                             total_muts += edge_counts[(parent, child)]
             
             if uncollapsed:
-                raise Warning("Support adjustment on uncollapsed DAG.")
+                warnings.warn("Support adjustment on uncollapsed DAG.")
 
             min_mut_freq = 1
             for mut in mut_freq.keys():
