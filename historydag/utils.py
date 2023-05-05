@@ -636,7 +636,7 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     return kwargs
 
 def rf_difference_funcs(
-    reference_tree: "HistoryDag",
+    ref_tree: "HistoryDag",
     rooted: bool=False
 ):
     """Provides functions to compute the resolution difference, i.e.
@@ -699,7 +699,74 @@ def rf_difference_funcs(
             "edge_weight_func": edge_func,
             "accum_func": accum_func,  # summation over edge weights
         },
-        name="one_sided_RF_rooted_sum",
+        name=name,
+    )
+    return kwargs
+
+def rf_difference_other_funcs(
+    ref_tree: "HistoryDag",
+    rooted: bool=False
+):
+    """Provides functions to compute the resolution difference, i.e.
+    number of clades in the reference tree that are not in the DAG trees.
+    Args:
+        reference_tree: A history, a tree-shaped DAG.
+    The reference tree must have the same taxa as all the trees in the DAG on 
+    which these count functions are used."""
+    pass
+    if not rooted:
+        name = "unrooted_resolution_difference_other"
+        taxa = frozenset(n.label for n in ref_tree.get_leaves())
+        def split(node):
+            cu = node.clade_union()
+            return frozenset({cu, taxa - cu})
+
+        ref_splits = frozenset(
+            split(node) for node in ref_tree.preorder()
+        )
+        # Remove above-root split, which doesn't map to any tree edge:
+        ref_splits = ref_splits - {
+            frozenset({taxa, frozenset()}),
+        }
+
+        n_taxa = len(taxa)
+
+        def is_history_root(n):
+            return len(n.clade_union()) == n_taxa
+
+        def edge_func(n1, n2):
+            spl = split(n2)
+            if n1.is_ua_node():
+                return 0
+            if len(n1.clades) == 2 and is_history_root(n1):
+                if spl in ref_splits:
+                    return 0
+                else:
+                    return Fraction(1, 2)
+            else:
+                if spl in ref_splits:
+                    return 0
+                else:
+                    return 1
+
+        # convert whole fraction Fraction(a, 1) to integer a
+        def try_int(frac):
+            if frac == int(frac):
+                return int(frac)
+            else:
+                return frac
+
+        def accum_func(wlist):
+            return try_int(sum(wlist))
+    else:
+        pass
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: 0,
+            "edge_weight_func": edge_func,
+            "accum_func": accum_func,  # summation over edge weights
+        },
+        name=name,
     )
     return kwargs
 
