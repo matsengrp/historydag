@@ -37,8 +37,8 @@ def test_weight_count():
     assert cdag.optimal_weight_annotate() == sdag.optimal_weight_annotate()
     assert cdag.trim_optimal_weight() == sdag.trim_optimal_weight()
 
+
 def test_adjusted_node_support():
-    pbdag.convert_to_collapsed()
     pbdag.uniform_distribution_annotate(log_probabilities=False)
     adj_d = pbdag.adjusted_node_probabilities(log_probabilities=False)
     d = pbdag.node_probabilities(log_probabilities=False)
@@ -55,4 +55,3 @@ def test_adjusted_node_support():
         assert isclose(log(p), p_log, abs_tol=1e-09)
         assert isclose(log(adj_p), adj_p_log, abs_tol=1e-09)
         assert adj_p <= p
-        

@@ -2649,8 +2649,9 @@ class HistoryDag:
                 start_func=start_func,
             )
 
-
-        adjust_func = _none_override_ternary(adjust_func, log_probabilities, lambda p, c: 0, lambda p, c: 1)
+        adjust_func = _none_override_ternary(
+            adjust_func, log_probabilities, lambda p, c: 0, lambda p, c: 1
+        )
         ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
         accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
         aggregate_func = _none_override_ternary(
