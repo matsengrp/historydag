@@ -334,7 +334,7 @@ class CGHistoryDag(HistoryDag):
             if log_probabilities:
 
                 def adjust_func(parent, child):
-                    if parent.is_root():
+                    if parent.is_root() or child.is_leaf():
                         return 0
                     else:
                         return log(
@@ -353,7 +353,7 @@ class CGHistoryDag(HistoryDag):
             else:
 
                 def adjust_func(parent, child):
-                    if parent.is_root():
+                    if parent.is_root() or child.is_leaf():
                         return 1
                     else:
                         return 1 - historydag.utils.prod(
