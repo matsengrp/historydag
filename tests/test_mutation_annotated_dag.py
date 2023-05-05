@@ -39,10 +39,10 @@ def test_weight_count():
 
 def test_adjusted_node_support():
     pbdag.convert_to_collapsed()
-    adj_d = pbdag.adjusted_node_probabilities(log_probabilities=False)
-    adj_d_log = pbdag.adjusted_node_probabilities(log_probabilities=True)
-    d = pbdag.node_probabilities(log_probabilities=False)
-    d_log = pbdag.node_probabilities(log_probabilities=False)
+    adj_d = pbdag.adjusted_node_probabilities(edge_weight_func=lambda p, c : 1, log_probabilities=False)
+    adj_d_log = pbdag.adjusted_node_probabilities(edge_weight_func=lambda p, c: 0, log_probabilities=True)
+    d = pbdag.node_probabilities(edge_weight_func=lambda p, c: 1, log_probabilities=False)
+    d_log = pbdag.node_probabilities(edge_weight_func=lambda p, c: 0, log_probabilities=True)
 
     pbdag.recompute_parents()
 

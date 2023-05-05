@@ -314,11 +314,11 @@ class CGHistoryDag(HistoryDag):
             for child in reversed(list(self.postorder())):
                 if not child.is_root():
                     for parent in child.parents:
-                        if parent.is_root():
+                        if parent.is_root() or child.is_leaf():
                             continue
-                        muts = cg_diff(
+                        muts = list(cg_diff(
                             parent.label.compact_genome, child.label.compact_genome
-                        )
+                        ))
                         if len(muts) == 0:
                             uncollapsed = True
                     
