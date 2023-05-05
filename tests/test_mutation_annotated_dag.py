@@ -3,6 +3,7 @@ from historydag.mutation_annotated_dag import (
     load_json_file,
 )
 from historydag.sequence_dag import SequenceHistoryDag
+from math import isclose, log
 
 pbdag = load_MAD_protobuf_file("sample_data/full_dag.pb")
 
@@ -35,3 +36,23 @@ def test_weight_count():
     assert cdag.weight_count() == sdag.weight_count()
     assert cdag.optimal_weight_annotate() == sdag.optimal_weight_annotate()
     assert cdag.trim_optimal_weight() == sdag.trim_optimal_weight()
+
+def test_adjusted_node_support():
+    pbdag.convert_to_collapsed()
+    pbdag.uniform_distribution_annotate(log_probabilities=False)
+    adj_d = pbdag.adjusted_node_probabilities(log_probabilities=False)
+    d = pbdag.node_probabilities(log_probabilities=False)
+
+    pbdag.uniform_distribution_annotate(log_probabilities=True)
+    adj_d_log = pbdag.adjusted_node_probabilities(log_probabilities=True)
+    d_log = pbdag.node_probabilities(log_probabilities=True)
+
+    for node in adj_d:
+        adj_p = adj_d[node]
+        adj_p_log = adj_d_log[node]
+        p = d[node]
+        p_log = d_log[node]
+        assert isclose(log(p), p_log, abs_tol=1e-09)
+        assert isclose(log(adj_p), adj_p_log, abs_tol=1e-09)
+        assert adj_p <= p
+        

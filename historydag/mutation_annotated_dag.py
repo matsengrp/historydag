@@ -315,10 +315,12 @@ class CGHistoryDag(HistoryDag):
             for child in reversed(list(self.postorder())):
                 if not child.is_root():
                     for parent in child.parents:
-                        if parent.is_root():
+                        if parent.is_root() or child.is_leaf():
                             continue
-                        muts = [mut for mut in cg_diff(parent.label.compact_genome, child.label.compact_genome)]
-                        if len(muts) == 0 and not parent.is_root():
+                        muts = list(cg_diff(
+                            parent.label.compact_genome, child.label.compact_genome
+                        ))
+                        if len(muts) == 0:
                             uncollapsed = True
                     
                         for mut in muts:
@@ -345,7 +347,7 @@ class CGHistoryDag(HistoryDag):
 
                 def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
                     print("parent:", len(parent.clade_union()), "child:", len(child.clade_union()))
-                    if parent.is_root():
+                    if parent.is_root() or child.is_leaf():
                         return 0
                     else:
                         diff = [
@@ -370,7 +372,7 @@ class CGHistoryDag(HistoryDag):
             else:
 
                 def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
-                    if parent.is_root():
+                    if parent.is_root() or child.is_leaf():
                         return 1
                     else:
                         diff = [
