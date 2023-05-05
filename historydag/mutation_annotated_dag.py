@@ -21,7 +21,8 @@ from historydag.parsimony_utils import (
 )
 import historydag.dag_pb2 as dpb
 import json
-from typing import NamedTuple
+from math import log
+from typing import NamedTuple, Callable
 
 
 _pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
@@ -292,6 +293,85 @@ class CGHistoryDag(HistoryDag):
         """Write this history DAG to a JSON file."""
         with open(filename, "w") as fh:
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
+
+    def adjusted_node_probabilities(
+        self,
+        log_probabilities=False,
+        ua_node_val=None,
+        adjust_func: Callable[[HistoryDagNode, HistoryDagNode], float] = None,
+        **kwargs,
+    ):
+        """Compute the probability of each node in the DAG, adjusted based on
+        the frequency of mutations that define each node.
+
+        See :meth:`HistoryDag.node_probabilities` for argument
+        descriptions.
+        """
+        if adjust_func is None:
+            mut_freq = {}  # (parent_nuc, child_nuc, sequence_index) -> frequency
+            total_muts = 0
+            for child in reversed(list(self.postorder())):
+                if not child.is_root():
+                    for parent in child.parents:
+                        if parent.is_root():
+                            continue
+                        muts = cg_diff(
+                            parent.label.compact_genome, child.label.compact_genome
+                        )
+                        for mut in muts:
+                            if mut not in mut_freq:
+                                mut_freq[mut] = 0
+                            mut_freq[mut] += 1
+                            total_muts += 1
+            for mut in mut_freq.keys():
+                mut_freq[mut] /= total_muts
+                assert mut_freq[mut] <= 1 and mut_freq[mut] >= 1 / total_muts
+
+            # TODO: Inspect this further to gather stats about what type of mutations are most common
+            # print(mut_freq)
+
+            # Returns a value in [0, 1] that indicates the correct adjustment
+            if log_probabilities:
+
+                def adjust_func(parent, child):
+                    if parent.is_root():
+                        return 0
+                    else:
+                        return log(
+                            1
+                            - historydag.utils.prod(
+                                [
+                                    mut_freq[mut]
+                                    for mut in cg_diff(
+                                        parent.label.compact_genome,
+                                        child.label.compact_genome,
+                                    )
+                                ]
+                            )
+                        )
+
+            else:
+
+                def adjust_func(parent, child):
+                    if parent.is_root():
+                        return 1
+                    else:
+                        return 1 - historydag.utils.prod(
+                            [
+                                mut_freq[mut]
+                                for mut in cg_diff(
+                                    parent.label.compact_genome,
+                                    child.label.compact_genome,
+                                )
+                            ]
+                        )
+
+        return self.node_probabilities(
+            log_probabilities=log_probabilities,
+            adjust_func=adjust_func,
+            ua_node_val=ua_node_val,
+            **kwargs,
+        )
 
 
 class AmbiguousLeafCGHistoryDag(CGHistoryDag):
