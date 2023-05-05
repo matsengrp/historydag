@@ -57,7 +57,7 @@ def make_weighted_hamming_count_funcs(
 def sankoff_postorder_iter_accum(
     postorder_iter, node_clade_function, child_node_function
 ):
-    """this is a re-take of :meth:`postorder_history_accum` that is altered so
+    """This is a re-take of :meth:`postorder_history_accum` that is altered so
     that it does not require a complete DAG, and simplified for the specific
     Sankoff algorithm.
 
@@ -267,7 +267,9 @@ def sankoff_downward(
         ]
 
     def compute_sequence_data(cost_vector):
-        """Compute all possible sequences that minimize transition costs as given by cost_vector.
+        """Compute all possible sequences that minimize transition costs as
+        given by cost_vector.
+
         Returns: a list of tuples, each tuple containing:
                   - a sequence
                   - an adjacency array of costs for that sequence, and
@@ -528,7 +530,7 @@ def build_trees_from_files(newickfiles, fastafile, **kwargs):
 
 
 def parsimony_score(tree, transition_model=parsimony_utils.default_nt_transitions):
-    """returns the parsimony score of a (disambiguated) ete tree.
+    """Returns the parsimony score of a (disambiguated) ete tree.
 
     Tree must have 'sequence' attributes on all nodes.
     """
@@ -555,7 +557,7 @@ def remove_invariant_sites(fasta_map):
 def parsimony_scores_from_topologies(
     newicks, fasta_map, gap_as_char=False, remove_invariants=False, **kwargs
 ):
-    """returns a generator on parsimony scores of trees specified by newick
+    """Returns a generator on parsimony scores of trees specified by newick
     strings and fasta. additional keyword arguments are passed to `build_tree`.
 
     Args:
@@ -578,7 +580,7 @@ def parsimony_scores_from_topologies(
 
 
 def parsimony_scores_from_files(treefiles, fastafile, **kwargs):
-    """returns the parsimony scores of trees specified by newick files and a
+    """Returns the parsimony scores of trees specified by newick files and a
     fasta file.
 
     Arguments match `build_trees_from_files`. Additional keyword
