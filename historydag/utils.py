@@ -692,7 +692,23 @@ def rf_difference_funcs(
         def accum_func(wlist):
             return try_int(shift + sum(w - shift for w in wlist))
     else:
-        pass
+        name = "rooted_resolution_difference"
+
+        ref_cus = frozenset(
+            node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
+        )
+
+        shift = len(ref_cus)
+
+        def edge_func(_, n2):
+            if n2.clade_union() in ref_cus:
+                return shift - 1
+            else:
+                return shift
+        
+        def accum_func(wlist):
+            return shift + sum(w - shift for w in wlist)
+
     kwargs = AddFuncDict(
         {
             "start_func": lambda _: shift,
@@ -759,12 +775,23 @@ def rf_difference_other_funcs(
         def accum_func(wlist):
             return try_int(sum(wlist))
     else:
-        pass
+        name = "rooted_resolution_difference_other"
+
+        ref_cus = frozenset(
+            node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
+        )
+
+        def edge_func(_, n2):
+            if n2.clade_union() in ref_cus:
+                return 0
+            else:
+                return 1
+        
     kwargs = AddFuncDict(
         {
             "start_func": lambda _: 0,
             "edge_weight_func": edge_func,
-            "accum_func": accum_func,  # summation over edge weights
+            "accum_func": sum,  # summation over edge weights
         },
         name=name,
     )
