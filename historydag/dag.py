@@ -2212,6 +2212,20 @@ class HistoryDag:
         kwargs = utils.sum_rfdistance_funcs(reference_dag)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
+    def optimal_sum_one_sided_rf_distance(
+        self,
+        reference_dag: "HistoryDag",
+        optimal_func: Callable[[List[Weight]], Weight] = min,
+    ):
+        """Returns the optimal (min or max) one-sided rooted RF distance to the
+        reference DAG. In other words, returns the number of clades in the
+        reference DAG that are not in the given DAG.
+
+        The given history must be on the same taxa as all trees in the DAG.
+        """
+        kwargs = utils.sum_one_sided_rfdistance_funcs(reference_dag)
+        return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
+        
     def trim_optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
@@ -2269,21 +2283,7 @@ class HistoryDag:
         kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
-    def optimal_one_sided_sum_rf_distance(
-        self,
-        reference_dag: "HistoryDag",
-        optimal_func: Callable[[List[Weight]], Weight] = min,
-    ):
-        """Returns the optimal (min or max) one-sided rooted RF distance to the
-        reference DAG. In other words, returns the number of clades in the
-        reference DAG that are not in the given DAG.
-
-        The given history must be on the same taxa as all trees in the DAG.
-        """
-        kwargs = utils.one_sided_rfdistance_funcs(reference_dag)
-        return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
-        
-    def optimal_rf_resolution_difference(
+    def optimal_rf_difference(
         self,
         reference_tree: "HistoryDag",
         optimal_func: Callable[[List[Weight]], Weight] = min,
@@ -2296,7 +2296,7 @@ class HistoryDag:
         kwargs = utils.rf_difference_funcs(reference_tree)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
         
-    def optimal_rf_resolution_difference_other(
+    def optimal_rf_difference_other(
         self,
         reference_tree: "HistoryDag",
         optimal_func: Callable[[List[Weight]], Weight] = min,

@@ -593,7 +593,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     )
     return kwargs
 
-def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
+def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
     In other words, the number of clades in a tree that are not in the reference tree.
     Args:
@@ -639,7 +639,7 @@ def rf_difference_funcs(
     ref_tree: "HistoryDag",
     rooted: bool=False
 ):
-    """Provides functions to compute the resolution difference, i.e.
+    """Provides functions to compute the RF resolution difference, i.e.
     number of clades in the reference tree that are not in the DAG trees.
     Args:
         reference_tree: A history, a tree-shaped DAG.
@@ -647,7 +647,7 @@ def rf_difference_funcs(
     which these count functions are used."""
     pass
     if not rooted:
-        name = "unrooted_resolution_difference"
+        name = "unrooted_RF_difference"
         taxa = frozenset(n.label for n in ref_tree.get_leaves())
         def split(node):
             cu = node.clade_union()
@@ -692,7 +692,7 @@ def rf_difference_funcs(
         def accum_func(wlist):
             return try_int(shift + sum(w - shift for w in wlist))
     else:
-        name = "rooted_resolution_difference"
+        name = "rooted_RF_difference"
 
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
@@ -731,7 +731,7 @@ def rf_difference_other_funcs(
     which these count functions are used."""
     pass
     if not rooted:
-        name = "unrooted_resolution_difference_other"
+        name = "unrooted_RF_difference_other"
         taxa = frozenset(n.label for n in ref_tree.get_leaves())
         def split(node):
             cu = node.clade_union()
@@ -775,7 +775,7 @@ def rf_difference_other_funcs(
         def accum_func(wlist):
             return try_int(sum(wlist))
     else:
-        name = "rooted_resolution_difference_other"
+        name = "rooted_RF_difference_other"
 
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
