@@ -682,7 +682,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     return kwargs
 
 
-def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
+def one_sided_rfdistance_funcs(reference_history: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
     In other words, the number of clades in a tree that are not in the reference tree.
 
@@ -699,7 +699,7 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
 
     The weights are represented by an IntState object.
     """
-    N = reference_dag.count_nodes(collapse=True)
+    N = reference_history.count_nodes(collapse=True)
 
     # Remove the UA node clade union from N
     try:
@@ -707,7 +707,7 @@ def one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     except KeyError:
         pass
 
-    num_trees = reference_dag.count_histories()
+    num_trees = reference_history.count_histories()
 
     def make_intstate(n):
         return IntState(n, state=n)
