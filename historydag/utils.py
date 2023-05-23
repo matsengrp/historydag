@@ -1,13 +1,14 @@
 """Utility functions and classes for working with HistoryDag objects."""
 
 import ete3
-from math import log
-from Bio.Data.IUPACData import ambiguous_dna_values
+from math import log, exp, isfinite
+from fractions import Fraction
 from collections import Counter
 from functools import wraps
 import operator
 from collections import UserDict
 from decimal import Decimal
+from warnings import warn
 from typing import (
     List,
     Any,
@@ -47,10 +48,6 @@ class UALabel(str):
 
     def _asdict(self):
         raise RuntimeError("Attempted to iterate from dag root UALabel")
-
-
-bases = "AGCT-"
-ambiguous_dna_values.update({"?": bases, "-": "-"})
 
 
 # ######## Decorators ########
@@ -154,47 +151,6 @@ def explode_label(labelfield: str):
 # ######## Distances and comparisons... ########
 
 
-def hamming_distance(s1: str, s2: str) -> int:
-    """The sitewise sum of base differences between s1 and s2."""
-    if len(s1) != len(s2):
-        raise ValueError("Sequences must have the same length!")
-    return sum(x != y for x, y in zip(s1, s2))
-
-
-@access_nodefield_default("sequence", 0)
-def wrapped_hamming_distance(s1, s2) -> int:
-    """The sitewise sum of base differences between sequence field contents of
-    two nodes.
-
-    Takes two HistoryDagNodes as arguments.
-
-    If l1 or l2 is a UANode, returns 0.
-    """
-    return hamming_distance(s1, s2)
-
-
-def hamming_distance_leaf_ambiguous(n1, n2):
-    """Same as wrapped_hamming_distance, but correctly calculates parsimony
-    scores if leaf nodes have ambiguous sequences."""
-    if n2.is_leaf():
-        # Then its sequence may be ambiguous
-        s1 = n1.label.sequence
-        s2 = n2.label.sequence
-        if len(s1) != len(s2):
-            raise ValueError("Sequences must have the same length!")
-        return sum(
-            pbase not in ambiguous_dna_values[cbase] for pbase, cbase in zip(s1, s2)
-        )
-    else:
-        return wrapped_hamming_distance(n1, n2)
-
-
-def is_ambiguous(sequence: str) -> bool:
-    """Returns whether the provided sequence contains IUPAC nucleotide
-    ambiguity codes."""
-    return any(code not in bases for code in sequence)
-
-
 def cartesian_product(
     optionlist: List[Callable[[], Iterable]], accum=tuple()
 ) -> Generator[Tuple, None, None]:
@@ -210,42 +166,6 @@ def cartesian_product(
             yield from cartesian_product(optionlist[1:], accum=(accum + (term,)))
     else:
         yield accum
-
-
-@explode_label("sequence")
-def sequence_resolutions(sequence: str) -> Generator[str, None, None]:
-    """Iterates through possible disambiguations of sequence, recursively.
-
-    Recursion-depth-limited by number of ambiguity codes in sequence,
-    not sequence length.
-    """
-
-    def _sequence_resolutions(sequence, _accum=""):
-        if sequence:
-            for index, base in enumerate(sequence):
-                if base in bases:
-                    _accum += base
-                else:
-                    for newbase in ambiguous_dna_values[base]:
-                        yield from _sequence_resolutions(
-                            sequence[index + 1 :], _accum=(_accum + newbase)
-                        )
-                    return
-        yield _accum
-
-    return _sequence_resolutions(sequence)
-
-
-@access_field("sequence")
-def sequence_resolutions_count(sequence: str) -> int:
-    """Count the number of possible sequence resolutions Equivalent to the
-    length of the list returned by :meth:`sequence_resolutions`."""
-    base_options = [
-        len(ambiguous_dna_values[base])
-        for base in sequence
-        if base in ambiguous_dna_values
-    ]
-    return prod(base_options)
 
 
 def hist(c: Counter, samples: int = 1):
@@ -277,10 +197,7 @@ def collapse_adjacent_sequences(tree: ete3.TreeNode) -> ete3.TreeNode:
     to_delete = []
     for node in tree.get_descendants():
         # This must stay invariably hamming distance, since it's measuring equality of strings
-        if (
-            not node.is_leaf()
-            and hamming_distance(node.up.sequence, node.sequence) == 0
-        ):
+        if not node.is_leaf() and node.up.sequence == node.sequence:
             to_delete.append(node)
     for node in to_delete:
         node.delete()
@@ -299,7 +216,7 @@ class AddFuncDict(UserDict):
     annotate a :meth:`historydag.HistoryDag` according to the weight that the
     contained functions implement.
 
-    For example, `dag.weight_count(**(utils.hamming_distance_countfuncs + make_newickcountfuncs()))`
+    For example, `dag.weight_count(**(parsimony_utils.hamming_distance_countfuncs + make_newickcountfuncs()))`
     would return a Counter object in which the weights are tuples containing hamming parsimony and newickstrings.
 
     Args:
@@ -466,6 +383,14 @@ class AddFuncDict(UserDict):
 
 
 class HistoryDagFilter:
+    """Container for :class:`historydag.utils.AddFuncDict` and an optimality
+    function `optimal_func`
+
+    Args:
+        weight_func: An :class:`AddFuncDict` object
+        optimal_func: A function that specifies how to choose the optimal result from `weight_func`. e.g. `min` or `max`
+    """
+
     def __init__(
         self,
         weight_funcs: AddFuncDict,
@@ -577,17 +502,6 @@ class HistoryDagFilter:
     #     return ret
 
 
-hamming_distance_countfuncs = AddFuncDict(
-    {
-        "start_func": lambda n: 0,
-        "edge_weight_func": wrapped_hamming_distance,
-        "accum_func": sum,
-    },
-    name="HammingParsimony",
-)
-"""Provides functions to count hamming distance parsimony.
-For use with :meth:`historydag.HistoryDag.weight_count`."""
-
 node_countfuncs = AddFuncDict(
     {
         "start_func": lambda n: 0,
@@ -597,7 +511,9 @@ node_countfuncs = AddFuncDict(
     name="NodeCount",
 )
 """Provides functions to count the number of nodes in trees.
-For use with :meth:`historydag.HistoryDag.weight_count`."""
+
+For use with :meth:`historydag.HistoryDag.weight_count`.
+"""
 
 
 def natural_edge_probability(parent, child):
@@ -641,46 +557,245 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     the relevant edge, and |T| is the number of trees in the reference dag. This provides rooted RF
     distances, meaning that the clade below each edge is used for RF distance computation.
 
-    The weights are represented by an IntState object and are shifted by a constant K,
+    The weights are integers shifted by a constant K,
     which is the sum of number of clades in each tree in the DAG.
     """
-    N = reference_dag.count_nodes(collapse=True)
+    counts = reference_dag.count_nodes(collapse=True)
 
     # Remove the UA node clade union from N
     try:
-        N.pop(frozenset())
+        counts.pop(frozenset())
     except KeyError:
         pass
 
     # K is the constant that the weights are shifted by
-    K = sum(N.values())
+    K = sum(counts.values())
 
     num_trees = reference_dag.count_histories()
 
-    def make_intstate(n):
-        return IntState(n + K, state=n)
-
-    def edge_func(n1, n2):
-        clade = n2.clade_union()
-        if clade in N:
-            weight = num_trees - (2 * N[n2.clade_union()])
+    def edge_func(_, child):
+        clade = child.clade_union()
+        if clade in counts:
+            weight = num_trees - (2 * counts[child.clade_union()])
         else:
             # This clade's count should then just be 0:
             weight = num_trees
-        return make_intstate(weight)
+        return K + weight
 
     kwargs = AddFuncDict(
         {
-            "start_func": lambda n: make_intstate(0),
+            "start_func": lambda _: K,
             "edge_weight_func": edge_func,
-            "accum_func": lambda wlist: make_intstate(
-                sum(w.state for w in wlist)
-            ),  # summation over edge weights
+            "accum_func": lambda wlist: K + sum(w - K for w in wlist)
+            # summation over edge weights
         },
         name="RF_rooted_sum",
     )
     return kwargs
 
+def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
+    """Provides functions to compute the one sided RF distance to a reference tree.
+    In other words, the number of clades in a tree that are not in the reference tree.
+    Args:
+        reference_dag: The reference DAG. The distance will be computed in relation
+            to this DAG
+    The reference DAG must have the same taxa as all the trees in the DAG on which these count
+    functions are used.
+    The edge weight is computed using the expression |T| - N[c_e] where c_e is the clade under
+    the relevant edge, and |T| is the number of trees in the reference dag. This provides rooted RF
+    distances, meaning that the clade below each edge is used for RF distance computation.
+    """
+    # count the number of trees each node takes part in
+    counts = reference_dag.count_nodes(collapse=True)
+
+    # Remove the UA node clade union from counts
+    try:
+        counts.pop(frozenset())
+    except KeyError:
+        pass
+
+    num_trees = reference_dag.count_histories()
+
+    def edge_func(_, child):
+        clade = child.clade_union()
+        if clade in counts:
+            weight = num_trees - (1 * counts[child.clade_union()])
+        else:
+            # This clade's count should then just be 0:
+            weight = num_trees
+        return weight
+
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: 0,
+            "edge_weight_func": edge_func,
+            "accum_func": sum,  # summation over edge weights
+        },
+        name="one_sided_RF_rooted_sum",
+    )
+    return kwargs
+
+def rf_difference_funcs(
+    ref_tree: "HistoryDag",
+    rooted: bool=False
+):
+    """Provides functions to compute the RF resolution difference, i.e.
+    number of clades in the reference tree that are not in the DAG trees.
+    Args:
+        reference_tree: A history, a tree-shaped DAG.
+    The reference tree must have the same taxa as all the trees in the DAG on 
+    which these count functions are used."""
+    pass
+    if not rooted:
+        name = "unrooted_RF_difference"
+        taxa = frozenset(n.label for n in ref_tree.get_leaves())
+        def split(node):
+            cu = node.clade_union()
+            return frozenset({cu, taxa - cu})
+
+        ref_splits = frozenset(
+            split(node) for node in ref_tree.preorder()
+        )
+        # Remove above-root split, which doesn't map to any tree edge:
+        ref_splits = ref_splits - {
+            frozenset({taxa, frozenset()}),
+        }
+        shift = len(ref_splits)
+
+        n_taxa = len(taxa)
+
+        def is_history_root(n):
+            return len(n.clade_union()) == n_taxa
+
+        def edge_func(n1, n2):
+            spl = split(n2)
+            if n1.is_ua_node():
+                return shift
+            if len(n1.clades) == 2 and is_history_root(n1):
+                if spl in ref_splits:
+                    return shift - Fraction(1, 2)
+                else:
+                    return shift
+            else:
+                if spl in ref_splits:
+                    return shift - 1
+                else:
+                    return shift
+
+        # convert whole fraction Fraction(a, 1) to integer a
+        def try_int(frac):
+            if frac == int(frac):
+                return int(frac)
+            else:
+                return frac
+
+        def accum_func(wlist):
+            return try_int(shift + sum(w - shift for w in wlist))
+    else:
+        name = "rooted_RF_difference"
+
+        ref_cus = frozenset(
+            node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
+        )
+
+        shift = len(ref_cus)
+
+        def edge_func(_, n2):
+            if n2.clade_union() in ref_cus:
+                return shift - 1
+            else:
+                return shift
+        
+        def accum_func(wlist):
+            return shift + sum(w - shift for w in wlist)
+
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: shift,
+            "edge_weight_func": edge_func,
+            "accum_func": accum_func,  # summation over edge weights
+        },
+        name=name,
+    )
+    return kwargs
+
+def rf_difference_other_funcs(
+    ref_tree: "HistoryDag",
+    rooted: bool=False
+):
+    """Provides functions to compute the resolution difference, i.e.
+    number of clades in the reference tree that are not in the DAG trees.
+    Args:
+        reference_tree: A history, a tree-shaped DAG.
+    The reference tree must have the same taxa as all the trees in the DAG on 
+    which these count functions are used."""
+    pass
+    if not rooted:
+        name = "unrooted_RF_difference_other"
+        taxa = frozenset(n.label for n in ref_tree.get_leaves())
+        def split(node):
+            cu = node.clade_union()
+            return frozenset({cu, taxa - cu})
+
+        ref_splits = frozenset(
+            split(node) for node in ref_tree.preorder()
+        )
+        # Remove above-root split, which doesn't map to any tree edge:
+        ref_splits = ref_splits - {
+            frozenset({taxa, frozenset()}),
+        }
+
+        n_taxa = len(taxa)
+
+        def is_history_root(n):
+            return len(n.clade_union()) == n_taxa
+
+        def edge_func(n1, n2):
+            spl = split(n2)
+            if n1.is_ua_node():
+                return 0
+            if len(n1.clades) == 2 and is_history_root(n1):
+                if spl in ref_splits:
+                    return 0
+                else:
+                    return Fraction(1, 2)
+            else:
+                if spl in ref_splits:
+                    return 0
+                else:
+                    return 1
+
+        # convert whole fraction Fraction(a, 1) to integer a
+        def try_int(frac):
+            if frac == int(frac):
+                return int(frac)
+            else:
+                return frac
+
+        def accum_func(wlist):
+            return try_int(sum(wlist))
+    else:
+        name = "rooted_RF_difference_other"
+
+        ref_cus = frozenset(
+            node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
+        )
+
+        def edge_func(_, n2):
+            if n2.clade_union() in ref_cus:
+                return 0
+            else:
+                return 1
+        
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: 0,
+            "edge_weight_func": edge_func,
+            "accum_func": sum,  # summation over edge weights
+        },
+        name=name,
+    )
+    return kwargs
 
 def one_sided_rfdistance_funcs(reference_history: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
@@ -756,29 +871,30 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     This calculation relies on the observation that the symmetric distance between
     the splits A in a tree in the DAG, and the splits B in the reference tree, can
     be computed as:
-    ``|A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|``
+    ``|A ^ B| = |A U B| - |A n B| = |B| + |A - B| - |A n B|``
 
     As long as tree edges are in bijection with splits, this can be computed without
     constructing the set A by considering each edge's split independently.
 
     In order to accommodate multiple edges with the same split in a tree with root
-    bifurcation, we keep track of the contribution of such edges separately.
+    bifurcation, we keep track of the contribution of such edges differently.
+    For most edges, the contribution to the weight is either `1` or `-1`, but 
+    for edges which are part of a root bifurcation, the contribution is instead 
+    `1/2` or `-1/2`. The weight type is either an int or a Fraction. 
 
-    The weight type is a tuple wrapped in an IntState object. The first tuple value `a` is the
-    contribution of edges which are not part of a root bifurcation, where edges whose splits are in B
-    contribute `-1`, and edges whose splits are not in B contribute `-1`, and the second tuple
-    value `b` is the contribution of the edges which are part of a root bifurcation. The value
-    of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
-    taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
+        name = "RF_unrooted_distance"
 
+        taxa = frozenset(n.label for n in ref_tree.get_leaves())
         def split(node):
             cu = node.clade_union()
             return frozenset({cu, taxa - cu})
 
-        ref_splits = frozenset(split(node) for node in ref_tree.preorder())
+        ref_splits = frozenset(
+            split(node) for node in ref_tree.preorder()
+        )
         # Remove above-root split, which doesn't map to any tree edge:
         ref_splits = ref_splits - {
             frozenset({taxa, frozenset()}),
@@ -788,71 +904,59 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         n_taxa = len(taxa)
 
         def is_history_root(n):
-            return len(list(n.clade_union())) == n_taxa
-
-        def sign(n):
-            return (-1) * (n < 0) + (n > 0)
-
-        def summer(tupseq):
-            a, b = 0, 0
-            for ia, ib in tupseq:
-                a += ia
-                b += ib
-            return (a, b)
-
-        def make_intstate(tup):
-            return IntState(tup[0] + shift + sign(tup[1]), state=tup)
+            return len(n.clade_union()) == n_taxa
 
         def edge_func(n1, n2):
             spl = split(n2)
             if n1.is_ua_node():
-                return make_intstate((0, 0))
+                return shift
             if len(n1.clades) == 2 and is_history_root(n1):
                 if spl in ref_splits:
-                    return make_intstate((0, -1))
+                    return shift - Fraction(1, 2)
                 else:
-                    return make_intstate((0, 1))
+                    return shift + Fraction(1, 2)
             else:
                 if spl in ref_splits:
-                    return make_intstate((-1, 0))
+                    return shift - 1
                 else:
-                    return make_intstate((1, 0))
+                    return shift + 1
 
-        kwargs = AddFuncDict(
-            {
-                "start_func": lambda n: make_intstate((0, 0)),
-                "edge_weight_func": edge_func,
-                "accum_func": lambda wlist: make_intstate(
-                    summer(w.state for w in wlist)
-                ),
-            },
-            name="RF_unrooted_distance",
-        )
+        # convert whole fraction Fraction(a, 1) to integer a
+        def try_int(frac):
+            if frac == int(frac):
+                return int(frac)
+            else:
+                return frac
+
+        def accum_func(wlist):
+            return try_int(shift + sum(w - shift for w in wlist))
+
     else:
+        name = "RF_rooted_distance"
+
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
         )
 
         shift = len(ref_cus)
 
-        def make_intstate(n):
-            return IntState(n + shift, state=n)
-
-        def edge_func(n1, n2):
+        def edge_func(_, n2):
             if n2.clade_union() in ref_cus:
-                return make_intstate(-1)
+                return shift - 1
             else:
-                return make_intstate(1)
+                return shift + 1
+        
+        def accum_func(wlist):
+            return shift + sum(w - shift for w in wlist)
 
-        kwargs = AddFuncDict(
-            {
-                "start_func": lambda n: make_intstate(0),
-                "edge_weight_func": edge_func,
-                "accum_func": lambda wlist: make_intstate(sum(w.state for w in wlist)),
-            },
-            name="RF_rooted_distance",
-        )
-
+    kwargs = AddFuncDict(
+        {
+            "start_func": lambda _: shift,
+            "edge_weight_func": edge_func,
+            "accum_func": accum_func,
+        },
+        name=name,
+    )
     return kwargs
 
 
@@ -974,6 +1078,19 @@ def prod(ls: list):
     return accum
 
 
+def logsumexp(ls: List[float]):
+    """A numerically stable implementation of logsumexp, similar to Scipy's."""
+    if len(ls) == 1:
+        return ls[0]
+    max_log = max(ls)
+    if not isfinite(max_log):
+        max_log = 0
+
+    exponentiated = [exp(a - max_log) for a in ls]
+    shifted_log_sum = log(sum(exponentiated))
+    return shifted_log_sum + max_log
+
+
 # Unfortunately these can't be made with a class factory (just a bit too meta for Python)
 # short of doing something awful like https://hg.python.org/cpython/file/b14308524cff/Lib/collections/__init__.py#l232
 def _remstate(kwargs):
@@ -984,30 +1101,30 @@ def _remstate(kwargs):
     return intkwargs
 
 
-class IntState(int):
-    """A subclass of int, with arbitrary, mutable state.
+# class IntState(int):
+#     """A subclass of int, with arbitrary, mutable state.
 
-    State is provided to the constructor as the keyword argument
-    ``state``. All other arguments will be passed to ``int``
-    constructor. Instances should be functionally indistinguishable from
-    ``int``.
-    """
+#     State is provided to the constructor as the keyword argument
+#     ``state``. All other arguments will be passed to ``int``
+#     constructor. Instances should be functionally indistinguishable from
+#     ``int``.
+#     """
 
-    def __new__(cls, *args, **kwargs):
-        intkwargs = _remstate(kwargs)
-        return super(IntState, cls).__new__(cls, *args, **intkwargs)
+#     def __new__(cls, *args, **kwargs):
+#         intkwargs = _remstate(kwargs)
+#         return super(IntState, cls).__new__(cls, *args, **intkwargs)
 
-    def __init__(self, *args, **kwargs):
-        self.state = kwargs["state"]
+#     def __init__(self, *args, **kwargs):
+#         self.state = kwargs["state"]
 
-    def __copy__(self):
-        return IntState(int(self), state=self.state)
+#     def __copy__(self):
+#         return IntState(int(self), state=self.state)
 
-    def __getstate__(self):
-        return {"val": int(self), "state": self.state}
+#     def __getstate__(self):
+#         return {"val": int(self), "state": self.state}
 
-    def __setstate__(self, statedict):
-        self.state = statedict["state"]
+#     def __setstate__(self, statedict):
+#         self.state = statedict["state"]
 
 
 class FloatState(float):
@@ -1088,6 +1205,15 @@ class StrState(str):
         self.state = statedict["state"]
 
 
+def count_labeled_binary_topologies(n):
+    """Returns the number of binary topologies on n labeled leaves.
+
+    In these topologies, left and right branches are not distinguished,
+    and internal nodes are not ranked.
+    """
+    return prod(range(1, 2 * n - 2, 2))
+
+
 def load_fasta(fastapath):
     fasta_records = []
     with open(fastapath, "r") as fh:
@@ -1097,3 +1223,15 @@ def load_fasta(fastapath):
             else:
                 fasta_records[-1][-1] += line.strip()
     return dict(fasta_records)
+
+
+def _deprecate_message(message):
+    def _deprecate(func):
+        @wraps(func)
+        def deprecated(*args, **kwargs):
+            warn(message)
+            return func(*args, **kwargs)
+
+        return deprecated
+
+    return _deprecate

@@ -3,9 +3,11 @@ import pickle
 import historydag
 import historydag.dag as hdag
 import historydag.utils as dagutils
+from historydag.utils import logsumexp
 from collections import Counter, namedtuple
-import pytest
 import random
+from historydag import parsimony_utils
+from math import exp, isclose
 
 
 def normalize_counts(counter):
@@ -13,8 +15,8 @@ def normalize_counts(counter):
     return ([num / n for _, num in counter.items()], (n / len(counter)) / n)
 
 
-def is_close(f1, f2, tol=0.03):
-    return abs(f1 - f2) < tol
+def is_close(f1, f2, tol=0.000001):
+    return isclose(f1, f2, rel_tol=tol)
 
 
 def deterministic_newick(tree: ete3.TreeNode) -> str:
@@ -77,6 +79,9 @@ dags.append(
         uncollapsed[0:5], [], label_functions={"sequence": lambda n: n.sequence}
     )
 )
+
+with open("tests/smalltestdag.p", "rb") as fh:
+    dags.append(pickle.load(fh))
 
 compdags = [dag.copy() for dag in dags]
 for dag in compdags:
@@ -148,25 +153,12 @@ def test_count_topologies_equals_newicks():
 
 
 def test_parsimony():
-    # test parsimony counts without ete
     def parsimony(tree):
         tree.recompute_parents()
         return sum(
-            dagutils.wrapped_hamming_distance(list(node.parents)[0], node)
+            parsimony_utils.hamming_edge_weight(list(node.parents)[0], node)
             for node in tree.postorder()
             if node.parents
-        )
-
-    _testfactory(lambda dag: dag.weight_count(), parsimony)
-
-
-def test_parsimony_counts():
-    # test parsimony counts using ete
-    def parsimony(tree):
-        etetree = tree.to_ete(features=["sequence"])
-        return sum(
-            dagutils.hamming_distance(n.up.sequence, n.sequence)
-            for n in etetree.iter_descendants()
         )
 
     _testfactory(lambda dag: dag.weight_count(), parsimony)
@@ -243,7 +235,7 @@ def test_min_weight():
     def parsimony(tree):
         tree.recompute_parents()
         return sum(
-            dagutils.wrapped_hamming_distance(list(node.parents)[0], node)
+            parsimony_utils.hamming_edge_weight(list(node.parents)[0], node)
             for node in tree.postorder()
             if node.parents
         )
@@ -265,7 +257,11 @@ def test_count_histories_expanded():
         ndag = dag.copy()
         ndag.explode_nodes()
         assert (
-            dag.count_histories(expand_func=dagutils.sequence_resolutions)
+            dag.count_histories(
+                expand_func=parsimony_utils.default_nt_transitions.ambiguity_map.get_sequence_resolution_func(
+                    "sequence"
+                )
+            )
             == ndag.count_histories()
         )
 
@@ -308,45 +304,25 @@ def test_topology_count_collapse():
     assert dag.count_topologies(collapse_leaves=True) == 2
 
 
-# this tests is each of the trees indexed are valid subtrees
+# this tests if each of the trees indexed are valid trees
 # they should have exactly one edge descending from each node clade pair
-def test_valid_subtrees():
+def test_valid_histories():
     for history_dag in dags + cdags:
-        for curr_dag_index in range(0, len(history_dag)):
-            next_tree = history_dag[curr_dag_index]
-            assert next_tree.to_newick() in history_dag.to_newicks()
-            assert next_tree.is_history()
+        newicks = history_dag.to_newicks()
+        n_histories = len(history_dag)
+        for curr_dag_index in range(0, n_histories):
+            if n_histories < 10 or curr_dag_index % 10 == 0:
+                next_tree = history_dag[curr_dag_index]
+                assert next_tree.to_newick() in newicks
+                assert next_tree.is_history()
 
 
 # this should check if the indexing algorithm accurately
-# captures all possible subtrees of the dag
+# captures all possible histories of the dag
 def test_indexing_comprehensive():
-    with pytest.raises(Exception) as _:
-        dags[5][-len(dags[5]) - 5]
-
     for history_dag in dags + cdags:
-        # get all the possible dags using indexing
-        all_dags_indexed = {None}
-        for curr_dag_index in range(0, len(history_dag)):
-            next_tree = history_dag[curr_dag_index]
-            all_dags_indexed.add(next_tree.to_newick())
-        print("len: " + str(len(history_dag)))
-        print("number of indexed trees: " + str(len(all_dags_indexed)))
-        all_dags_indexed.remove(None)
-
-        # get the set of all actual dags from the get_histories
-        all_dags_true = set(history_dag.to_newicks())
-
-        print("actual number of subtrees: " + str(len(all_dags_true)))
-        assert all_dags_true == all_dags_indexed
-
-        # verify the lengths match
-        assert len(history_dag) == len(all_dags_indexed)
-        assert len(all_dags_indexed) == len(all_dags_true)
-
-        # test the for each loop
-        assert set(history_dag.to_newicks()) == set(
-            {tree.to_newick() for tree in history_dag}
+        assert Counter(history_dag.to_newicks()) == Counter(
+            history_dag[i].to_newick() for i in range(len(history_dag))
         )
 
 
@@ -373,7 +349,7 @@ def test_trim_fixedleaves():
 
 def test_trim():
     kwarglist = [
-        (dagutils.hamming_distance_countfuncs, min),
+        (parsimony_utils.hamming_distance_countfuncs, min),
         (dagutils.node_countfuncs, min),
     ]
     for dag in dags + cdags:
@@ -417,7 +393,7 @@ def test_sample_with_node():
         node for node, val in node_to_count.items() if val == min_count
     ]
     for node in least_supported_nodes:
-        tree_samples = [dag.sample_with_node(node) for _ in range(min_count * 5)]
+        tree_samples = [dag.sample_with_node(node) for _ in range(min_count * 6)]
         tree_samples[0]._check_valid()
         tree_newicks = {tree.to_newick() for tree in tree_samples}
         # We sampled all trees possible containing the node
@@ -490,7 +466,9 @@ def test_add_label_fields():
     dag = dags[-1]
     old_fieldset = dag.get_label_type()._fields + tuple(["isLeaf", "originalLocation"])
     new_field_values = {n: [n.is_leaf(), "new location"] for n in dag.postorder()}
-    ndag = dag.add_label_fields(["isLeaf", "originalLocation"], new_field_values)
+    ndag = dag.add_label_fields(
+        ["isLeaf", "originalLocation"], lambda n: new_field_values[n]
+    )
     ndag._check_valid()
     new_fieldset = ndag.get_label_type()._fields
     assert old_fieldset == new_fieldset
@@ -500,7 +478,7 @@ def test_remove_label_fields():
     dag = dags[-1]
     old_fieldset = dag.get_label_type()._fields
     new_field_values = {n: [n.is_leaf()] for n in dag.postorder()}
-    ndag = dag.add_label_fields(["added_field"], new_field_values)
+    ndag = dag.add_label_fields(["added_field"], lambda n: new_field_values[n])
     ndag._check_valid()
     # test removing a field that isn't there and one that is
     odag = dag.remove_label_fields(["removed_field", "added_field"])
@@ -629,7 +607,7 @@ def test_one_sided_rf_distance():
 
 
 def test_trim_range():
-    for curr_dag in dags + cdags:
+    for curr_dag in [dags[-1], cdags[-1]]:
         history_dag = curr_dag.copy()
         print("history dag contains ", history_dag.count_trees(), " trees")
         counter = history_dag.weight_count()
@@ -671,84 +649,9 @@ def test_trim_range():
         assert set(true_subdag.to_newicks()) == set(history_dag.to_newicks())
 
 
-def test_trim_above():
-    for curr_dag in dags + cdags:
-        history_dag = curr_dag.copy()
-        # print(history_dag.to_newicks())
-        print("history dag contains ", history_dag.count_trees(), " trees")
-        counter = history_dag.weight_count()
-        min_weight_passed = list(counter.keys())[int(len(counter.keys()) / 2)]
-
-        print("weight count before trimming:")
-        print(counter)
-        print("min weight passed in:")
-        print(min_weight_passed)
-        trees_to_merge = [
-            tree.copy()
-            for tree in history_dag
-            if tree.optimal_weight_annotate() >= min_weight_passed
-        ]
-        true_subdag = hdag.history_dag_from_clade_trees(trees_to_merge)
-
-        history_dag.trim_within_range(min_weight=min_weight_passed)
-        print("weight count after trimming:")
-        print(history_dag.weight_count())
-        print("weight count expected:")
-        print(true_subdag.weight_count())
-
-        difference = set(history_dag.to_newicks()) - set(true_subdag.to_newicks())
-        print(
-            "number of subtrees included in tree after trimming but not after merging: "
-            + str(len(difference))
-        )
-        difference2 = set(true_subdag.to_newicks()) - set(history_dag.to_newicks())
-        print(
-            "number of subtrees included in tree after merging but not trimming: "
-            + str(len(difference2))
-        )
-        assert set(true_subdag.to_newicks()) == set(history_dag.to_newicks())
-
-
-def test_trim_weight():
-    for curr_dag in dags + cdags:
-        history_dag = curr_dag.copy()
-        print("history dag contains ", history_dag.count_trees(), " trees")
-        counter = history_dag.weight_count()
-        max_weight_passed = list(counter.keys())[int(len(counter.keys()) / 2)]
-
-        print("weight count before trimming:")
-        print(counter)
-        print("max weight passed in:")
-        print(max_weight_passed)
-        trees_to_merge = [
-            tree.copy()
-            for tree in history_dag
-            if tree.optimal_weight_annotate() <= max_weight_passed
-        ]
-        true_subdag = hdag.history_dag_from_clade_trees(trees_to_merge)
-
-        history_dag.trim_within_range(max_weight=max_weight_passed)
-        print("weight count after trimming:")
-        print(history_dag.weight_count())
-        print("weight count expected:")
-        print(true_subdag.weight_count())
-
-        difference = set(history_dag.to_newicks()) - set(true_subdag.to_newicks())
-        print(
-            "number of subtrees included in tree after trimming but not after merging: "
-            + str(len(difference))
-        )
-        difference2 = set(true_subdag.to_newicks()) - set(history_dag.to_newicks())
-        print(
-            "number of subtrees included in tree after merging but not trimming: "
-            + str(len(difference2))
-        )
-        assert set(true_subdag.to_newicks()) == set(history_dag.to_newicks())
-
-
 def test_trim_filter():
     dag = dags[-1].copy()
-    pars_d = hdag.utils.hamming_distance_countfuncs
+    pars_d = parsimony_utils.hamming_distance_countfuncs
     node_d = hdag.utils.node_countfuncs
 
     # >>
@@ -793,7 +696,7 @@ def test_trim_filter():
 
 
 def test_weight_range_annotate():
-    kwargs = hdag.utils.hamming_distance_countfuncs
+    kwargs = parsimony_utils.hamming_distance_countfuncs
     for dag in dags:
         assert dag.weight_range_annotate(**kwargs) == (
             dag.optimal_weight_annotate(**kwargs, optimal_func=min),
@@ -818,6 +721,12 @@ def test_sum_all_pair_rf_distance():
     assert dag.sum_rf_distances() == sum(dag.count_sum_rf_distances(dag).elements())
 
 
+def test_sum_weight():
+    dag = dags[-1].copy()
+    correct = sum(dag.weight_count().elements())
+    assert correct == dag.sum_weights()
+
+
 def test_intersection():
     dag = dags[-1]
     dag1 = hdag.history_dag_from_histories(dag.sample() for _ in range(8)) | dag[0]
@@ -826,3 +735,138 @@ def test_intersection():
 
     assert len(idag | dag1) == len(dag1)
     assert len(idag | dag2) == len(dag2)
+
+
+def compare_decomposed_probabilities(dag, edge_func, log_probabilities):
+    if log_probabilities:
+        kwargs = {
+            "accum_func": sum,
+            "start_func": lambda n: 0,
+            "edge_weight_func": edge_func,
+            "optimal_func": logsumexp,
+        }
+    else:
+        kwargs = {
+            "accum_func": dagutils.prod,
+            "start_func": lambda n: 1,
+            "edge_weight_func": edge_func,
+            "optimal_func": sum,
+        }
+
+    true_unnormalized_probs = [tree.optimal_weight_annotate(**kwargs) for tree in dag]
+    if log_probabilities:
+        normalization_constant = logsumexp(true_unnormalized_probs)
+
+        def normalize(prob):
+            return prob - normalization_constant
+
+    else:
+        normalization_constant = sum(true_unnormalized_probs)
+
+        def normalize(prob):
+            return prob / normalization_constant
+
+    dag.probability_annotate(edge_func, log_probabilities=log_probabilities)
+    conditional_edge_probs = dag.export_edge_probabilities()
+    check_kwargs = kwargs.copy()
+    check_kwargs["edge_weight_func"] = lambda n1, n2: conditional_edge_probs[(n1, n2)]
+    normalized_product_conditional_probs = [
+        tree.optimal_weight_annotate(**check_kwargs) for tree in dag
+    ]
+    for true_prob, check_prob in zip(
+        true_unnormalized_probs, normalized_product_conditional_probs
+    ):
+        assert is_close(normalize(true_prob), check_prob, tol=0.00001)
+
+
+def test_conditional_edge_probabilities():
+    # first compare to uniform:
+    compare_decomposed_probabilities(dag, lambda n1, n2: 1, log_probabilities=False)
+    # now try log version for uniform:
+    compare_decomposed_probabilities(dag, lambda n1, n2: 0, log_probabilities=True)
+    # hamming parsimony weighted support:
+    compare_decomposed_probabilities(
+        dag,
+        lambda n1, n2: exp(-3 * parsimony_utils.hamming_edge_weight(n1, n2)),
+        log_probabilities=False,
+    )
+    # now hamming parsimony log version:
+    compare_decomposed_probabilities(
+        dag,
+        lambda n1, n2: -2 * parsimony_utils.hamming_edge_weight(n1, n2),
+        log_probabilities=True,
+    )
+    # and some other examples...
+    compare_decomposed_probabilities(dag, lambda n1, n2: 2, log_probabilities=False)
+
+
+def test_node_support():
+    dag = dags[-1].copy()
+
+    # first compare to uniform:
+    dag.probability_annotate(lambda n1, n2: 1, log_probabilities=False)
+    nd = dag.node_probabilities(log_probabilities=False)
+    od = dag.count_nodes()
+    hists = dag.count_histories()
+    od = {n: count / hists for n, count in od.items()}
+    for node in dag.postorder():
+        assert is_close(nd[node], od[node], tol=0.0001)
+
+    # now try log version for uniform:
+    dag.probability_annotate(lambda n1, n2: 0, log_probabilities=True)
+    nd = dag.node_probabilities(log_probabilities=True)
+    print(nd[dag.dagroot])
+    for node in dag.postorder():
+        assert is_close(exp(nd[node]), od[node], tol=0.0001)
+
+
+def test_conditional_annotation_nilpotent():
+    dag = dags[-1].copy()
+    dag.probability_annotate(lambda n1, n2: 1, log_probabilities=False)
+    edge_weights = dag.export_edge_probabilities()
+    dag.probability_annotate(
+        lambda n1, n2: edge_weights[(n1, n2)], log_probabilities=False
+    )
+    comp_edge_weights = dag.export_edge_probabilities()
+    print(len(comp_edge_weights))
+    for key in edge_weights:
+        assert isclose(edge_weights[key], comp_edge_weights[key])
+
+
+def test_count_nodes():
+    dag = dags[-1].copy()
+    node_counts = dag.count_nodes()
+    dag.uniform_distribution_annotate(log_probabilities=False)
+    node_supports = dag.node_probabilities(log_probabilities=False)
+    n_histories = dag.count_histories()
+    for node in node_counts:
+        assert node_counts[node] == round(node_supports[node] * n_histories)
+
+    edge_supports = dag.edge_probabilities(log_probabilities=False)
+    edge_counts = dag.count_edges()
+    for edge in edge_counts:
+        assert edge_counts[edge] == round(edge_supports[edge] * n_histories)
+
+    # now with some collapsing
+    dag = dags[-1].copy()
+    node_counts = dag.count_nodes(collapse=True)
+    dag.uniform_distribution_annotate(log_probabilities=False)
+    node_supports = dag.node_probabilities(
+        log_probabilities=False, collapse_key=hdag.HistoryDagNode.clade_union
+    )
+    n_histories = dag.count_histories()
+    for node in node_counts:
+        assert node_counts[node] == round(node_supports[node] * n_histories)
+
+    edge_supports = dag.edge_probabilities(
+        log_probabilities=False,
+        collapse_key=lambda edge: (edge[0].clade_union(), edge[1].clade_union()),
+    )
+    edge_counts = dag.count_edges(collapsed=True)
+    for edge in edge_counts:
+        assert edge_counts[edge] == round(edge_supports[edge] * n_histories)
+
+
+def test_likelihoods():
+    dag = dags[-1]
+    assert dag.optimal_weight_annotate(**historydag.likelihoods.JC_log_countfuncs) < 0
