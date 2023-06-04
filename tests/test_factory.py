@@ -594,17 +594,49 @@ def test_optimal_sum_rf_distance():
 def test_one_sided_rf_distance():
     for dag in dags:
         for tree in dag:
-            old_tree = tree.copy()
-            tree.convert_to_collapsed()
+            tree_collapsed = tree.copy()
+            tree_collapsed.convert_to_collapsed()
 
-            # look at trees where the collapsed tree is different from the original
-            if tree.to_newick() != old_tree.to_newick():
-                assert (tree.optimal_one_sided_sum_rf_distance(old_tree) == 0)
-                assert (old_tree.optimal_one_sided_sum_rf_distance(tree) >= 0)
+            if tree_collapsed.to_newick() != tree.to_newick():
+                #  number of clades in tree_collapsed that are not in tree = 0
+                assert (tree_collapsed.optimal_rf_difference_other(tree) == 0)
+                assert (tree_collapsed.optimal_sum_one_sided_rf_distance(tree) == 0)
+                assert (tree.optimal_rf_difference(tree_collapsed) == 0)
+
+                #  number of clades in tree that are not in tree_collapsed > 0
+                assert (tree.optimal_rf_difference_other(tree_collapsed) > 0)
+                assert (tree.optimal_sum_one_sided_rf_distance(tree_collapsed) > 0)
+                assert (tree_collapsed.optimal_rf_difference(tree) > 0)
             else:
-                assert (tree.optimal_one_sided_sum_rf_distance(old_tree) == 0)
-                assert (old_tree.optimal_one_sided_sum_rf_distance(tree) == 0)
+                #  number of clades in tree_collapsed that are not in tree = 0
+                assert (tree_collapsed.optimal_rf_difference_other(tree) == 0)
+                assert (tree_collapsed.optimal_sum_one_sided_rf_distance(tree) == 0)
+                assert (tree.optimal_rf_difference(tree_collapsed) == 0)
 
+                #  number of clades in tree that are not in tree_collapsed = 0
+                assert (tree.optimal_rf_difference_other(tree_collapsed) == 0)
+                assert (tree.optimal_sum_one_sided_rf_distance(tree_collapsed) == 0)
+                assert (tree_collapsed.optimal_rf_difference(tree) == 0)
+            # # look at trees where the collapsed tree is different from the original
+            # if tree_collapsed.to_newick() != tree.to_newick():
+            #     # number of clades in the collapsed tree that are not in the original should be 0
+            #     assert (tree_collapsed.optimal_one_sided_sum_rf_distance(tree) == 0)
+            #     # assert (tree_collapsed.optimal_rf_difference(tree)
+            #     #         == tree_collapsed.optimal_one_sided_sum_rf_distance(tree))
+            #     assert (tree_collapsed.optimal_rf_difference(tree) > 0) # ? 
+            #     assert (tree.optimal_rf_difference(tree_collapsed) == 0)
+
+            #     # # number of clades in the original that are not in the collapsed tree should be > 0
+            #     # assert (tree.optimal_one_sided_sum_rf_distance(tree_collapsed) > 0)
+            #     # assert (tree_collapsed.optimal_rf_difference_other(tree)
+            #     #         == tree.optimal_one_sided_sum_rf_distance(tree_collapsed))
+
+            # # else:
+            # #     assert (tree_collapsed.optimal_one_sided_sum_rf_distance(tree) == 0)
+            # #     assert (tree.optimal_one_sided_sum_rf_distance(tree_collapsed) == 0)
+
+            # #     assert (tree_collapsed.optimal_rf_difference(tree) == 0)
+            # #     # assert (tree_collapsed.optimal_rf_difference_other(tree) == 0)
 
 def test_trim_range():
     for curr_dag in [dags[-1], cdags[-1]]:

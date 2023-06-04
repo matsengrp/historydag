@@ -2194,24 +2194,6 @@ class HistoryDag:
         ref_history = dag_copy.sample()
         return 2 * self.optimal_rf_distance(ref_history, optimal_func=max)
 
-    def optimal_one_sided_sum_rf_distance(
-        self,
-        reference_history: "HistoryDag",
-        optimal_func: Callable[[List[Weight]], Weight] = min,
-    ):
-        """Returns the optimal (min or max) one-sided rooted RF distance to the
-        reference DAG. In other words, returns the number of clades in the
-        reference DAG that are not in the given DAG.
-
-        The given history must be on the same taxa as all trees in the DAG.
-        Since computing reference splits is expensive, it is better to use
-        :meth:``optimal_weight_annotate`` and :meth:``utils.one_sided_rfdistance_funcs``
-        instead of making multiple calls to this method with the same reference
-        history DAG.
-        """
-        kwargs = utils.one_sided_rfdistance_funcs(reference_history)
-        return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
-
     def optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
@@ -2236,13 +2218,14 @@ class HistoryDag:
     ):
         """Returns the optimal (min or max) one-sided rooted RF distance to the
         reference DAG. In other words, returns the number of clades in the
-        reference DAG that are not in the given DAG.
+        reference DAG that are not in the reference DAG.
 
         The given history must be on the same taxa as all trees in the DAG.
         """
         kwargs = utils.sum_one_sided_rfdistance_funcs(reference_dag)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
-        
+    
+
     def trim_optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
@@ -2312,15 +2295,20 @@ class HistoryDag:
         """
         kwargs = utils.rf_difference_funcs(reference_tree)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
-        
+
     def optimal_rf_difference_other(
         self,
         reference_tree: "HistoryDag",
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
+        """Returns the optimal (min or max) one-sided rooted RF distance to the
+        reference DAG. In other words, returns the number of clades in the
+        DAG that are not in the reference DAG.
+        The given history must be on the same taxa as all trees in the DAG.
+        """
         kwargs = utils.rf_difference_other_funcs(reference_tree)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
-        
+
     def count_rf_distances(self, history: "HistoryDag", rooted: bool = False):
         """Returns a Counter containing all RF distances to a given history.
 

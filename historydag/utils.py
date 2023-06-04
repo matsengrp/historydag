@@ -593,6 +593,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     )
     return kwargs
 
+
 def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
     In other words, the number of clades in a tree that are not in the reference tree.
@@ -635,20 +636,22 @@ def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     )
     return kwargs
 
+
 def rf_difference_funcs(
     ref_tree: "HistoryDag",
-    rooted: bool=False
+    rooted: bool = False
 ):
     """Provides functions to compute the RF resolution difference, i.e.
     number of clades in the reference tree that are not in the DAG trees.
     Args:
         reference_tree: A history, a tree-shaped DAG.
-    The reference tree must have the same taxa as all the trees in the DAG on 
+    The reference tree must have the same taxa as all the trees in the DAG on
     which these count functions are used."""
     pass
     if not rooted:
         name = "unrooted_RF_difference"
         taxa = frozenset(n.label for n in ref_tree.get_leaves())
+
         def split(node):
             cu = node.clade_union()
             return frozenset({cu, taxa - cu})
@@ -702,12 +705,12 @@ def rf_difference_funcs(
 
         def edge_func(_, n2):
             if n2.clade_union() in ref_cus:
-                return shift - 1
+                return 1
             else:
-                return shift
-        
+                return 0
+
         def accum_func(wlist):
-            return shift + sum(w - shift for w in wlist)
+            return shift - sum(w for w in wlist)
 
     kwargs = AddFuncDict(
         {
@@ -724,7 +727,7 @@ def rf_difference_other_funcs(
     rooted: bool=False
 ):
     """Provides functions to compute the resolution difference, i.e.
-    number of clades in the reference tree that are not in the DAG trees.
+    number of clades in the DAG trees that are not in the reference tree.
     Args:
         reference_tree: A history, a tree-shaped DAG.
     The reference tree must have the same taxa as all the trees in the DAG on 
@@ -786,7 +789,7 @@ def rf_difference_other_funcs(
                 return 0
             else:
                 return 1
-        
+
     kwargs = AddFuncDict(
         {
             "start_func": lambda _: 0,
@@ -794,57 +797,6 @@ def rf_difference_other_funcs(
             "accum_func": sum,  # summation over edge weights
         },
         name=name,
-    )
-    return kwargs
-
-def one_sided_rfdistance_funcs(reference_history: "HistoryDag"):
-    """Provides functions to compute the one sided RF distance to a reference tree.
-    In other words, the number of clades in a tree that are not in the reference tree.
-
-    Args:
-        reference_dag: The reference DAG. The distance will be computed in relation
-            to this DAG
-
-    The reference DAG must have the same taxa as all the trees in the DAG on which these count
-    functions are used.
-
-    The edge weight is computed using the expression |T| - N[c_e] where c_e is the clade under
-    the relevant edge, and |T| is the number of trees in the reference dag. This provides rooted RF
-    distances, meaning that the clade below each edge is used for RF distance computation.
-
-    The weights are represented by an IntState object.
-    """
-    N = reference_history.count_nodes(collapse=True)
-
-    # Remove the UA node clade union from N
-    try:
-        N.pop(frozenset())
-    except KeyError:
-        pass
-
-    num_trees = reference_history.count_histories()
-
-    def make_intstate(n):
-        return IntState(n, state=n)
-
-    def edge_func(n1, n2):
-        clade = n2.clade_union()
-        if clade in N:
-            weight = num_trees - (1 * N[n2.clade_union()])
-        else:
-            # This clade's count should then just be 0:
-            weight = num_trees
-        return make_intstate(weight)
-
-    kwargs = AddFuncDict(
-        {
-            "start_func": lambda n: make_intstate(0),
-            "edge_weight_func": edge_func,
-            "accum_func": lambda wlist: make_intstate(
-                sum(w.state for w in wlist)
-            ),  # summation over edge weights
-        },
-        name="one_sided_RF_rooted_sum",
     )
     return kwargs
 
@@ -1101,30 +1053,30 @@ def _remstate(kwargs):
     return intkwargs
 
 
-# class IntState(int):
-#     """A subclass of int, with arbitrary, mutable state.
+class IntState(int):
+    """A subclass of int, with arbitrary, mutable state.
 
-#     State is provided to the constructor as the keyword argument
-#     ``state``. All other arguments will be passed to ``int``
-#     constructor. Instances should be functionally indistinguishable from
-#     ``int``.
-#     """
+    State is provided to the constructor as the keyword argument
+    ``state``. All other arguments will be passed to ``int``
+    constructor. Instances should be functionally indistinguishable from
+    ``int``.
+    """
 
-#     def __new__(cls, *args, **kwargs):
-#         intkwargs = _remstate(kwargs)
-#         return super(IntState, cls).__new__(cls, *args, **intkwargs)
+    def __new__(cls, *args, **kwargs):
+        intkwargs = _remstate(kwargs)
+        return super(IntState, cls).__new__(cls, *args, **intkwargs)
 
-#     def __init__(self, *args, **kwargs):
-#         self.state = kwargs["state"]
+    def __init__(self, *args, **kwargs):
+        self.state = kwargs["state"]
 
-#     def __copy__(self):
-#         return IntState(int(self), state=self.state)
+    def __copy__(self):
+        return IntState(int(self), state=self.state)
 
-#     def __getstate__(self):
-#         return {"val": int(self), "state": self.state}
+    def __getstate__(self):
+        return {"val": int(self), "state": self.state}
 
-#     def __setstate__(self, statedict):
-#         self.state = statedict["state"]
+    def __setstate__(self, statedict):
+        self.state = statedict["state"]
 
 
 class FloatState(float):
