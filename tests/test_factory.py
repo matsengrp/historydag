@@ -623,7 +623,7 @@ def test_one_sided_rf_distance():
             #     assert (tree_collapsed.optimal_one_sided_sum_rf_distance(tree) == 0)
             #     # assert (tree_collapsed.optimal_rf_difference(tree)
             #     #         == tree_collapsed.optimal_one_sided_sum_rf_distance(tree))
-            #     assert (tree_collapsed.optimal_rf_difference(tree) > 0) # ? 
+            #     assert (tree_collapsed.optimal_rf_difference(tree) > 0) # ?
             #     assert (tree.optimal_rf_difference(tree_collapsed) == 0)
 
             #     # # number of clades in the original that are not in the collapsed tree should be > 0
@@ -637,6 +637,7 @@ def test_one_sided_rf_distance():
 
             # #     assert (tree_collapsed.optimal_rf_difference(tree) == 0)
             # #     # assert (tree_collapsed.optimal_rf_difference_other(tree) == 0)
+
 
 def test_trim_range():
     for curr_dag in [dags[-1], cdags[-1]]:

@@ -594,7 +594,7 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     return kwargs
 
 
-def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
+def sum_one_sided_rfdistance_funcs(reference_history: "HistoryDag"):
     """Provides functions to compute the one sided RF distance to a reference tree.
     In other words, the number of clades in a tree that are not in the reference tree.
     Args:
@@ -607,7 +607,7 @@ def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     distances, meaning that the clade below each edge is used for RF distance computation.
     """
     # count the number of trees each node takes part in
-    counts = reference_dag.count_nodes(collapse=True)
+    counts = reference_history.count_nodes(collapse=True)
 
     # Remove the UA node clade union from counts
     try:
@@ -615,7 +615,7 @@ def sum_one_sided_rfdistance_funcs(reference_dag: "HistoryDag"):
     except KeyError:
         pass
 
-    num_trees = reference_dag.count_histories()
+    num_trees = reference_history.count_histories()
 
     def edge_func(_, child):
         clade = child.clade_union()
@@ -722,20 +722,22 @@ def rf_difference_funcs(
     )
     return kwargs
 
+
 def rf_difference_other_funcs(
     ref_tree: "HistoryDag",
-    rooted: bool=False
+    rooted: bool = False
 ):
     """Provides functions to compute the resolution difference, i.e.
     number of clades in the DAG trees that are not in the reference tree.
     Args:
         reference_tree: A history, a tree-shaped DAG.
-    The reference tree must have the same taxa as all the trees in the DAG on 
+    The reference tree must have the same taxa as all the trees in the DAG on
     which these count functions are used."""
     pass
     if not rooted:
         name = "unrooted_RF_difference_other"
         taxa = frozenset(n.label for n in ref_tree.get_leaves())
+
         def split(node):
             cu = node.clade_union()
             return frozenset({cu, taxa - cu})
@@ -830,9 +832,9 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
 
     In order to accommodate multiple edges with the same split in a tree with root
     bifurcation, we keep track of the contribution of such edges differently.
-    For most edges, the contribution to the weight is either `1` or `-1`, but 
-    for edges which are part of a root bifurcation, the contribution is instead 
-    `1/2` or `-1/2`. The weight type is either an int or a Fraction. 
+    For most edges, the contribution to the weight is either `1` or `-1`, but
+    for edges which are part of a root bifurcation, the contribution is instead
+    `1/2` or `-1/2`. The weight type is either an int or a Fraction.
 
     """
 
@@ -840,6 +842,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         name = "RF_unrooted_distance"
 
         taxa = frozenset(n.label for n in ref_tree.get_leaves())
+
         def split(node):
             cu = node.clade_union()
             return frozenset({cu, taxa - cu})

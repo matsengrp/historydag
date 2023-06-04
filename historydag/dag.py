@@ -2213,7 +2213,7 @@ class HistoryDag:
 
     def optimal_sum_one_sided_rf_distance(
         self,
-        reference_dag: "HistoryDag",
+        reference_history: "HistoryDag",
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Returns the optimal (min or max) one-sided rooted RF distance to the
@@ -2222,9 +2222,8 @@ class HistoryDag:
 
         The given history must be on the same taxa as all trees in the DAG.
         """
-        kwargs = utils.sum_one_sided_rfdistance_funcs(reference_dag)
+        kwargs = utils.sum_one_sided_rfdistance_funcs(reference_history)
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
-    
 
     def trim_optimal_sum_rf_distance(
         self,
