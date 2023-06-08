@@ -9,8 +9,8 @@
 
    .. autosummary::
    
-      hamming_distance_countfuncs
       node_countfuncs
+      log_natural_probability_funcs
    
    
 
@@ -24,20 +24,19 @@
       access_nodefield_default
       cartesian_product
       collapse_adjacent_sequences
+      count_labeled_binary_topologies
+      edge_difference_funcs
       explode_label
-      hamming_distance
-      hamming_distance_leaf_ambiguous
       hist
       ignore_uanode
-      is_ambiguous
       is_collapsed
       load_fasta
+      logsumexp
       make_newickcountfuncs
       make_rfdistance_countfuncs
+      natural_edge_probability
       prod
-      sequence_resolutions
-      sequence_resolutions_count
-      wrapped_hamming_distance
+      sum_rfdistance_funcs
    
    
 
@@ -50,6 +49,7 @@
       AddFuncDict
       DecimalState
       FloatState
+      HistoryDagFilter
       IntState
       StrState
       UALabel

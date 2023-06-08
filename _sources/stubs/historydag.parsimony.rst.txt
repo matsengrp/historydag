@@ -18,16 +18,16 @@
       build_trees_from_files
       disambiguate
       disambiguate_history
-      edge_weight_func_from_weight_matrix
-      hamming_distance
       load_fasta
+      make_weighted_hamming_count_funcs
       parsimony_score
       parsimony_scores_from_files
       parsimony_scores_from_topologies
       remove_invariant_sites
+      replace_label_attr
       sankoff_downward
+      sankoff_postorder_iter_accum
       sankoff_upward
-      summarize_dag
       treewise_sankoff_in_dag
    
    

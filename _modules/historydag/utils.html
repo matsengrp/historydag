@@ -10,10 +10,9 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -26,11 +25,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> historydag
+
+          
+          
+          <a href="../../index.html">
+            
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -61,7 +64,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
       <li class="breadcrumb-item active">historydag.utils</li>
       <li class="wy-breadcrumbs-aside">
@@ -76,11 +79,13 @@
 <span></span><span class="sd">&quot;&quot;&quot;Utility functions and classes for working with HistoryDag objects.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">ete3</span>
-<span class="kn">from</span> <span class="nn">Bio.Data.IUPACData</span> <span class="kn">import</span> <span class="n">ambiguous_dna_values</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">isfinite</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">import</span> <span class="nn">operator</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">UserDict</span>
 <span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">List</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
@@ -122,13 +127,9 @@
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Attempted to iterate from dag root UALabel&quot;</span><span class="p">)</span></div>
 
 
-<span class="n">bases</span> <span class="o">=</span> <span class="s2">&quot;AGCT-&quot;</span>
-<span class="n">ambiguous_dna_values</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="n">bases</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">})</span>
-
-
 <span class="c1"># ######## Decorators ########</span>
 <div class="viewcode-block" id="access_nodefield_default"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.access_nodefield_default">[docs]</a><span class="k">def</span> <span class="nf">access_nodefield_default</span><span class="p">(</span><span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;A decorator for accessing label fields on a HistoryDagNode. Converts a</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator for accessing label fields on a HistoryDagNode. Converts a</span>
 <span class="sd">    function taking some label field&#39;s values as positional arguments, to a</span>
 <span class="sd">    function taking HistoryDagNodes as positional arguments.</span>
 
@@ -155,7 +156,7 @@
 
 
 <div class="viewcode-block" id="access_field"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.access_field">[docs]</a><span class="k">def</span> <span class="nf">access_field</span><span class="p">(</span><span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;A decorator for conveniently accessing a field in a label.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator for conveniently accessing a field in a label.</span>
 
 <span class="sd">    To be used instead of something like `lambda l1, l2:</span>
 <span class="sd">    func(l1.fieldname, l2.fieldname)`. Instead just write</span>
@@ -176,7 +177,7 @@
 
 
 <div class="viewcode-block" id="ignore_uanode"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.ignore_uanode">[docs]</a><span class="k">def</span> <span class="nf">ignore_uanode</span><span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;A decorator to return a default value if any argument is a UANode.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator to return a default value if any argument is a UANode.</span>
 
 <span class="sd">    For instance, to allow distance between two nodes to be zero if one</span>
 <span class="sd">    is UANode</span>
@@ -197,7 +198,7 @@
 
 
 <div class="viewcode-block" id="explode_label"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.explode_label">[docs]</a><span class="k">def</span> <span class="nf">explode_label</span><span class="p">(</span><span class="n">labelfield</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A decorator to make it easier to expand a Label by a certain field.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator to make it easier to expand a Label by a certain field.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        labelfield: the name of the field whose contents the wrapped function is expected to</span>
@@ -227,51 +228,10 @@
 <span class="c1"># ######## Distances and comparisons... ########</span>
 
 
-<div class="viewcode-block" id="hamming_distance"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.hamming_distance">[docs]</a><span class="k">def</span> <span class="nf">hamming_distance</span><span class="p">(</span><span class="n">s1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">s2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;The sitewise sum of base differences between s1 and s2.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sequences must have the same length!&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">!=</span> <span class="n">y</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">))</span></div>
-
-
-<div class="viewcode-block" id="wrapped_hamming_distance"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.wrapped_hamming_distance">[docs]</a><span class="nd">@access_nodefield_default</span><span class="p">(</span><span class="s2">&quot;sequence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">wrapped_hamming_distance</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;The sitewise sum of base differences between sequence field contents of</span>
-<span class="sd">    two nodes.</span>
-
-<span class="sd">    Takes two HistoryDagNodes as arguments.</span>
-
-<span class="sd">    If l1 or l2 is a UANode, returns 0.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">hamming_distance</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="hamming_distance_leaf_ambiguous"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.hamming_distance_leaf_ambiguous">[docs]</a><span class="k">def</span> <span class="nf">hamming_distance_leaf_ambiguous</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Same as wrapped_hamming_distance, but correctly calculates parsimony</span>
-<span class="sd">    scores if leaf nodes have ambiguous sequences.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">n2</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
-        <span class="c1"># Then its sequence may be ambiguous</span>
-        <span class="n">s1</span> <span class="o">=</span> <span class="n">n1</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">sequence</span>
-        <span class="n">s2</span> <span class="o">=</span> <span class="n">n2</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">sequence</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sequences must have the same length!&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="n">pbase</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ambiguous_dna_values</span><span class="p">[</span><span class="n">cbase</span><span class="p">]</span> <span class="k">for</span> <span class="n">pbase</span><span class="p">,</span> <span class="n">cbase</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">wrapped_hamming_distance</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="is_ambiguous"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.is_ambiguous">[docs]</a><span class="k">def</span> <span class="nf">is_ambiguous</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Returns whether the provided sequence contains IUPAC nucleotide</span>
-<span class="sd">    ambiguity codes.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bases</span> <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">)</span></div>
-
-
 <div class="viewcode-block" id="cartesian_product"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.cartesian_product">[docs]</a><span class="k">def</span> <span class="nf">cartesian_product</span><span class="p">(</span>
     <span class="n">optionlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Iterable</span><span class="p">]],</span> <span class="n">accum</span><span class="o">=</span><span class="nb">tuple</span><span class="p">()</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;The cartesian product of iterables in a list.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The cartesian product of iterables in a list.</span>
 
 <span class="sd">    Takes a list of functions which each return a fresh generator on</span>
 <span class="sd">    options at that site, and returns a generator yielding tuples, which</span>
@@ -285,54 +245,18 @@
         <span class="k">yield</span> <span class="n">accum</span></div>
 
 
-<div class="viewcode-block" id="sequence_resolutions"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.sequence_resolutions">[docs]</a><span class="nd">@explode_label</span><span class="p">(</span><span class="s2">&quot;sequence&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">sequence_resolutions</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Iterates through possible disambiguations of sequence, recursively.</span>
-
-<span class="sd">    Recursion-depth-limited by number of ambiguity codes in sequence,</span>
-<span class="sd">    not sequence length.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">_sequence_resolutions</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">_accum</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">sequence</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sequence</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
-                    <span class="n">_accum</span> <span class="o">+=</span> <span class="n">base</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">newbase</span> <span class="ow">in</span> <span class="n">ambiguous_dna_values</span><span class="p">[</span><span class="n">base</span><span class="p">]:</span>
-                        <span class="k">yield from</span> <span class="n">_sequence_resolutions</span><span class="p">(</span>
-                            <span class="n">sequence</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:],</span> <span class="n">_accum</span><span class="o">=</span><span class="p">(</span><span class="n">_accum</span> <span class="o">+</span> <span class="n">newbase</span><span class="p">)</span>
-                        <span class="p">)</span>
-                    <span class="k">return</span>
-        <span class="k">yield</span> <span class="n">_accum</span>
-
-    <span class="k">return</span> <span class="n">_sequence_resolutions</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="sequence_resolutions_count"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.sequence_resolutions_count">[docs]</a><span class="nd">@access_field</span><span class="p">(</span><span class="s2">&quot;sequence&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">sequence_resolutions_count</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Count the number of possible sequence resolutions Equivalent to the</span>
-<span class="sd">    length of the list returned by :meth:`sequence_resolutions`.&quot;&quot;&quot;</span>
-    <span class="n">base_options</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nb">len</span><span class="p">(</span><span class="n">ambiguous_dna_values</span><span class="p">[</span><span class="n">base</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">sequence</span>
-        <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">ambiguous_dna_values</span>
-    <span class="p">]</span>
-    <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="n">base_options</span><span class="p">)</span></div>
-
-
 <div class="viewcode-block" id="hist"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.hist">[docs]</a><span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Pretty prints a counter Normalizing counts using the number of samples,</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pretty prints a counter Normalizing counts using the number of samples,</span>
 <span class="sd">    passed as the argument `samples`.&quot;&quot;&quot;</span>
     <span class="n">ls</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
     <span class="n">ls</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Weight</span><span class="se">\t</span><span class="s2">| Frequency</span><span class="se">\n</span><span class="s2">------------------&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">weight</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="n">ls</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">weight</span><span class="si">}</span><span class="s2">  </span><span class="se">\t</span><span class="s2">| </span><span class="si">{</span><span class="n">freq</span> <span class="k">if</span> <span class="n">samples</span><span class="o">==</span><span class="mi">1</span> <span class="k">else</span> <span class="n">freq</span><span class="o">/</span><span class="n">samples</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">weight</span><span class="si">}</span><span class="s2">  </span><span class="se">\t</span><span class="s2">| </span><span class="si">{</span><span class="n">freq</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">samples</span><span class="o">==</span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">freq</span><span class="o">/</span><span class="n">samples</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="is_collapsed"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.is_collapsed">[docs]</a><span class="k">def</span> <span class="nf">is_collapsed</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Return whether the provided tree is collapsed.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether the provided tree is collapsed.</span>
 
 <span class="sd">    Collapsed means that any edge whose target is not a leaf node</span>
 <span class="sd">    connects nodes with different sequences.</span>
@@ -344,16 +268,13 @@
 
 
 <div class="viewcode-block" id="collapse_adjacent_sequences"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.collapse_adjacent_sequences">[docs]</a><span class="k">def</span> <span class="nf">collapse_adjacent_sequences</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Collapse nonleaf nodes that have the same sequence.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse nonleaf nodes that have the same sequence.&quot;&quot;&quot;</span>
     <span class="c1"># Need to keep doing this until the tree fully collapsed. See gctree for this!</span>
     <span class="n">tree</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">to_delete</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">get_descendants</span><span class="p">():</span>
         <span class="c1"># This must stay invariably hamming distance, since it&#39;s measuring equality of strings</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">()</span>
-            <span class="ow">and</span> <span class="n">hamming_distance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">sequence</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">()</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">up</span><span class="o">.</span><span class="n">sequence</span> <span class="o">==</span> <span class="n">node</span><span class="o">.</span><span class="n">sequence</span><span class="p">:</span>
             <span class="n">to_delete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">:</span>
         <span class="n">node</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
@@ -361,7 +282,7 @@
 
 
 <div class="viewcode-block" id="AddFuncDict"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict">[docs]</a><span class="k">class</span> <span class="nc">AddFuncDict</span><span class="p">(</span><span class="n">UserDict</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Container for function keyword arguments to</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for function keyword arguments to</span>
 <span class="sd">    :meth:`historydag.HistoryDag.weight_count`. This is primarily useful</span>
 <span class="sd">    because it allows instances to be added. Passing the result to</span>
 <span class="sd">    `weight_count` as keyword arguments counts the weights jointly. A</span>
@@ -372,7 +293,7 @@
 <span class="sd">    annotate a :meth:`historydag.HistoryDag` according to the weight that the</span>
 <span class="sd">    contained functions implement.</span>
 
-<span class="sd">    For example, `dag.weight_count(**(utils.hamming_distance_countfuncs + make_newickcountfuncs()))`</span>
+<span class="sd">    For example, `dag.weight_count(**(parsimony_utils.hamming_distance_countfuncs + make_newickcountfuncs()))`</span>
 <span class="sd">    would return a Counter object in which the weights are tuples containing hamming parsimony and newickstrings.</span>
 
 <span class="sd">    Args:</span>
@@ -404,6 +325,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
         <span class="k">elif</span> <span class="n">names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;``names`` keyword argument expects a tuple.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">names</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">initialdata</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiredkeys</span><span class="p">:</span>
@@ -439,6 +362,9 @@
             <span class="n">names</span><span class="o">=</span><span class="n">fdict1</span><span class="o">.</span><span class="n">names</span> <span class="o">+</span> <span class="n">fdict2</span><span class="o">.</span><span class="n">names</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;AddFuncDict[</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">it</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
+
     <span class="k">def</span> <span class="nf">_convert_to_tupleargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 
@@ -469,19 +395,189 @@
                 <span class="n">names</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,),</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span></div>
+            <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="AddFuncDict.linear_combination"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict.linear_combination">[docs]</a>    <span class="k">def</span> <span class="nf">linear_combination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">significant_digits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert an AddFuncDict implementing a tuple of weights to a linear</span>
+<span class="sd">        combination of those weights.</span>
+
+<span class="sd">        This only works when the weights computed by the AddFuncDict use plain</span>
+<span class="sd">        `sum` as their accum_func.</span>
+<span class="sd">        Otherwise, although the resulting AddFuncDict may be usable without errors,</span>
+<span class="sd">        its behavior is undefined.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            coeffs: The coefficients to be multiplied with each weight before summing.</span>
+<span class="sd">            significant_digits: To combat floating point errors, only this many digits</span>
+<span class="sd">                after the decimal will be significant in comparisons between weights.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new AddFuncDict object which computes the specified linear combination</span>
+<span class="sd">            of weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> ranking coefficients but received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;linear_combination should only be called on AddFuncDict&quot;</span>
+                <span class="s2">&quot; objects which compute more than one weight, e.g.&quot;</span>
+                <span class="s2">&quot; resulting from summing one or more AddFuncDicts.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">make_floatstate</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">FloatState</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">significant_digits</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_lc</span><span class="p">(</span><span class="n">weight_tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">make_floatstate</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">w</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">weight_tuple</span><span class="p">)))</span>
+
+        <span class="k">def</span> <span class="nf">accum_func</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">make_floatstate</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">))</span>
+
+        <span class="n">start_func</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;start_func&quot;</span><span class="p">]</span>
+        <span class="n">edge_func</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;edge_weight_func&quot;</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">new_start_func</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_lc</span><span class="p">(</span><span class="n">start_func</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">new_edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_lc</span><span class="p">(</span><span class="n">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="n">new_start_func</span><span class="p">,</span>
+                <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">new_edge_func</span><span class="p">,</span>
+                <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="n">accum_func</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;(&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
 
 
-<span class="n">hamming_distance_countfuncs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">wrapped_hamming_distance</span><span class="p">,</span>
-        <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HammingParsimony&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;Provides functions to count hamming distance parsimony.</span>
-<span class="sd">For use with :meth:`historydag.HistoryDag.weight_count`.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="HistoryDagFilter"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.HistoryDagFilter">[docs]</a><span class="k">class</span> <span class="nc">HistoryDagFilter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for :class:`historydag.utils.AddFuncDict` and an optimality</span>
+<span class="sd">    function `optimal_func`</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        weight_func: An :class:`AddFuncDict` object</span>
+<span class="sd">        optimal_func: A function that specifies how to choose the optimal result from `weight_func`. e.g. `min` or `max`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HistoryDagFilter.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.HistoryDagFilter.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">weight_funcs</span><span class="p">:</span> <span class="n">AddFuncDict</span><span class="p">,</span>
+        <span class="n">optimal_func</span><span class="p">,</span>
+        <span class="n">ordering_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">eq_func</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span> <span class="o">=</span> <span class="n">weight_funcs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimal_func</span> <span class="o">=</span> <span class="n">optimal_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eq_func</span> <span class="o">=</span> <span class="n">eq_func</span>
+        <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ordering_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">optimal_func</span> <span class="o">==</span> <span class="nb">min</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;minimum&quot;</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">),)</span>
+            <span class="k">elif</span> <span class="n">optimal_func</span> <span class="o">==</span> <span class="nb">max</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;maximum&quot;</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">),)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;optimal&quot;</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">),)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="p">((</span><span class="n">ordering_name</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">),)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ordering_name</span><span class="p">,</span> <span class="n">end_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span><span class="p">:</span>
+            <span class="n">these_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">these_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">descriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ordering_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">it</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">these_names</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">descriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ordering_name</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">these_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="n">end_idx</span>
+        <span class="k">return</span> <span class="s2">&quot;HistoryDagFilter[&quot;</span> <span class="o">+</span> <span class="s2">&quot; then &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">descriptions</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="s2">&quot;optimal_func&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_func</span>
+        <span class="k">elif</span> <span class="n">item</span> <span class="o">==</span> <span class="s2">&quot;eq_func&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_func</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+    <span class="c1"># Or should it be &amp;?</span>
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">HistoryDagFilter</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Can only add HistoryDagFilter to HistoryDagFilter, not f</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="n">split_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">new_optimal_func</span><span class="p">(</span><span class="n">weight_tuple_seq</span><span class="p">):</span>
+            <span class="n">weight_tuple_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">weight_tuple_seq</span><span class="p">)</span>
+            <span class="n">first_optimal_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_func</span><span class="p">(</span>
+                <span class="n">t</span><span class="p">[:</span><span class="n">split_idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">weight_tuple_seq</span>
+            <span class="p">)</span>
+            <span class="n">second_optimal_val</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">optimal_func</span><span class="p">(</span>
+                <span class="n">t</span><span class="p">[</span><span class="n">split_idx</span><span class="p">:]</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">weight_tuple_seq</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_func</span><span class="p">(</span><span class="n">t</span><span class="p">[:</span><span class="n">split_idx</span><span class="p">],</span> <span class="n">first_optimal_val</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">first_optimal_val</span> <span class="o">+</span> <span class="n">second_optimal_val</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_func</span> <span class="o">==</span> <span class="n">operator</span><span class="o">.</span><span class="n">eq</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">eq_func</span> <span class="o">==</span> <span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">:</span>
+            <span class="n">new_eq_func</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">eq</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">new_eq_func</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_func</span><span class="p">(</span><span class="n">a</span><span class="p">[:</span><span class="n">split_idx</span><span class="p">],</span> <span class="n">b</span><span class="p">[:</span><span class="n">split_idx</span><span class="p">])</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">eq_func</span><span class="p">(</span>
+                    <span class="n">a</span><span class="p">[</span><span class="n">split_idx</span><span class="p">:],</span> <span class="n">b</span><span class="p">[</span><span class="n">split_idx</span><span class="p">:]</span>
+                <span class="p">)</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">HistoryDagFilter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">weight_funcs</span><span class="p">,</span>
+            <span class="n">new_optimal_func</span><span class="p">,</span>
+            <span class="n">eq_func</span><span class="o">=</span><span class="n">new_eq_func</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">split_idx</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">ordering_names</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">yield from</span> <span class="p">(</span><span class="s2">&quot;optimal_func&quot;</span><span class="p">,</span> <span class="s2">&quot;eq_func&quot;</span><span class="p">)</span></div>
+
+    <span class="c1"># def with_linear_combination_ordering(self, ranking_coeffs, eq_func=operator.eq):</span>
+    <span class="c1">#     ranking_coeffs = tuple(ranking_coeffs)</span>
+    <span class="c1">#     n = len(self.weight_funcs.names)</span>
+    <span class="c1">#     if len(ranking_coeffs) != n:</span>
+    <span class="c1">#         raise ValueError(f&quot;Expected {n} ranking coefficients but received {len(ranking_coeffs)}.&quot;)</span>
+
+    <span class="c1">#     def _lc(weight_tuple):</span>
+    <span class="c1">#         return sum(c * w for c, w in zip(ranking_coeffs, weight_tuple))</span>
+
+    <span class="c1">#     def new_optimal_func(weight_tuple_sequence):</span>
+    <span class="c1">#         return min(weight_tuple_sequence, key=_lc)</span>
+
+    <span class="c1">#     def new_eq_func(weight_tup1, weight_tup2):</span>
+    <span class="c1">#         return eq_func(_lc(weight_tup1), _lc(weight_tup2))</span>
+
+    <span class="c1">#     ret = HistoryDagFilter(self.weight_funcs, new_optimal_func, eq_func=new_eq_func)</span>
+    <span class="c1">#     new_optimal_func_name = (&quot;minimum (&quot;</span>
+    <span class="c1">#                              + &#39;+&#39;.join(str(c) + chr(97 + i) for i, c in enumerate(ranking_coeffs))</span>
+    <span class="c1">#                              + &quot;) for (&quot;</span>
+    <span class="c1">#                              + &#39;,&#39;.join(chr(97 + i) for i in range(n))</span>
+    <span class="c1">#                              + &quot;) =&quot;)</span>
+    <span class="c1">#     ret.ordering_names = ((new_optimal_func_name, n),)</span>
+    <span class="c1">#     return ret</span>
+
 
 <span class="n">node_countfuncs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
     <span class="p">{</span>
@@ -492,15 +588,104 @@
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NodeCount&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="sd">&quot;&quot;&quot;Provides functions to count the number of nodes in trees.</span>
-<span class="sd">For use with :meth:`historydag.HistoryDag.weight_count`.&quot;&quot;&quot;</span>
+
+<span class="sd">For use with :meth:`historydag.HistoryDag.weight_count`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="natural_edge_probability"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.natural_edge_probability">[docs]</a><span class="k">def</span> <span class="nf">natural_edge_probability</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the downward-conditional edge probability of the edge from parent</span>
+<span class="sd">    to child.</span>
+
+<span class="sd">    This is defined as 1/n, where n is the number of edges descending</span>
+<span class="sd">    from the same child clade of ``parent`` as this edge.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">()))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eset</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">clades</span><span class="p">[</span><span class="n">child</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">eset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span></div>
+
+
+<span class="n">log_natural_probability_funcs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">:</span> <span class="n">log</span><span class="p">(</span><span class="n">natural_edge_probability</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">)),</span>
+        <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LogNaturalProbability&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Provides functions to count the probabilities of histories in a DAG,</span>
+<span class="sd">according to the natural distribution induced by the DAG topology.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="sum_rfdistance_funcs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.sum_rfdistance_funcs">[docs]</a><span class="k">def</span> <span class="nf">sum_rfdistance_funcs</span><span class="p">(</span><span class="n">reference_dag</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to compute the sum over all histories in the provided</span>
+<span class="sd">    reference DAG, of rooted RF distances to those histories.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        reference_dag: The reference DAG. The sum will be computed over all RF</span>
+<span class="sd">            distances to histories in this DAG</span>
+
+<span class="sd">    The reference DAG must have the same taxa as all the trees in the DAG on which these count</span>
+<span class="sd">    functions are used.</span>
+
+<span class="sd">    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under</span>
+<span class="sd">    the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF</span>
+<span class="sd">    distances, meaning that the clade below each edge is used for RF distance computation.</span>
+
+<span class="sd">    The weights are represented by an IntState object and are shifted by a constant K,</span>
+<span class="sd">    which is the sum of number of clades in each tree in the DAG.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">count_nodes</span><span class="p">(</span><span class="n">collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Remove the UA node clade union from N</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">N</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># K is the constant that the weights are shifted by</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">num_trees</span> <span class="o">=</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">count_histories</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">IntState</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">K</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
+        <span class="n">clade</span> <span class="o">=</span> <span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">clade</span> <span class="ow">in</span> <span class="n">N</span><span class="p">:</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">num_trees</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">N</span><span class="p">[</span><span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># This clade&#39;s count should then just be 0:</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">num_trees</span>
+        <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_func</span><span class="p">,</span>
+            <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">wlist</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wlist</span><span class="p">)</span>
+            <span class="p">),</span>  <span class="c1"># summation over edge weights</span>
+        <span class="p">},</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_rooted_sum&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">kwargs</span></div>
 
 
 <div class="viewcode-block" id="make_rfdistance_countfuncs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.make_rfdistance_countfuncs">[docs]</a><span class="k">def</span> <span class="nf">make_rfdistance_countfuncs</span><span class="p">(</span><span class="n">ref_tree</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span> <span class="n">rooted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Provides functions to compute Robinson-Foulds (RF) distances of trees in</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to compute Robinson-Foulds (RF) distances of trees in</span>
 <span class="sd">    a DAG, relative to a fixed reference tree.</span>
 
-<span class="sd">    We use :meth:`ete3.TreeNode.robinson_foulds` as the reference implementation for both</span>
-<span class="sd">    rooted and unrooted RF distance.</span>
+<span class="sd">    We use :meth:`ete3.TreeNode.robinson_foulds` as the reference implementation for</span>
+<span class="sd">    unrooted RF distance.</span>
+
+<span class="sd">    Rooted Robinson-Foulds is simply the cardinality of the symmetric difference of</span>
+<span class="sd">    the clade sets of two trees, including the root clade.</span>
+<span class="sd">    Since we include the root clade in this calculation, our rooted RF distance does</span>
+<span class="sd">    not match the rooted :meth:`ete3.TreeNode.robinson_foulds` implementation.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.</span>
@@ -588,19 +773,13 @@
         <span class="n">ref_cus</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
             <span class="n">node</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ref_tree</span><span class="o">.</span><span class="n">preorder</span><span class="p">(</span><span class="n">skip_ua_node</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">ref_cus</span> <span class="o">=</span> <span class="n">ref_cus</span> <span class="o">-</span> <span class="p">{</span>
-            <span class="n">taxa</span><span class="p">,</span>
-        <span class="p">}</span>
+
         <span class="n">shift</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_cus</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ref_cus</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">IntState</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">shift</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">n1</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
-                <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span> <span class="ow">in</span> <span class="n">ref_cus</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -625,7 +804,7 @@
     <span class="n">internal_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">collapse_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Provides functions to count newick strings. For use with</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to count newick strings. For use with</span>
 <span class="sd">    :meth:`historydag.HistoryDag.weight_count`.</span>
 
 <span class="sd">    Arguments are the same as for</span>
@@ -671,8 +850,40 @@
     <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="edge_difference_funcs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.edge_difference_funcs">[docs]</a><span class="k">def</span> <span class="nf">edge_difference_funcs</span><span class="p">(</span><span class="n">reference_dag</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to compute the number of edges in a history which do</span>
+<span class="sd">    not appear in a reference HistoryDag.</span>
+
+<span class="sd">    This is useful for taking history-wise intersections of DAGs, or counting</span>
+<span class="sd">    the number of histories which would appear in such an intersection.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        reference_dag: The reference DAG. These functions will count the</span>
+<span class="sd">            number of edges in a history which do not appear in this DAG.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :class:`utils.AddFuncDict` object for use with HistoryDag methods for</span>
+<span class="sd">        trimming and weight counting/annotation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">edge_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">key</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">preorder</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">children</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">edge_weight_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">key</span><span class="p">(</span><span class="n">n1</span><span class="p">),</span> <span class="n">key</span><span class="p">(</span><span class="n">n2</span><span class="p">))</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">edge_set</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_weight_func</span><span class="p">,</span>
+            <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;EdgeDifference&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
 <span class="k">def</span> <span class="nf">_history_method</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;HistoryDagNode method decorator to ensure that the method is only run on</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;HistoryDagNode method decorator to ensure that the method is only run on</span>
 <span class="sd">    history DAGs which are histories.&quot;&quot;&quot;</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
@@ -689,7 +900,7 @@
 
 
 <div class="viewcode-block" id="prod"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.prod">[docs]</a><span class="k">def</span> <span class="nf">prod</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return product of elements of the input list.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return product of elements of the input list.</span>
 
 <span class="sd">    if passed list is empty, returns 1.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -704,6 +915,19 @@
     <span class="k">return</span> <span class="n">accum</span></div>
 
 
+<div class="viewcode-block" id="logsumexp"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.logsumexp">[docs]</a><span class="k">def</span> <span class="nf">logsumexp</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A numerically stable implementation of logsumexp, similar to Scipy&#39;s.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">max_log</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">isfinite</span><span class="p">(</span><span class="n">max_log</span><span class="p">):</span>
+        <span class="n">max_log</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">exponentiated</span> <span class="o">=</span> <span class="p">[</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">max_log</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ls</span><span class="p">]</span>
+    <span class="n">shifted_log_sum</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">exponentiated</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">shifted_log_sum</span> <span class="o">+</span> <span class="n">max_log</span></div>
+
+
 <span class="c1"># Unfortunately these can&#39;t be made with a class factory (just a bit too meta for Python)</span>
 <span class="c1"># short of doing something awful like https://hg.python.org/cpython/file/b14308524cff/Lib/collections/__init__.py#l232</span>
 <span class="k">def</span> <span class="nf">_remstate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">):</span>
@@ -715,7 +939,7 @@
 
 
 <div class="viewcode-block" id="IntState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.IntState">[docs]</a><span class="k">class</span> <span class="nc">IntState</span><span class="p">(</span><span class="nb">int</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A subclass of int, with arbitrary, mutable state.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of int, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
 <span class="sd">    ``state``. All other arguments will be passed to ``int``</span>
@@ -741,7 +965,7 @@
 
 
 <div class="viewcode-block" id="FloatState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.FloatState">[docs]</a><span class="k">class</span> <span class="nc">FloatState</span><span class="p">(</span><span class="nb">float</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A subclass of float, with arbitrary, mutable state.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of float, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
 <span class="sd">    ``state``. All other arguments will be passed to ``float``</span>
@@ -767,7 +991,7 @@
 
 
 <div class="viewcode-block" id="DecimalState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.DecimalState">[docs]</a><span class="k">class</span> <span class="nc">DecimalState</span><span class="p">(</span><span class="n">Decimal</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A subclass of ``decimal.Decimal``, with arbitrary, mutable state.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of ``decimal.Decimal``, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
 <span class="sd">    ``state``. All other arguments will be passed to ``Decimal``</span>
@@ -793,7 +1017,7 @@
 
 
 <div class="viewcode-block" id="StrState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.StrState">[docs]</a><span class="k">class</span> <span class="nc">StrState</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A subclass of string, with arbitrary, mutable state.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of string, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
 <span class="sd">    ``state``. All other arguments will be passed to ``str``</span>
@@ -818,6 +1042,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">statedict</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
 
 
+<div class="viewcode-block" id="count_labeled_binary_topologies"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.count_labeled_binary_topologies">[docs]</a><span class="k">def</span> <span class="nf">count_labeled_binary_topologies</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the number of binary topologies on n labeled leaves.</span>
+
+<span class="sd">    In these topologies, left and right branches are not distinguished,</span>
+<span class="sd">    and internal nodes are not ranked.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span></div>
+
+
 <span class="k">def</span> <span class="nf">load_fasta</span><span class="p">(</span><span class="n">fastapath</span><span class="p">):</span>
     <span class="n">fasta_records</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fastapath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
@@ -827,6 +1060,18 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">fasta_records</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fasta_records</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_deprecate_message</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_deprecate</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">deprecated</span>
+
+    <span class="k">return</span> <span class="n">_deprecate</span>
 </pre></div>
 
            </div>

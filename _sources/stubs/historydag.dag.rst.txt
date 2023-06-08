@@ -13,9 +13,10 @@
 
    .. autosummary::
    
-      empty_node
+      convert
       from_newick
       from_tree
+      get_default_args
       history_dag_from_clade_trees
       history_dag_from_etes
       history_dag_from_histories
@@ -31,14 +32,17 @@
 
    .. autosummary::
    
-      EdgeSet
       HistoryDag
-      HistoryDagNode
-      UANode
    
    
 
    
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      IntersectionError
    
    
 

@@ -14,9 +14,8 @@
    .. autosummary::
    
       cg_diff
-      cg_hamming_distance
       compact_genome_from_sequence
-      wrapped_cg_hamming_distance
+      unpack_mut_string
    
    
 

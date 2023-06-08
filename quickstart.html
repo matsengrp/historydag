@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quickstart &mdash; historydag  documentation</title>
@@ -11,10 +11,9 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -29,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> historydag
+
+          
+          
+          <a href="index.html">
+            
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -52,6 +55,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#basic-historydag-operations">Basic HistoryDag operations</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#sampling-indexing-and-iterating-over-histories">Sampling, Indexing, and Iterating Over Histories</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#merging">Merging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#intersecting">Intersecting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#completion">Completion</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#collapsing">Collapsing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#relabeling">Relabeling</a></li>
@@ -59,12 +63,13 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#historydag-subtypes-and-conversions">HistoryDag Subtypes and Conversions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#defining-and-computing-history-weights">Defining and Computing History Weights</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#the-addfuncdict">The AddFuncDict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-addfuncdict-class">The AddFuncDict Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-historydagfilter-class">The HistoryDagFilter Class</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#combining-weights">Combining Weights</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#exporting-tree-data">Exporting Tree Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#tldr-a-quick-tour">TLDR: A Quick Tour</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-quick-tour">A Quick Tour</a></li>
 </ul>
 </li>
 </ul>
@@ -89,7 +94,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Quickstart</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -302,6 +307,34 @@ argument:</p>
 </pre></div>
 </div>
 </section>
+<section id="intersecting">
+<h3>Intersecting<a class="headerlink" href="#intersecting" title="Permalink to this heading"></a></h3>
+<p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a> also supports set-style intersection via <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> and <code class="docutils literal notranslate"><span class="pre">&amp;=</span></code>,
+so that the resulting history DAG contains the histories which were in both the
+intersected DAGs. In the following example, notice that both <code class="docutils literal notranslate"><span class="pre">dag1</span></code> and
+<code class="docutils literal notranslate"><span class="pre">dag2</span></code> contain the history <code class="docutils literal notranslate"><span class="pre">dag[0]</span></code>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dag1</span> <span class="o">=</span> <span class="n">dag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">|</span> <span class="p">(</span><span class="n">dag</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dag2</span> <span class="o">=</span> <span class="n">dag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">|</span> <span class="p">(</span><span class="n">dag</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">idag</span> <span class="o">=</span> <span class="n">dag1</span> <span class="o">&amp;</span> <span class="n">dag2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">idag</span><span class="p">)</span> <span class="o">&gt;=</span><span class="mi">1</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">idag</span> <span class="o">|</span> <span class="n">dag1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dag1</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">idag</span> <span class="o">|</span> <span class="n">dag2</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dag2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>However, since a history DAG must contain at least a single history, empty
+intersections raise a <a class="reference internal" href="stubs/historydag.dag.html#historydag.dag.IntersectionError" title="historydag.dag.IntersectionError"><code class="xref py py-class docutils literal notranslate"><span class="pre">dag.IntersectionError</span></code></a>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">dag</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+  File <span class="nb">&quot;/home/user/historydag/historydag/dag.py&quot;</span>, line <span class="m">1086</span>, in <span class="n">history_complement</span>
+<span class="w">    </span><span class="k">raise</span> <span class="n">IntersectionError</span><span class="p">(</span><span class="s2">&quot;The requested complement contains no histories,&quot;</span>
+<span class="gr">historydag.dag.IntersectionError</span>: <span class="n">The requested complement contains no histories, and a history DAG must contain at least one history.</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> operator is shorthand for <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.history_intersect" title="historydag.HistoryDag.history_intersect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.history_intersect()</span></code></a>.</p>
+</section>
 <section id="completion">
 <h3>Completion<a class="headerlink" href="#completion" title="Permalink to this heading"></a></h3>
 <p>A history DAG can be “completed”, meaning that all possible edges are added
@@ -430,8 +463,8 @@ number of nodes:</p>
 <span class="go">Counter({37: 173})</span>
 </pre></div>
 </div>
-<section id="the-addfuncdict">
-<h3>The AddFuncDict<a class="headerlink" href="#the-addfuncdict" title="Permalink to this heading"></a></h3>
+<section id="the-addfuncdict-class">
+<h3>The AddFuncDict Class<a class="headerlink" href="#the-addfuncdict-class" title="Permalink to this heading"></a></h3>
 <p>Since the interfaces of these three methods are similar, we provide
 a special subclassed dictionary <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> for storing
 their keyword arguments.</p>
@@ -456,14 +489,14 @@ returns the additive identity of the weight type, such as <code class="docutils 
 </div>
 <p>A variety of useful <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> objects are provided:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.hamming_distance_countfuncs" title="historydag.utils.hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.hamming_distance_countfuncs</span></code></a> allow computation of histories’
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.hamming_distance_countfuncs</span></code> allow computation of histories’
 Hamming parsimony scores, in history DAGs whose nodes have <code class="docutils literal notranslate"><span class="pre">sequence</span></code> label
 attributes containing unambiguous nucleotide sequences of equal length.</p></li>
-<li><p><a class="reference internal" href="stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.compact_genome_hamming_distance_countfuncs" title="historydag.mutation_annotated_dag.compact_genome_hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mutation_annotated_dag.compact_genome_hamming_distance_countfuncs</span></code></a>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mutation_annotated_dag.compact_genome_hamming_distance_countfuncs</span></code>
 allow computation of Hamming parsimony scores, in history DAGs whose nodes
 have <code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> label attributes containing
 <a class="reference internal" href="stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome" title="historydag.compact_genome.CompactGenome"><code class="xref py py-class docutils literal notranslate"><span class="pre">compact_genome.CompactGenome</span></code></a> objects.</p></li>
-<li><p><a class="reference internal" href="stubs/historydag.sequence_dag.html#historydag.sequence_dag.leaf_ambiguous_hamming_distance_countfuncs" title="historydag.sequence_dag.leaf_ambiguous_hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sequence_dag.leaf_ambiguous_hamming_distance_countfuncs</span></code></a> allow
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sequence_dag.leaf_ambiguous_hamming_distance_countfuncs</span></code> allow
 computation of Hamming parsimony scores, in history DAGs whose nodes have
 <code class="docutils literal notranslate"><span class="pre">sequence</span></code> label attributes, and whose leaf node sequences may contain
 ambiguous nucleotide characters.</p></li>
@@ -478,10 +511,37 @@ although this functionality is conveniently wrapped in
 <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.to_newick" title="historydag.HistoryDag.to_newick"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.to_newick()</span></code></a> and <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.to_newicks" title="historydag.HistoryDag.to_newicks"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.to_newicks()</span></code></a>.</p></li>
 </ul>
 </section>
+<section id="the-historydagfilter-class">
+<h3>The HistoryDagFilter Class<a class="headerlink" href="#the-historydagfilter-class" title="Permalink to this heading"></a></h3>
+<p>In addition to an edge weight function, history DAG methods like
+<a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.trim_optimal_weight" title="historydag.HistoryDag.trim_optimal_weight"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.trim_optimal_weight()</span></code></a> require a choice of <code class="docutils literal notranslate"><span class="pre">optimal_func</span></code>,
+usually specifying whether to minimize or maximize the weight of histories.</p>
+<p>The <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.HistoryDagFilter" title="historydag.utils.HistoryDagFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.HistoryDagFilter</span></code></a> class provides a container for
+a <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> and an <code class="docutils literal notranslate"><span class="pre">optimal_func</span></code>, and provides a similar
+interface as <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a>, allowing keyword argument unpacking:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="o">.</span><span class="n">weight_count</span><span class="p">(</span><span class="o">**</span><span class="n">node_count_funcs</span><span class="p">)</span>
+<span class="go">Counter({35: 17, 36: 325, 37: 173})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">min_nodes</span> <span class="o">=</span> <span class="n">hdag</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">HistoryDagFilter</span><span class="p">(</span><span class="n">node_count_funcs</span><span class="p">,</span> <span class="nb">min</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">min_parsimony</span><span class="p">)</span>
+<span class="go">HistoryDagFilter[minimum NodeCount]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="o">.</span><span class="n">optimal_weight_annotate</span><span class="p">(</span><span class="o">**</span><span class="n">min_nodes</span><span class="p">)</span>
+<span class="go">35</span>
+</pre></div>
+</div>
+<p>However, <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.HistoryDagFilter" title="historydag.utils.HistoryDagFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.HistoryDagFilter</span></code></a> can also be used in history DAG
+filtering syntax, which is equivalent to calling
+<a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.trim_optimal_weight" title="historydag.HistoryDag.trim_optimal_weight"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.trim_optimal_weight()</span></code></a> on a copy:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filtered_dag</span> <span class="o">=</span> <span class="n">dag</span><span class="p">[</span><span class="n">min_nodes</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">filtered_dag</span><span class="o">.</span><span class="n">weight_count</span><span class="p">(</span><span class="o">**</span><span class="n">min_nodes</span><span class="p">)</span>
+<span class="go">Counter({35: 17})</span>
+</pre></div>
+</div>
+</section>
 <section id="combining-weights">
 <h3>Combining Weights<a class="headerlink" href="#combining-weights" title="Permalink to this heading"></a></h3>
-<p>The primary advantage of a <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> object over a plain
-dictionary is its composability via the <code class="docutils literal notranslate"><span class="pre">+</span></code> operator.</p>
+<p>The primary advantage of a <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> and
+<a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.HistoryDagFilter" title="historydag.utils.HistoryDagFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.HistoryDagFilter</span></code></a> objects over a plain
+dictionary are their composability via the <code class="docutils literal notranslate"><span class="pre">+</span></code> operator.</p>
 <p>Addition of two <code class="docutils literal notranslate"><span class="pre">AddFuncDict</span></code> objects returns a new <code class="docutils literal notranslate"><span class="pre">AddFuncDict</span></code> which
 computes the weights implemented by the original two <code class="docutils literal notranslate"><span class="pre">AddFuncDict</span></code>’s
 simultaneously, storing them in a tuple.</p>
@@ -506,8 +566,41 @@ together. The resulting weight type will be a tuple of weights, respecting the
 order of addition (note that nested tuples are avoided). The names of each
 weight are stored in the <code class="docutils literal notranslate"><span class="pre">names</span></code> attribute of the resulting data structure:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">hamming_distance_countfuncs</span> <span class="o">+</span> <span class="n">utils</span><span class="o">.</span><span class="n">node_countfuncs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="go">AddFuncDict[HammingParsimony, NodeCount]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">kwargs</span><span class="o">.</span><span class="n">names</span>
 <span class="go">(&#39;HammingParsimony&#39;, &#39;NodeCount&#39;)</span>
+</pre></div>
+</div>
+<p>Similary, addition of two <code class="docutils literal notranslate"><span class="pre">HistoryDagFilter</span></code> objects returns a new
+<code class="docutils literal notranslate"><span class="pre">HistoryDagFilter</span></code> which implements the added <code class="docutils literal notranslate"><span class="pre">HistoryDagFilter</span></code> operations
+sequentially. The contained <code class="docutils literal notranslate"><span class="pre">AddFuncDict</span></code> is the sum of the original two
+<code class="docutils literal notranslate"><span class="pre">AddFuncDicts</span></code>, so computes the weights implemented by
+the original two <code class="docutils literal notranslate"><span class="pre">AddFuncDict</span></code>’s simultaneously, storing them in a tuple.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">min_parsimony</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">HistoryDagFilter</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">hamming_distance_countfuncs</span><span class="p">,</span> <span class="nb">min</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">max_node_count</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">HistoryDagFilter</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">node_countfuncs</span><span class="p">,</span> <span class="nb">max</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_filter</span> <span class="o">=</span> <span class="n">min_parsimony</span> <span class="o">+</span> <span class="n">max_node_count</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="o">.</span><span class="n">weight_count</span><span class="p">(</span><span class="o">**</span><span class="n">my_filter</span><span class="p">)</span>
+<span class="go">Counter({(73, 35): 17, (73, 36): 320, (74, 36): 5, (74, 37): 112, (73, 37): 61})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="o">.</span><span class="n">trim_optimal_weight</span><span class="p">(</span><span class="o">**</span><span class="n">my_filter</span><span class="p">)</span>
+<span class="go">(73, 37)</span>
+</pre></div>
+</div>
+<p>The last expression above is faster than, but equivalent to:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="o">.</span><span class="n">trim_optimal_weight</span><span class="p">(</span><span class="o">**</span><span class="n">min_parsimony</span><span class="p">)</span>
+<span class="go">73</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dag</span><span class="o">.</span><span class="n">trim_optimal_weight</span><span class="p">(</span><span class="o">**</span><span class="n">max_node_count</span><span class="p">)</span>
+<span class="go">37</span>
+</pre></div>
+</div>
+<p>Using filtering syntax, we can conveniently do the same thing without modifying the DAG
+in-place:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">filtered_dag</span> <span class="o">=</span> <span class="n">dag</span><span class="p">[</span><span class="n">my_filter</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The filter object can describe itself:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_filter</span><span class="p">)</span>
+<span class="go">HistoryDagFilter[minimum HammingParsimony then maximum NodeCount]</span>
 </pre></div>
 </div>
 </section>
@@ -531,8 +624,8 @@ appropriate data to be stored in each attribute.</p></li>
 <p>History DAGs, including histories, can also be easily visualized using the
 <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.to_graphviz" title="historydag.HistoryDag.to_graphviz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.to_graphviz()</span></code></a> method.</p>
 </section>
-<section id="tldr-a-quick-tour">
-<h2>TLDR: A Quick Tour<a class="headerlink" href="#tldr-a-quick-tour" title="Permalink to this heading"></a></h2>
+<section id="a-quick-tour">
+<h2>A Quick Tour<a class="headerlink" href="#a-quick-tour" title="Permalink to this heading"></a></h2>
 <p>In this package, the history DAG is a recursive data structure consisting of
 <a class="reference internal" href="stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode" title="historydag.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.HistoryDagNode</span></code></a> objects storing label, clade, and adjacency
 data. Each history DAG is wrapped in a user-facing <cite>historydag.HistoryDag</cite>
