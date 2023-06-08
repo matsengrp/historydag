@@ -604,6 +604,9 @@ def test_one_sided_rf_distance():
                 assert (tree.optimal_rf_difference(tree_collapsed) == 0)
 
                 #  number of clades in tree that are not in tree_collapsed > 0
+                if not (tree.optimal_rf_difference_other(tree_collapsed) > 0):
+                    with open('eg_one_collapsed.p', 'wb') as fh:
+                        pickle.dump((tree, tree_collapsed), file=fh)
                 assert (tree.optimal_rf_difference_other(tree_collapsed) > 0)
                 assert (tree.optimal_sum_one_sided_rf_distance(tree_collapsed) > 0)
                 assert (tree_collapsed.optimal_rf_difference(tree) > 0)
