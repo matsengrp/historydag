@@ -367,7 +367,7 @@ class CGHistoryDag(HistoryDag):
 
             else:
 
-                def adjust_func(parent, child):
+                def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
                     if parent.is_root() or child.is_leaf():
                         return 1
                     else:
