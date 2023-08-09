@@ -2606,6 +2606,7 @@ class HistoryDag:
         start_func=None,
         ua_node_val=None,
         collapse_key=None,
+        adjust_func: Callable[[HistoryDagNode, HistoryDagNode], float] = None,
         **kwargs,
     ):
         """Compute the probability of each node in the DAG.
@@ -2630,6 +2631,8 @@ class HistoryDag:
                 to which node probabilities should be collapsed. The return type is the key type for the
                 dictionary returned by this method. For example, to compute probabilities of each clade observed
                 in the DAG, use ``collapse_key=HistoryDagNode.clade_union``.
+            adjust_func: A function accepting an edge, and returning a factor by which to adjust confidence in the
+                edge's child node contributed by trees containing that edge.
 
         Returns:
             A dictionary keyed by :class:`HistoryDagNode` objects (or the return values of ``collapse_key`` if provided)
@@ -2646,6 +2649,9 @@ class HistoryDag:
                 start_func=start_func,
             )
 
+        adjust_func = _none_override_ternary(
+            adjust_func, log_probabilities, lambda p, c: 0, lambda p, c: 1
+        )
         ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
         accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
         aggregate_func = _none_override_ternary(
@@ -2653,27 +2659,36 @@ class HistoryDag:
         )
 
         self.recompute_parents()
-        node_probs = {self.dagroot: ua_node_val}
+        # first value is true probability, and second value is adjusted
+        node_probs = {self.dagroot: (ua_node_val, ua_node_val)}
+        # first value is vector of true probabilities, and second value is adjusted
         node_above_probs = {}
         for node in reversed(list(self.postorder())):
             # All parents have been visited, so this_node_prob can be computed
             if not node.is_ua_node():
-                this_node_prob = aggregate_func(node_above_probs[node])
-                node_probs[node] = this_node_prob
+                this_node_prob = aggregate_func(node_above_probs[node][0])
+                adjusted_this_node_prob = aggregate_func(node_above_probs[node][1])
+                node_probs[node] = (this_node_prob, adjusted_this_node_prob)
             else:
                 this_node_prob = ua_node_val
             # Now add this node's probability to node_above_probs for all
             # children.
             for clade, eset in node.clades.items():
                 for child, _, prob in eset:
-                    child_above_probs = node_above_probs.setdefault(child, [])
+                    (
+                        child_above_probs,
+                        child_above_adjusted_probs,
+                    ) = node_above_probs.setdefault(child, ([], []))
                     child_above_probs.append(accum_func([this_node_prob, prob]))
+                    child_above_adjusted_probs.append(
+                        accum_func([this_node_prob, prob, adjust_func(node, child)])
+                    )
 
         # This must be done separately because otherwise we have no reverse
         # postorder guarantee on keys in node_probs.
         if collapse_key is not None:
             collapsed_probs = {}
-            for node, prob in node_probs.items():
+            for node, (_, prob) in node_probs.items():
                 key = collapse_key(node)
                 if key not in collapsed_probs:
                     collapsed_probs[key] = prob
@@ -2682,7 +2697,7 @@ class HistoryDag:
                     collapsed_probs[key] = aggregate_func([val, prob])
             return collapsed_probs
         else:
-            return node_probs
+            return {node: prob for node, (_, prob) in node_probs.items()}
 
     def edge_probabilities(
         self,

@@ -212,6 +212,26 @@ class CompactGenome:
             self.reference,
         )
 
+    def superset_sites(self, sites, new_reference, one_based=True):
+        """Do the opposite of `subset_sites`, adjusting site indices from
+        indices in a sequence of variant sites, to indices in a sequence
+        containing all sites.
+
+        Args:
+            sites: A sorted list of sites in the new_reference sequence which are represented
+                by sites in the current compact genome's reference sequence
+            new_reference: A new reference sequence
+            one_based: Whether the sites in `sites` are one-based
+        """
+        if one_based:
+            adjust = 0
+        else:
+            adjust = 1
+        return CompactGenome(
+            {sites[site - 1] + adjust: mut for site, mut in self.mutations.items()},
+            new_reference,
+        )
+
     def subset_sites(self, sites, one_based=True, new_reference=None):
         """Remove all but those sites in ``sites``, and adjust the reference
         sequence.
@@ -236,6 +256,8 @@ class CompactGenome:
             for old_site, state in self.mutations.items()
             if old_site - adjust in sites
         }
+        if len(result) != len(self.mutations):
+            warn("Sites where cg differed from reference removed.")
 
         if new_reference is None:
             new_reference = "".join(
@@ -315,9 +337,9 @@ def compact_genome_from_sequence(sequence: str, reference: str):
 
 
 def cg_diff(parent_cg: CompactGenome, child_cg: CompactGenome):
-    """Yields mutations in the format (parent_nuc, child_nuc, sequence_index)
-    distinguishing two compact genomes, such that applying the resulting
-    mutations to `parent_cg` would yield `child_cg`"""
+    """Yields mutations in the format (parent_nuc, child_nuc, one-based
+    sequence_index) distinguishing two compact genomes, such that applying the
+    resulting mutations to `parent_cg` would yield `child_cg`"""
     keys = set(parent_cg.mutations.keys()) | set(child_cg.mutations.keys())
     for key in keys:
         parent_base = parent_cg.get_site(key)
