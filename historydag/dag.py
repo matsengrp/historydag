@@ -671,6 +671,18 @@ class HistoryDag:
         except StopIteration:
             raise ValueError("No matching node found.")
 
+    def fuzzy_sample(self) -> "HistoryDag":
+
+        def _sample_helper(node, parent):
+            parent_mutations = get_mutations(node, parent)
+            children = list(node.get_children())
+            # Draw a number of children to be collapsed upward
+            n_to_collapse = sample_n(parent_mutations, len(children))
+            to_collapse = random.choice(children, n_to_collapse)
+
+            
+
+
     def sample(
         self, edge_selector=lambda e: True, log_probabilities=False
     ) -> "HistoryDag":
@@ -678,8 +690,8 @@ class HistoryDag:
         DAG containing the root and all leaf nodes) For reproducibility, set
         ``random.seed`` before sampling.
 
-        When there is an option, edges pointing to nodes on which `selection_func` is True
-        will always be chosen.
+        When there is an option, only edges pointing to nodes on which `edge_selector` is True
+        will be chosen.
 
         Returns a new HistoryDag object.
         """
