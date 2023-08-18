@@ -434,7 +434,7 @@ def disambiguate(
 
         # Adjust child cost vectors
         for child in node.children:
-            child.cost_vector += adj_vec
+            child.cost_vector = child.cost_vector + adj_vec
         node.sequence = "".join(new_seq)
 
     if remove_cvs:

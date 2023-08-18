@@ -310,7 +310,6 @@ class CGHistoryDag(HistoryDag):
         
         return muts
         
-
     def adjusted_node_probabilities(
         self,
         log_probabilities=False,
@@ -343,25 +342,51 @@ class CGHistoryDag(HistoryDag):
                                 mut_freq[mut] = 0
                             mut_freq[mut] += edge_counts[(parent, child)]
                             total_muts += edge_counts[(parent, child)]
+            ####
+            # NOTE: DEBUG stuff
+            # mut_freq_test = {}
+            # edge_counts = self.count_edges()
+            # total_muts = 0
+            # for child in reversed(list(self.postorder())):
+            #     if not child.is_root():
+            #         for parent in child.parents:
+            #             if parent.is_root() or child.is_leaf():
+            #                 continue
+            #             muts = self.get_mutations(parent, child, "parent_child_site")
+            #             if len(muts) == 0:
+            #                 uncollapsed = True
+                    
+            #             for mut in muts:
+            #                 if mut not in mut_freq_test:
+            #                     mut_freq_test[mut] = 0
+            #                 mut_freq_test[mut] += edge_counts[(parent, child)]
+            #                 total_muts += edge_counts[(parent, child)]
+
+            # print(mut_freq_test)
+            # print(mut_freq)
             
-            if uncollapsed:
-                warnings.warn("Support adjustment on uncollapsed DAG.")
+            # if uncollapsed:
+            #     warnings.warn("Support adjustment on uncollapsed DAG.")
+            ####
 
             min_mut_freq = 1
+            max_mut_freq = 0
             for mut in mut_freq.keys():
                 mut_freq[mut] /= total_muts
                 assert mut_freq[mut] <= 1 and mut_freq[mut] >= 1 / total_muts
                 if mut_freq[mut] < min_mut_freq:
                     min_mut_freq = mut_freq[mut]
+                if mut_freq[mut] > max_mut_freq:
+                    max_mut_freq = mut_freq[mut]
 
-            # TODO: Inspect this further to gather stats about what type of mutations are most common
-            # print(mut_freq)
+            def mut_freq_transformation(freq):
+                # return (freq - min_mut_freq) / max_mut_freq # Linear map supports correction to [0,1]
+                return freq / max_mut_freq * 0.25
 
             # Returns a value in [0, 1] that indicates the correct adjustment
             if log_probabilities:
 
                 def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
-                    print("parent:", len(parent.clade_union()), "child:", len(child.clade_union()))
                     if parent.is_root() or child.is_leaf():
                         return 0
                     else:
@@ -373,7 +398,7 @@ class CGHistoryDag(HistoryDag):
                                 1
                                 - historydag.utils.prod(
                                     [
-                                        mut_freq[mut] for mut in diff
+                                        mut_freq_transformation(mut_freq[mut]) for mut in diff
                                     ]
                                 )
                             )
@@ -389,7 +414,7 @@ class CGHistoryDag(HistoryDag):
                             return eps * min_mut_freq
                         return 1 - historydag.utils.prod(
                             [
-                                mut_freq[mut]
+                                mut_freq_transformation(mut_freq[mut])
                                 for mut in diff
                             ]
                         )
