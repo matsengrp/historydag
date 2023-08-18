@@ -21,8 +21,9 @@ from historydag.parsimony_utils import (
 )
 import historydag.dag_pb2 as dpb
 import json
-from typing import NamedTuple, Callable
 from math import log
+from typing import NamedTuple, Callable
+from math import log, Callable
 
 
 _pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
@@ -303,26 +304,36 @@ class CGHistoryDag(HistoryDag):
     ):
         """Compute the probability of each node in the DAG, adjusted based on
         the frequency of mutations that define each node.
+
         See :meth:`HistoryDag.node_probabilities` for argument
         descriptions.
         """
         if adjust_func is None:
+            uncollapsed = False
             mut_freq = {}  # (parent_nuc, child_nuc, sequence_index) -> frequency
             edge_counts = self.count_edges()
             total_muts = 0
             for child in reversed(list(self.postorder())):
                 if not child.is_root():
                     for parent in child.parents:
-                        if parent.is_root():
+                        if parent.is_root() or child.is_leaf():
                             continue
-                        muts = cg_diff(
-                            parent.label.compact_genome, child.label.compact_genome
+                        muts = list(
+                            cg_diff(
+                                parent.label.compact_genome, child.label.compact_genome
+                            )
                         )
+                        if len(muts) == 0:
+                            uncollapsed = True
+
                         for mut in muts:
                             if mut not in mut_freq:
                                 mut_freq[mut] = 0
                             mut_freq[mut] += edge_counts[(parent, child)]
                             total_muts += edge_counts[(parent, child)]
+
+            if uncollapsed:
+                raise Warning("Support adjustment on uncollapsed DAG.")
 
             min_mut_freq = 1
             for mut in mut_freq.keys():
@@ -338,45 +349,39 @@ class CGHistoryDag(HistoryDag):
             if log_probabilities:
 
                 def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
-                    print("parent:", len(parent.clade_union()), "child:", len(child.clade_union()))
-                    if parent.is_root():
+                    if parent.is_root() or child.is_leaf():
                         return 0
                     else:
-                        # print(historydag.utils.prod([mut_freq[mut] for mut in cg_diff(parent.label.compact_genome, child.label.compact_genome)]))
-                        # print("Mutation freqs:", [mut_freq[mut] for mut in cg_diff(parent.label.compact_genome, child.label.compact_genome)])
                         diff = [
-                            mut for mut in 
-                                cg_diff(
-                                    parent.label.compact_genome,
-                                    child.label.compact_genome
-                                    )
+                            mut
+                            for mut in cg_diff(
+                                parent.label.compact_genome, child.label.compact_genome
+                            )
                         ]
                         if len(diff) == 0:
-                            return eps * min_mut_freq
+                            return log(eps * min_mut_freq)
                         else:
                             return log(
                                 1
-                                - historydag.utils.prod(
-                                    [
-                                        mut_freq[mut] for mut in diff
-                                    ]
-                                )
+                                - historydag.utils.prod([mut_freq[mut] for mut in diff])
                             )
 
             else:
 
-                def adjust_func(parent, child):
-                    if parent.is_root():
+                def adjust_func(parent, child, min_mut_freq=min_mut_freq, eps=1e-2):
+                    if parent.is_root() or child.is_leaf():
                         return 1
                     else:
+                        diff = [
+                            mut
+                            for mut in cg_diff(
+                                parent.label.compact_genome, child.label.compact_genome
+                            )
+                        ]
+                        if len(diff) == 0:
+                            return eps * min_mut_freq
                         return 1 - historydag.utils.prod(
-                            [
-                                mut_freq[mut]
-                                for mut in cg_diff(
-                                    parent.label.compact_genome,
-                                    child.label.compact_genome,
-                                )
-                            ]
+                            [mut_freq[mut] for mut in diff]
                         )
 
         return self.node_probabilities(

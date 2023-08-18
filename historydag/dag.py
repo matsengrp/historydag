@@ -2881,11 +2881,9 @@ class HistoryDag:
                 start_func=start_func,
             )
 
-        if adjust_func is None:
-
-            def adjust_func(parent, child):
-                return 1
-
+        adjust_func = _none_override_ternary(
+            adjust_func, log_probabilities, lambda p, c: 0, lambda p, c: 1
+        )
         ua_node_val = _none_override_ternary(ua_node_val, log_probabilities, 0, 1)
         accum_func = _none_override_ternary(accum_func, log_probabilities, sum, prod)
         aggregate_func = _none_override_ternary(
@@ -2932,7 +2930,6 @@ class HistoryDag:
             return collapsed_probs
         else:
             return {node: prob for node, (_, prob) in node_probs.items()}
-        
 
     def edge_probabilities(
         self,
