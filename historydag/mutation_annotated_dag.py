@@ -19,11 +19,19 @@ from historydag.parsimony_utils import (
     compact_genome_hamming_distance_countfuncs,
     leaf_ambiguous_compact_genome_hamming_distance_countfuncs,
 )
+from historydag.utils import (
+    collapse_ete,
+    resolve_ete
+)
+
 import historydag.dag_pb2 as dpb
 import json
-from math import log
+from math import log, prod
 from typing import NamedTuple, Callable
-from math import log, Callable
+import numpy as np
+from scipy.linalg import expm
+import random
+random.seed(123)
 
 
 _pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
@@ -294,6 +302,35 @@ class CGHistoryDag(HistoryDag):
         """Write this history DAG to a JSON file."""
         with open(filename, "w") as fh:
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
+    
+    def diffused_tree_sampler(self, num_trees=1, node2id=None, prob_muts=None):
+        """
+        Samples n trees from mutation-diffused MP distribution on trees.
+        """
+
+        # Samples collapsed tree wp proportional to the number of binary trees its compatible with
+        self.count_histories(bifurcating=True)
+        self.probability_annotate(edge_weight_func=lambda par, child: child._dp_data) # TODO: Do I need to normalize the score?
+
+        if node2id is None:
+            node2id = {n: "unnamed" for n in self.preorder()}
+
+        for _ in range(num_trees):
+            history = self.sample()
+            tree = history.to_ete(name_func=lambda n: node2id[n], features=["compact_genome"])
+
+            # Collapse nodes randomly
+            if prob_muts is None:
+                collapse_ete(tree, feature_func_dict={"compact_genome": lambda n: n.compact_genome})
+            else:
+                collapse_ete(tree, prob_muts, feature_func_dict={"compact_genome": lambda n: n.compact_genome})
+
+            # Resolve to a binary tree uar
+            resolve_ete(tree, feature_func_dict={"compact_genome": lambda n: n.compact_genome})
+            
+            yield tree
+
+
 
     def adjusted_node_probabilities(
         self,
@@ -341,9 +378,6 @@ class CGHistoryDag(HistoryDag):
                 assert mut_freq[mut] <= 1 and mut_freq[mut] >= 1 / total_muts
                 if mut_freq[mut] < min_mut_freq:
                     min_mut_freq = mut_freq[mut]
-
-            # TODO: Inspect this further to gather stats about what type of mutations are most common
-            # print(mut_freq)
 
             # Returns a value in [0, 1] that indicates the correct adjustment
             if log_probabilities:

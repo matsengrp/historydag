@@ -1,8 +1,14 @@
 """Utility functions and classes for working with HistoryDag objects."""
 
 import ete3
-from math import log, exp, isfinite
+from ete3 import Tree
+import random
+from random import randrange
+random.seed(123)
+import numpy as np
+from math import log, exp, isfinite, prod
 from collections import Counter
+from frozendict import frozendict
 from functools import wraps
 import operator
 from collections import UserDict
@@ -994,3 +1000,170 @@ def _deprecate_message(message):
         return deprecated
 
     return _deprecate
+
+
+# TODO: If this works, update the CLI code to incorporate this version of random resolving
+def resolve_ete(tree, feature_func_dict={}):
+    """
+    Given an ete tree, resolves all polytomies by creating a uniformly random bifurcating tree
+    that is consistent with the multifurcating one. New nodes will be populated with their parent's
+    features specified by feature_func_dict.
+    """
+    def _resolve(node, new_node_name, feature_func_dict=feature_func_dict):
+        if len(node.children) > 2:
+            # Implements Remy's algorithm for sampling binary trees uar
+            node_list = [child.detach() for child in node.children.copy()]
+            random.shuffle(node_list)
+            added_nodes = [node_list.pop(0)]
+            root = None
+            for _ in range(len(node_list)):
+                sampled_leaf = node_list.pop(0)
+                # sample node (internal/external) from current tree
+                sampled_node = added_nodes[random.randint(0, len(added_nodes)-1)]
+                sampled_node_parent = sampled_node.up
+
+                # merge under a parent node
+                parent = ete3.Tree()
+                parent.name = f"r{new_node_name}"
+                new_node_name+=1
+                if sampled_node_parent is not None:
+                    sampled_node.detach()
+                parent.add_child(sampled_node)
+                parent.add_child(sampled_leaf)
+                for feature, func in feature_func_dict.items():
+                    parent.add_feature(feature, func(node))
+                
+                # Edit tree in place to contain new structure and keep track of new root
+                if sampled_node_parent is not None:
+                    sampled_node_parent.add_child(parent)
+                else:
+                    root = parent
+                
+                added_nodes.append(parent)
+                added_nodes.append(sampled_leaf)
+
+            node.add_child(root)
+            root.delete()
+            
+            assert len(node.children) == 2
+
+        return new_node_name
+
+    new_node_name = 1
+    target = [tree]
+    target.extend([n for n in tree.get_descendants()])
+    for n in target:
+        new_node_name = _resolve(n, new_node_name) # Resolve the edges under given node
+
+
+def collapse_ete(tree, prob_muts=lambda n: 1, feature_func_dict={}, and_resolve = False):
+    """
+    Given an ete tree, collapse edges probabilistically as a fn of their mutaitons (prob_muts).
+    An edge (p, c) is collapsed by removing it from the DAG and connecting c to the parent of p.
+    New nodes will be populated with their parent's features specified by feature_func_dict.
+    If the `and_resolve` flag is set, this method resolves each node after every collapse.
+    """
+    for node in list(tree.traverse("preorder")):
+        if node.is_root() or node.is_leaf():
+            continue
+        num_children = len(node.children)
+        num_mut_occured = np.random.binomial(num_children-1, prob_muts(node))+1
+        if num_mut_occured > 1:
+            # Create a new node under node.up for each mutation
+            new_nodes = []
+            for _ in range(num_mut_occured):
+                new_node = ete3.Tree()
+                for feature, func in feature_func_dict.items():
+                    new_node.add_feature(feature, func(node))
+                node.up.add_child(new_node)
+                new_nodes.append(new_node)
+            
+            # Randomly assign the children of node to each new node
+            children = node.children.copy()
+            for i, idx in enumerate(random.sample(range(len(children)), len(children))):
+                child = children[idx].detach()
+                if i < len(new_nodes):  # Guarantees that each new node has one child
+                    new_nodes[i].add_child(child)
+                else:
+                    new_nodes[random.randint(0, len(new_nodes)-1)].add_child(child)
+
+            # Clean up by removing unifurcations and the old node reference from the tree
+            node.detach()
+            for new_node in new_nodes:
+                if len(new_node.children) == 1:
+                    new_node.delete()
+        
+        if and_resolve:
+            # TODO: How much of the tree should we be resolving here? Only what has been edited
+            #       during this collapse? If so the order of traversal matters a lot...
+            raise Warning("Resolving while collapsing has not been implemented yet!")
+
+
+
+
+def _test_resolve_ete(n, trials=10):
+    """
+    Computes statistics about the method `resolve_ete` by looking at the distribution of trees on n
+    taxa it yeilds.
+    """
+    num_bifurcating_trees = count_labeled_binary_topologies(n)
+
+    def equals(t1, t2):
+        """Uses RF distance to determine whether two trees are equal"""
+        t1_node2cu = {}
+        for node in t1.traverse("postorder"):
+            if node.is_leaf():
+                cu = [node.name]
+            else:
+                cu = []
+                for child in node.children:
+                    cu.extend(list(t1_node2cu[child]))
+            cu = frozenset(cu)
+            t1_node2cu[node] = cu
+        t2_node2cu = {}
+        for node in t2.traverse("postorder"):
+            if node.is_leaf():
+                cu = [node.name]
+            else:
+                cu = []
+                for child in node.children:
+                    cu.extend(list(t2_node2cu[child]))
+            cu = frozenset(cu)
+            t2_node2cu[node] = cu
+
+        rf_dist = len(set(t1_node2cu.values()).difference(set(t2_node2cu.values()))) + \
+                len(set(t2_node2cu.values()).difference(set(t1_node2cu.values())))
+        
+        return rf_dist == 0
+    
+    ctree = Tree()
+    ctree.populate(n, names_library=[f"s{i+1}" for i in range(n)])
+    collapse_ete(ctree, prob_muts=lambda n: 1)
+    print(ctree)
+    tree_list = []
+    tree_counts = Counter()
+    for i in range(trials):
+        rtree = ctree.copy()
+        resolve_ete(rtree)
+        idx = len(tree_list)
+        for j, tree in enumerate(tree_list):
+            if equals(tree, rtree):
+                idx = j
+                break
+        if idx == len(tree_list):
+            tree_list.append(rtree)
+        tree_counts[idx] += 1
+
+    return tree_list, tree_counts, num_bifurcating_trees
+
+    
+
+
+    
+        
+        
+
+    
+
+
+
