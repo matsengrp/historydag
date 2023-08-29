@@ -311,8 +311,7 @@ class CGHistoryDag(HistoryDag):
         # Samples collapsed tree wp proportional to the number of binary trees its compatible with
         self.count_histories(bifurcating=True)
         self.probability_annotate(
-            edge_weight_func=lambda par, child: child._dp_data
-            * count_labeled_binary_topologies(len(child.clades))
+            edge_weight_func=lambda par, child: count_labeled_binary_topologies(len(child.clades))
         )
 
         if node2id is None:

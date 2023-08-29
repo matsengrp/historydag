@@ -790,8 +790,7 @@ def test_make_bifurcating_uniform():
     bif_counts = Counter(bif_counts)
     dag.count_histories(bifurcating=True)
     dag.probability_annotate(
-        edge_weight_func=lambda par, child: child._dp_data
-        * dagutils.count_labeled_binary_topologies(len(child.clades))
+        edge_weight_func=lambda par, child: dagutils.count_labeled_binary_topologies(len(child.clades))
     )
     dag._check_valid()
     take2 = Counter([dag.sample().to_newick() for _ in range(10000)])
