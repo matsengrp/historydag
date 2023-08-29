@@ -35,6 +35,7 @@ from historydag.dag_node import (
     EdgeSet,
     empty_node,
 )
+
 # from historydag.mutation_annotated_dag import CGHistoryDag    # NOTE: Causes circular import
 from historydag.compact_genome import cg_diff
 
@@ -2598,7 +2599,6 @@ class HistoryDag:
             aggregate_func = sum
         return self.optimal_weight_annotate(**kwargs, optimal_func=aggregate_func)
 
-
     # def node_probabilities_old(
     #     self,
     #     log_probabilities=False,
@@ -2689,7 +2689,6 @@ class HistoryDag:
     #     else:
     #         return node_probs
 
-
     # William's first stab
     # def node_probabilities(
     #     self,
@@ -2739,7 +2738,7 @@ class HistoryDag:
     #     # NOTE: Can't check this here due to circular import issues
     #     # if adjust_probs and not isinstance(self, CGHistoryDag):
     #     #     raise Exception("Have not implemented support adjustment for non-CG DAGs")
-    
+
     #     if edge_weight_func is not None:
     #         self.probability_annotate(
     #             edge_weight_func,
@@ -2755,7 +2754,6 @@ class HistoryDag:
     #     aggregate_func = _none_override_ternary(
     #         aggregate_func, log_probabilities, utils.logsumexp, sum
     #     )
-
 
     #     self.recompute_parents()
     #     node_probs = {self.dagroot: ua_node_val}
@@ -2782,7 +2780,7 @@ class HistoryDag:
     #     # print(mut_freq)
 
     #     adj_node_probs = {self.dagroot: ua_node_val}
-    
+
     #     # Returns a value in [0, 1] that indicates the correct adjustment
     #     def adj_func(parent, child):
     #         if parent.is_root():
@@ -2814,7 +2812,7 @@ class HistoryDag:
 
     #     if adjust_probs:
     #         node_probs = adj_node_probs
-        
+
     #     # This must be done separately because otherwise we have no reverse
     #     # postorder guarantee on keys in node_probs.
     #     if collapse_key is not None:
@@ -2844,6 +2842,7 @@ class HistoryDag:
         **kwargs,
     ):
         """Compute the probability of each node in the DAG.
+
         Args:
             log_probabilities: If True, all probabilities, and the values from ``edge_weight_func``, will
                 be treated as log values.

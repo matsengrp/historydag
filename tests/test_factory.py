@@ -764,6 +764,39 @@ def compare_decomposed_probabilities(dag, edge_func, log_probabilities):
         assert is_close(normalize(true_prob), check_prob, tol=0.00001)
 
 
+def test_make_bifurcating_uniform():
+    random.seed(1)
+
+    def normalize_counts(counter):
+        n = len(list(counter.elements()))
+        return [num / n for _, num in sorted(counter.items(), key=lambda it: it[0])]
+
+    def is_close(f1, f2):
+        return abs(f1 - f2) < 0.03
+
+    dag = cdags[-4]
+    bif_counts = {
+        tree.to_newick(): tree.count_histories(bifurcating=True) for tree in dag
+    }
+
+    print(len(bif_counts), list(bif_counts.values()))
+    bif_counts = Counter(bif_counts)
+    dag.count_histories(bifurcating=True)
+    dag.probability_annotate(
+        edge_weight_func=lambda par, child: child._dp_data
+        * dagutils.count_labeled_binary_topologies(len(child.clades))
+    )
+    dag._check_valid()
+    take2 = Counter([dag.sample().to_newick() for _ in range(10000)])
+
+    take1norms = normalize_counts(bif_counts)
+
+    take2norms = normalize_counts(take2)
+    print(take1norms)
+    print(take2norms)
+    assert all(is_close(norm1, norm2) for norm1, norm2 in zip(take1norms, take2norms))
+
+
 def test_conditional_edge_probabilities():
     # first compare to uniform:
     compare_decomposed_probabilities(dag, lambda n1, n2: 1, log_probabilities=False)

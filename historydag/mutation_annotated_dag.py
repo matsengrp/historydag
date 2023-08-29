@@ -21,7 +21,8 @@ from historydag.parsimony_utils import (
 )
 from historydag.utils import (
     collapse_ete,
-    resolve_ete
+    resolve_ete,
+    count_labeled_binary_topologies,
 )
 
 import historydag.dag_pb2 as dpb
@@ -31,6 +32,7 @@ from typing import NamedTuple, Callable
 import numpy as np
 from scipy.linalg import expm
 import random
+
 random.seed(123)
 
 
@@ -302,35 +304,45 @@ class CGHistoryDag(HistoryDag):
         """Write this history DAG to a JSON file."""
         with open(filename, "w") as fh:
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
-    
+
     def diffused_tree_sampler(self, num_trees=1, node2id=None, prob_muts=None):
-        """
-        Samples n trees from mutation-diffused MP distribution on trees.
-        """
+        """Samples n trees from mutation-diffused MP distribution on trees."""
 
         # Samples collapsed tree wp proportional to the number of binary trees its compatible with
         self.count_histories(bifurcating=True)
-        self.probability_annotate(edge_weight_func=lambda par, child: child._dp_data) # TODO: Do I need to normalize the score?
+        self.probability_annotate(
+            edge_weight_func=lambda par, child: child._dp_data
+            * count_labeled_binary_topologies(len(child.clades))
+        )
 
         if node2id is None:
             node2id = {n: "unnamed" for n in self.preorder()}
 
         for _ in range(num_trees):
             history = self.sample()
-            tree = history.to_ete(name_func=lambda n: node2id[n], features=["compact_genome"])
+            tree = history.to_ete(
+                name_func=lambda n: node2id[n], features=["compact_genome"]
+            )
 
             # Collapse nodes randomly
             if prob_muts is None:
-                collapse_ete(tree, feature_func_dict={"compact_genome": lambda n: n.compact_genome})
+                collapse_ete(
+                    tree,
+                    feature_func_dict={"compact_genome": lambda n: n.compact_genome},
+                )
             else:
-                collapse_ete(tree, prob_muts, feature_func_dict={"compact_genome": lambda n: n.compact_genome})
+                collapse_ete(
+                    tree,
+                    prob_muts,
+                    feature_func_dict={"compact_genome": lambda n: n.compact_genome},
+                )
 
             # Resolve to a binary tree uar
-            resolve_ete(tree, feature_func_dict={"compact_genome": lambda n: n.compact_genome})
-            
+            resolve_ete(
+                tree, feature_func_dict={"compact_genome": lambda n: n.compact_genome}
+            )
+
             yield tree
-
-
 
     def adjusted_node_probabilities(
         self,
