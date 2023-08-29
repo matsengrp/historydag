@@ -774,7 +774,14 @@ def test_make_bifurcating_uniform():
     def is_close(f1, f2):
         return abs(f1 - f2) < 0.03
 
-    dag = cdags[-4]
+    # dag = cdags[-4]
+    local_outpath = "/fh/fast/matsen_e/whowards/hdag-benchmark/tmp"
+    from historydag import mutation_annotated_dag
+    dag = mutation_annotated_dag.load_MAD_protobuf_file(local_outpath + "/trimmed_opt_dag.pb")
+    dag.make_complete()
+    dag.convert_to_collapsed()
+    dag.trim_optimal_weight()
+
     bif_counts = {
         tree.to_newick(): tree.count_histories(bifurcating=True) for tree in dag
     }
@@ -790,10 +797,24 @@ def test_make_bifurcating_uniform():
     take2 = Counter([dag.sample().to_newick() for _ in range(10000)])
 
     take1norms = normalize_counts(bif_counts)
-
     take2norms = normalize_counts(take2)
-    print(take1norms)
-    print(take2norms)
+
+    take1total = sum([c for c in bif_counts.values()])
+    take2total = sum([c for c in take2.values()])
+
+    take1ordered = []
+    take2ordered = []
+    bif_counts_ordered = []
+    for nwk in bif_counts.keys():
+        take1ordered.append(bif_counts[nwk] / take1total)
+        take2ordered.append(take2[nwk] / take2total)
+        bif_counts_ordered.append(bif_counts[nwk])
+
+    print(bif_counts_ordered)
+    print("Ideal distribution:")
+    print(take1ordered)
+    print("Approximate DAG distirbution:")
+    print(take2ordered)
     assert all(is_close(norm1, norm2) for norm1, norm2 in zip(take1norms, take2norms))
 
 
