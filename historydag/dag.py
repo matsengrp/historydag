@@ -1170,6 +1170,13 @@ class HistoryDag:
         namedict: Mapping[Label, str] = {},
         show_child_clades: bool = True,
         show_partitions: bool = None,
+        level_leaves: bool = False,
+        graph_attr: dict = {},
+        node_attr: dict = {},
+        edge_attr: dict = {},
+        edge_attr_inheritance: str = "none",
+        show_edge_probs: bool = False,
+        show_edge_weights: bool = False,
     ) -> gv.Digraph:
         r"""Converts history DAG to graphviz (dot format) Digraph object.
 
@@ -1180,6 +1187,20 @@ class HistoryDag:
                 used instead, if both are provided.
             show_child_clades: Whether to include child clades in output.
             show_partitions: Deprecated alias for show_child_clades.
+            level_leaves: Whether to draw leaves on the same level, or wherever they fall naturally.
+            graph_attr: Additional graphviz graph attributes (see graphviz docs)
+            node_attr: Additional graphviz node attributes (see graphviz docs)
+            edge_attr: Additional graphviz edge attributes (see graphviz docs)
+            edge_attr_inheritance: "parent" to inherit from parent node, "child" to inherit from child, or "none".
+            show_edge_probs: whether to show edge probabilities
+            show_edge_weights: whether to show edge weights
+
+        Notes:
+            Graphviz dot format attributes are documented at https://graphviz.org/doc/info/attrs.html
+            The graphviz attributes passed to this method are for the entire graph. Attributes for
+            individual nodes can be included in individual node attr dictionaries under the key ``gv_attrs``.
+            For example, ``node.attr['gv_attrs'] = {'color': 'red'}`` will color a node red in the graphviz
+            output.
         """
         if show_partitions is not None:
             show_child_clades = show_partitions
@@ -1187,39 +1208,73 @@ class HistoryDag:
         def labeller(label):
             if label in namedict:
                 return str(namedict[label])
+            elif isinstance(label, UALabel):
+                return "UA_node"
             elif len(str(tuple(label))) < 11:
                 return str(tuple(label))
             else:
                 return str(hash(label))
+
+        if labelfunc is None:
+            labelfunc = lambda n: labeller(n.label)
 
         def taxa(clade):
             ls = [labeller(taxon) for taxon in clade]
             ls.sort()
             return ",".join(ls)
 
-        if labelfunc is None:
-            labelfunc = utils.ignore_uanode("UA_node")(lambda n: labeller(n.label))
 
-        G = gv.Digraph("labeled partition DAG", node_attr={"shape": "record"})
-        for node in self.postorder():
-            if node.is_leaf() or show_child_clades is False:
-                G.node(str(id(node)), f"<label> {labelfunc(node)}")
+        def gv_attrs(node):
+            if isinstance(node.attr, dict) and "gv_attrs" in node.attr:
+                return node.attr["gv_attrs"]
+            else:
+                return dict()
+
+        def gv_edge_attrs(parent, child):
+            if edge_attr_inheritance == "parent":
+                return gv_attrs(parent)
+            elif edge_attr_inheritance == "child":
+                return gv_attrs(child)
+            else:
+                return dict()
+
+        _node_attr = {"shape": "record"}
+        _node_attr.update(node_attr)
+        G = gv.Digraph("labeled partition DAG",
+                       graph_attr=graph_attr,
+                       edge_attr=edge_attr,
+                       node_attr=_node_attr)
+        
+
+        leaves = self.get_leaves()
+        internal_nodes = filter(lambda n: not n.is_leaf(), self.preorder())
+        with G.subgraph() as s:
+            if level_leaves:
+                s.attr(rank='same')
+            for node in leaves:
+                s.node(str(id(node)), f"<label> {labelfunc(node)}", **gv_attrs(node))
+
+            
+        for node in internal_nodes:
+            if node.is_ua_node() or show_child_clades is False:
+                G.node(str(id(node)), f"<label> {labelfunc(node)}", **gv_attrs(node))
             else:
                 splits = "|".join(
                     [f"<{taxa(clade)}> {taxa(clade)}" for clade in node.clades]
                 )
-                G.node(str(id(node)), f"{{ <label> {labelfunc(node)} |{{{splits}}} }}")
+                G.node(str(id(node)), f"{{ <label> {labelfunc(node)} |{{{splits}}} }}", **gv_attrs(node))
             for clade in node.clades:
                 for target, weight, prob in node.clades[clade]:
                     label = ""
-                    if prob < 1.0:
+                    if show_edge_probs:
                         label += f"p:{prob:.2f}"
-                    if weight > 0.0:
+                    if show_edge_weights:
                         label += f"w:{weight}"
                     G.edge(
                         f"{id(node)}:{taxa(clade) if show_child_clades else 'label'}:s",
                         f"{id(target)}:n",
                         label=label,
+                        **gv_edge_attrs(node, target)
                     )
         return G
 
