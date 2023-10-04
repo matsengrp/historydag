@@ -1216,13 +1216,14 @@ class HistoryDag:
                 return str(hash(label))
 
         if labelfunc is None:
-            labelfunc = lambda n: labeller(n.label)
+
+            def labelfunc(n):
+                return labeller(n.label)
 
         def taxa(clade):
             ls = [labeller(taxon) for taxon in clade]
             ls.sort()
             return ",".join(ls)
-
 
         def gv_attrs(node):
             if isinstance(node.attr, dict) and "gv_attrs" in node.attr:
@@ -1240,21 +1241,21 @@ class HistoryDag:
 
         _node_attr = {"shape": "record"}
         _node_attr.update(node_attr)
-        G = gv.Digraph("labeled partition DAG",
-                       graph_attr=graph_attr,
-                       edge_attr=edge_attr,
-                       node_attr=_node_attr)
-        
+        G = gv.Digraph(
+            "labeled partition DAG",
+            graph_attr=graph_attr,
+            edge_attr=edge_attr,
+            node_attr=_node_attr,
+        )
 
         leaves = self.get_leaves()
         internal_nodes = filter(lambda n: not n.is_leaf(), self.preorder())
         with G.subgraph() as s:
             if level_leaves:
-                s.attr(rank='same')
+                s.attr(rank="same")
             for node in leaves:
                 s.node(str(id(node)), f"<label> {labelfunc(node)}", **gv_attrs(node))
 
-            
         for node in internal_nodes:
             if node.is_ua_node() or show_child_clades is False:
                 G.node(str(id(node)), f"<label> {labelfunc(node)}", **gv_attrs(node))
@@ -1262,7 +1263,11 @@ class HistoryDag:
                 splits = "|".join(
                     [f"<{taxa(clade)}> {taxa(clade)}" for clade in node.clades]
                 )
-                G.node(str(id(node)), f"{{ <label> {labelfunc(node)} |{{{splits}}} }}", **gv_attrs(node))
+                G.node(
+                    str(id(node)),
+                    f"{{ <label> {labelfunc(node)} |{{{splits}}} }}",
+                    **gv_attrs(node),
+                )
             for clade in node.clades:
                 for target, weight, prob in node.clades[clade]:
                     label = ""
@@ -1274,7 +1279,7 @@ class HistoryDag:
                         f"{id(node)}:{taxa(clade) if show_child_clades else 'label'}:s",
                         f"{id(target)}:n",
                         label=label,
-                        **gv_edge_attrs(node, target)
+                        **gv_edge_attrs(node, target),
                     )
         return G
 
