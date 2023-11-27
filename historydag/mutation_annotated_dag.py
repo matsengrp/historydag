@@ -5,7 +5,7 @@ The resulting history DAG contains labels with 'compact genomes', and a
 'refseq' attribute describing a reference sequence and set of mutations
 relative to the reference.
 """
-
+import warnings
 import functools
 from frozendict import frozendict
 from historydag.dag import HistoryDag, HistoryDagNode, UANode, EdgeSet
@@ -305,8 +305,9 @@ class CGHistoryDag(HistoryDag):
         with open(filename, "w") as fh:
             fh.write(self.to_json(sort_compact_genomes=sort_compact_genomes))
 
-    def diffused_tree_sampler(self, num_trees=1, node2id=None, prob_muts=None):
-        """Samples n trees from mutation-diffused MP distribution on trees."""
+    def diffused_tree_sampler(self, num_trees, fasta, prob_muts=None):
+        """Samples n trees from mutation-diffused MP distribution on trees. Node2id is used to
+        name the ete nodes"""
 
         # Samples collapsed tree wp proportional to the number of binary trees its compatible with
         self.count_histories(bifurcating=True)
@@ -314,8 +315,19 @@ class CGHistoryDag(HistoryDag):
             edge_weight_func=lambda par, child: count_labeled_binary_topologies(len(child.clades))
         )
 
-        if node2id is None:
-            node2id = {n: "unnamed" for n in self.preorder()}
+        
+        seq2id = {seq: id for id, seq in fasta.items()}
+        node2id = {}
+        for node in self.postorder():
+            if node.is_leaf():
+                seq = node.label.compact_genome.to_sequence()
+                if seq in seq2id:
+                    node2id[node] = seq2id[seq]
+                else:
+                    warnings.warn("Warning: leaf sequence not found in fasta")
+                    node2id[node] = "unnamed"
+            else:
+                node2id[node] = "unnamed"
 
         for _ in range(num_trees):
             history = self.sample()
@@ -359,7 +371,7 @@ class CGHistoryDag(HistoryDag):
         if adjust_func is None:
             uncollapsed = False
             mut_freq = {}  # (parent_nuc, child_nuc, sequence_index) -> frequency
-            edge_counts = self.count_edges()
+            edge_counts = self.count_edges()    # Number of trees each edge takes part in
             total_muts = 0
             for child in reversed(list(self.postorder())):
                 if not child.is_root():

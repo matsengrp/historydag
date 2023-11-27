@@ -1061,7 +1061,7 @@ def resolve_ete(tree, feature_func_dict={}):
 
 def collapse_ete(tree, prob_muts=lambda n: 1, feature_func_dict={}, and_resolve=False):
     """Given an ete tree, collapse edges probabilistically as a fn of their
-    mutaitons (prob_muts).
+    mutations (prob_muts).
 
     An edge (p, c) is collapsed by removing it from the DAG and
     connecting c to the parent of p. New nodes will be populated with
@@ -1074,11 +1074,17 @@ def collapse_ete(tree, prob_muts=lambda n: 1, feature_func_dict={}, and_resolve=
             continue
         num_children = len(node.children)
         num_mut_occured = np.random.binomial(num_children - 1, prob_muts(node)) + 1
+
+
         if num_mut_occured > 1:
             # Create a new node under node.up for each mutation
             new_nodes = []
             for _ in range(num_mut_occured):
                 new_node = ete3.Tree()
+                new_node.name = node.name
+
+                # TODO: THIS DOESN'T WORK!
+                #       Need to give nodes their own mutations. This replaces mutations with nothing
                 for feature, func in feature_func_dict.items():
                     new_node.add_feature(feature, func(node))
                 node.up.add_child(new_node)
