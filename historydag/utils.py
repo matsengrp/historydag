@@ -597,7 +597,12 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     return kwargs
 
 
-def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
+def make_rfdistance_countfuncs(
+    ref_tree: "HistoryDag",
+    rooted: bool = False,
+    one_sided: str = None,
+    one_sided_coefficients: Tuple[float, float] = (1, 1),
+):
     """Provides functions to compute Robinson-Foulds (RF) distances of trees in
     a DAG, relative to a fixed reference tree.
 
@@ -613,13 +618,23 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.
         rooted: If False, use edges' splits for RF distance computation. Otherwise, use
             the clade below each edge.
+        one_sided: May be 'left', 'right', or None. 'left' means that we count
+            splits (or clades, in the rooted case) which are in the reference tree but not
+            in the DAG tree, especially useful if trees in the DAG might be resolutions of
+            a multifurcating reference. 'right' means that we count splits or clades in
+            the DAG tree which are not in the reference tree, useful if the reference tree
+            is possibly a resolution of multifurcating trees in the DAG. If not None,
+            one_sided_coefficients are ignored.
+        one_sided_coefficients: coefficients for non-standard symmetric difference calculations
+            (explained in notes below)
 
     The reference tree must have the same taxa as all the trees in the DAG.
 
     This calculation relies on the observation that the symmetric distance between
-    the splits A in a tree in the DAG, and the splits B in the reference tree, can
-    be computed as:
-    ``|A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|``
+    the splits (or clades, in the rooted case) A in a tree in the DAG, and the splits
+    (or clades) B in the reference tree, can be computed as:
+
+    ``|B ^ A| = |B - A| + |A - B| = |B| - |A n B| + |A - B|``
 
     As long as tree edges are in bijection with splits, this can be computed without
     constructing the set A by considering each edge's split independently.
@@ -627,15 +642,50 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     In order to accommodate multiple edges with the same split in a tree with root
     bifurcation, we keep track of the contribution of such edges separately.
 
+    One-sided RF distances are computed in this framework by introducing a pair of
+    ``one_sided_coefficients`` ``(s, t)``, which affect how much weight is given to
+    the right and left differences in the RF distance calculation:
+
+    ``|B ^ A| = s|B - A| + t|A - B| = |B| - |A n B| + |A - B|``
+
+    When both ``s`` and ``t`` are 1, we get the standard RF distance.
+    When ``s=1`` and ``t=0``, then we have a one-sided "left" RF difference, counting
+    the number of splits in the reference tree which are not in each DAG tree. When
+    ``one_sided`` is set to `left`, then these coefficients will be used, regardless of
+    the values passed.
+    When ``s=0`` and ``t=1``, then we have a one-sided "right" RF difference, counting
+    the number of splits in each DAG tree which are not in the reference. When
+    ``one_sided`` is set to `right`, these coefficients will be used, regardless of
+    the values passed.
+
     The weight type is a tuple wrapped in an IntState object. The first tuple value `a` is the
     contribution of edges which are not part of a root bifurcation, where edges whose splits are in B
     contribute `-1`, and edges whose splits are not in B contribute `-1`, and the second tuple
     value `b` is the contribution of the edges which are part of a root bifurcation. The value
     of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
+
+    rf_type_suffix = 'distance'
+    if one_sided_coefficients != (1,1):
+        rf_type_suffix = 'nonstandard'
+
+    if one_sided is None:
+        pass
+    elif one_sided.lower() == 'left':
+        one_sided_coefficients = (1, 0)
+        one_sided_suffix = 'left_difference'
+    elif one_sided.lower() == 'right':
+        one_sided_coefficients = (0, 1)
+        one_sided_suffix = 'right_difference'
+    else:
+        raise ValueError(f"Argument `one_sided` must have value 'left', 'right', or None, not {one_sided}")
+
+    s, t = one_sided_coefficients
+
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
+        # TODO sidedness not implemented for rooted
 
         def split(node):
             cu = node.clade_union()
@@ -692,20 +742,22 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
             name="RF_unrooted_distance",
         )
     else:
+        # TODO sidedness not tested for unrooted
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
         )
 
-        shift = len(ref_cus)
+        shift = s * len(ref_cus)
 
         def make_intstate(n):
             return IntState(n + shift, state=n)
 
         def edge_func(n1, n2):
             if n2.clade_union() in ref_cus:
-                return make_intstate(-1)
+                inval = 1
             else:
-                return make_intstate(1)
+                inval = 0
+            return make_intstate(t - (s + t) * inval)
 
         kwargs = AddFuncDict(
             {
@@ -713,7 +765,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
                 "edge_weight_func": edge_func,
                 "accum_func": lambda wlist: make_intstate(sum(w.state for w in wlist)),
             },
-            name="RF_rooted_distance",
+            name="RF_rooted_" + rf_type_suffix,
         )
 
     return kwargs
