@@ -493,18 +493,30 @@ def rooted_rf_distance(history1, history2):
     cladeset2 = {n.clade_union() for n in history2.preorder(skip_ua_node=True)}
     return len(cladeset1 ^ cladeset2)
 
+
 def test_right_left_rf_add_correctly():
     # In both the rooted and unrooted cases, left and right RF distances should
     # sum to the normal RF distance.
     for rooted in (True, False):
         for dag in dags:
             ref_tree = dag.sample()
-            left_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=rooted, one_sided='left')
-            right_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=rooted, one_sided='right')
+            left_kwargs = dagutils.make_rfdistance_countfuncs(
+                ref_tree, rooted=rooted, one_sided="left"
+            )
+            right_kwargs = dagutils.make_rfdistance_countfuncs(
+                ref_tree, rooted=rooted, one_sided="right"
+            )
             kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=rooted)
 
             for tree in dag:
-                assert tree.optimal_weight_annotate(**left_kwargs) + tree.optimal_weight_annotate(**right_kwargs) == tree.optimal_weight_annotate(**kwargs)
+                assert tree.optimal_weight_annotate(
+                    **left_kwargs
+                ) + tree.optimal_weight_annotate(
+                    **right_kwargs
+                ) == tree.optimal_weight_annotate(
+                    **kwargs
+                )
+
 
 def test_right_left_rf_collapse():
     """
@@ -533,16 +545,23 @@ def test_right_left_rf_collapse():
                     continue
                 else:
                     count += 1
-                    left_kwargs = dagutils.make_rfdistance_countfuncs(ctree, rooted=rooted, one_sided='left')
+                    left_kwargs = dagutils.make_rfdistance_countfuncs(
+                        ctree, rooted=rooted, one_sided="left"
+                    )
                     assert tree.optimal_weight_annotate(**left_kwargs) == 0
-                    oleft_kwargs = dagutils.make_rfdistance_countfuncs(tree, rooted=rooted, one_sided='left')
+                    oleft_kwargs = dagutils.make_rfdistance_countfuncs(
+                        tree, rooted=rooted, one_sided="left"
+                    )
                     assert ctree.optimal_weight_annotate(**oleft_kwargs) > 0
-                    right_kwargs = dagutils.make_rfdistance_countfuncs(ctree, rooted=rooted, one_sided='right')
+                    right_kwargs = dagutils.make_rfdistance_countfuncs(
+                        ctree, rooted=rooted, one_sided="right"
+                    )
                     assert tree.optimal_weight_annotate(**right_kwargs) > 0
-                    oright_kwargs = dagutils.make_rfdistance_countfuncs(tree, rooted=rooted, one_sided='right')
+                    oright_kwargs = dagutils.make_rfdistance_countfuncs(
+                        tree, rooted=rooted, one_sided="right"
+                    )
                     assert ctree.optimal_weight_annotate(**oright_kwargs) == 0
         assert count > 0
-
 
 
 def test_rf_rooted_distances():
@@ -642,7 +661,9 @@ def test_optimal_sum_rf_distance():
             calculated_sum = tree.optimal_sum_rf_distance(dag)
             assert calculated_sum == expected_sum
 
+
 # ############# END RF Distance Tests: ###############
+
 
 def test_trim_range():
     for curr_dag in [dags[-1], cdags[-1]]:

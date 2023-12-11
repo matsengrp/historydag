@@ -2315,7 +2315,7 @@ class HistoryDag:
             history,
             rooted=rooted,
             one_sided=one_sided,
-            one_sided_coefficients=one_sided_coefficients
+            one_sided_coefficients=one_sided_coefficients,
         )
         return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
 
@@ -2339,7 +2339,7 @@ class HistoryDag:
             history,
             rooted=rooted,
             one_sided=one_sided,
-            one_sided_coefficients=one_sided_coefficients
+            one_sided_coefficients=one_sided_coefficients,
         )
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
@@ -2363,7 +2363,7 @@ class HistoryDag:
             history,
             rooted=rooted,
             one_sided=one_sided,
-            one_sided_coefficients=one_sided_coefficients
+            one_sided_coefficients=one_sided_coefficients,
         )
         return self.weight_count(**kwargs)
 

@@ -665,27 +665,28 @@ def make_rfdistance_countfuncs(
     of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
 
-    rf_type_suffix = 'distance'
-    if one_sided_coefficients != (1,1):
-        rf_type_suffix = 'nonstandard'
+    rf_type_suffix = "distance"
+    if one_sided_coefficients != (1, 1):
+        rf_type_suffix = "nonstandard"
 
     if one_sided is None:
         pass
-    elif one_sided.lower() == 'left':
+    elif one_sided.lower() == "left":
         one_sided_coefficients = (1, 0)
-        one_sided_suffix = 'left_difference'
-    elif one_sided.lower() == 'right':
+        rf_type_suffix = "left_difference"
+    elif one_sided.lower() == "right":
         one_sided_coefficients = (0, 1)
-        one_sided_suffix = 'right_difference'
+        rf_type_suffix = "right_difference"
     else:
-        raise ValueError(f"Argument `one_sided` must have value 'left', 'right', or None, not {one_sided}")
+        raise ValueError(
+            f"Argument `one_sided` must have value 'left', 'right', or None, not {one_sided}"
+        )
 
     s, t = one_sided_coefficients
 
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
-        # TODO sidedness not tested for rooted
 
         def split(node):
             cu = node.clade_union()
@@ -742,10 +743,9 @@ def make_rfdistance_countfuncs(
                     summer(w.state for w in wlist)
                 ),
             },
-            name="RF_unrooted_distance",
+            name="RF_unrooted_distance_" + rf_type_suffix,
         )
     else:
-        # TODO sidedness not tested for unrooted
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
         )
