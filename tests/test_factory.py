@@ -496,15 +496,54 @@ def rooted_rf_distance(history1, history2):
 def test_right_left_rf_add_correctly():
     # In both the rooted and unrooted cases, left and right RF distances should
     # sum to the normal RF distance.
-    for dag in dags:
-        ref_tree = dag.sample()
-        left_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True, one_sided='left')
-        right_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True, one_sided='left')
-        kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True)
+    for rooted in (True, False):
+        for dag in dags:
+            ref_tree = dag.sample()
+            left_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=rooted, one_sided='left')
+            right_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=rooted, one_sided='right')
+            kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=rooted)
 
-        assert Counter((tree.optimal_weight_annotate(**left_kwargs) + 
-                       tree.optimal_weight_annotate(**right_kwargs))
-                       for tree in dag) == dag.weight_count(**kwargs)
+            for tree in dag:
+                assert tree.optimal_weight_annotate(**left_kwargs) + tree.optimal_weight_annotate(**right_kwargs) == tree.optimal_weight_annotate(**kwargs)
+
+def test_right_left_rf_collapse():
+    """
+    When one tree is a resolution of another, one-sided RF distance should be
+    able to detect this with a distance of 0. The relevant descriptions from
+    the docstring:
+
+        one_sided: May be 'left', 'right', or None. 'left' means that we count
+            splits (or clades, in the rooted case) which are in the reference tree but not
+            in the DAG tree, especially useful if trees in the DAG might be resolutions of
+            a multifurcating reference. 'right' means that we count splits or clades in
+            the DAG tree which are not in the reference tree, useful if the reference tree
+            is possibly a resolution of multifurcating trees in the DAG. If not None,
+            one_sided_coefficients are ignored.
+    """
+    for rooted in (True, False):
+        count = 0
+        for dag in dags:
+            for tree in dag:
+                ctree = tree.copy()
+                ctree.convert_to_collapsed()
+                kwargs = dagutils.make_rfdistance_countfuncs(ctree, rooted=rooted)
+                if tree.optimal_weight_annotate(**kwargs) == 0:
+                    # Then they're the same topology (when unrooted, a simple
+                    # node count isn't enough to identify this)
+                    continue
+                else:
+                    count += 1
+                    left_kwargs = dagutils.make_rfdistance_countfuncs(ctree, rooted=rooted, one_sided='left')
+                    assert tree.optimal_weight_annotate(**left_kwargs) == 0
+                    oleft_kwargs = dagutils.make_rfdistance_countfuncs(tree, rooted=rooted, one_sided='left')
+                    assert ctree.optimal_weight_annotate(**oleft_kwargs) > 0
+                    right_kwargs = dagutils.make_rfdistance_countfuncs(ctree, rooted=rooted, one_sided='right')
+                    assert tree.optimal_weight_annotate(**right_kwargs) > 0
+                    oright_kwargs = dagutils.make_rfdistance_countfuncs(tree, rooted=rooted, one_sided='right')
+                    assert ctree.optimal_weight_annotate(**oright_kwargs) == 0
+        assert count > 0
+
+
 
 def test_rf_rooted_distances():
     for dag in dags:
