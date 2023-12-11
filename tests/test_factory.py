@@ -487,11 +487,24 @@ def test_remove_label_fields():
     assert old_fieldset == new_fieldset
 
 
+# ############# RF Distance Tests: ###############
 def rooted_rf_distance(history1, history2):
     cladeset1 = {n.clade_union() for n in history1.preorder(skip_ua_node=True)}
     cladeset2 = {n.clade_union() for n in history2.preorder(skip_ua_node=True)}
     return len(cladeset1 ^ cladeset2)
 
+def test_right_left_rf_add_correctly():
+    # In both the rooted and unrooted cases, left and right RF distances should
+    # sum to the normal RF distance.
+    for dag in dags:
+        ref_tree = dag.sample()
+        left_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True, one_sided='left')
+        right_kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True, one_sided='left')
+        kwargs = dagutils.make_rfdistance_countfuncs(ref_tree, rooted=True)
+
+        assert Counter((tree.optimal_weight_annotate(**left_kwargs) + 
+                       tree.optimal_weight_annotate(**right_kwargs))
+                       for tree in dag) == dag.weight_count(**kwargs)
 
 def test_rf_rooted_distances():
     for dag in dags:
@@ -590,6 +603,7 @@ def test_optimal_sum_rf_distance():
             calculated_sum = tree.optimal_sum_rf_distance(dag)
             assert calculated_sum == expected_sum
 
+# ############# END RF Distance Tests: ###############
 
 def test_trim_range():
     for curr_dag in [dags[-1], cdags[-1]]:

@@ -660,7 +660,7 @@ def make_rfdistance_countfuncs(
 
     The weight type is a tuple wrapped in an IntState object. The first tuple value `a` is the
     contribution of edges which are not part of a root bifurcation, where edges whose splits are in B
-    contribute `-1`, and edges whose splits are not in B contribute `-1`, and the second tuple
+    contribute `-1`, and edges whose splits are not in B contribute `1`, and the second tuple
     value `b` is the contribution of the edges which are part of a root bifurcation. The value
     of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
@@ -685,7 +685,7 @@ def make_rfdistance_countfuncs(
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
-        # TODO sidedness not implemented for rooted
+        # TODO sidedness not tested for rooted
 
         def split(node):
             cu = node.clade_union()
@@ -696,15 +696,18 @@ def make_rfdistance_countfuncs(
         ref_splits = ref_splits - {
             frozenset({taxa, frozenset()}),
         }
-        shift = len(ref_splits)
+        shift = s * len(ref_splits)
 
         n_taxa = len(taxa)
 
         def is_history_root(n):
+            # TODO this is slow and dirty! Make more efficient
             return len(list(n.clade_union())) == n_taxa
 
         def sign(n):
-            return (-1) * (n < 0) + (n > 0)
+            # Should return the value of a single term corresponding
+            # to the identical root splits below a bifurcating root
+            return (-s) * (n < 0) + t * (n > 0)
 
         def summer(tupseq):
             a, b = 0, 0
@@ -727,9 +730,9 @@ def make_rfdistance_countfuncs(
                     return make_intstate((0, 1))
             else:
                 if spl in ref_splits:
-                    return make_intstate((-1, 0))
+                    return make_intstate((-s, 0))
                 else:
-                    return make_intstate((1, 0))
+                    return make_intstate((t, 0))
 
         kwargs = AddFuncDict(
             {

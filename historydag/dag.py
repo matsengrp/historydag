@@ -2296,6 +2296,8 @@ class HistoryDag:
         self,
         history: "HistoryDag",
         rooted: bool = False,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Trims this history DAG to the optimal (min or max) RF distance to a
@@ -2309,13 +2311,20 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
+        kwargs = utils.make_rfdistance_countfuncs(
+            history,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients
+        )
         return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
 
     def optimal_rf_distance(
         self,
         history: "HistoryDag",
         rooted: bool = False,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Returns the optimal (min or max) RF distance to a given history.
@@ -2326,10 +2335,21 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
+        kwargs = utils.make_rfdistance_countfuncs(
+            history,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients
+        )
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
-    def count_rf_distances(self, history: "HistoryDag", rooted: bool = False):
+    def count_rf_distances(
+        self,
+        history: "HistoryDag",
+        rooted: bool = False,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
+    ):
         """Returns a Counter containing all RF distances to a given history.
 
         The given history must be on the same taxa as all trees in the DAG.
@@ -2339,7 +2359,12 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
+        kwargs = utils.make_rfdistance_countfuncs(
+            history,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients
+        )
         return self.weight_count(**kwargs)
 
     def count_sum_rf_distances(self, reference_dag: "HistoryDag", rooted: bool = False):
