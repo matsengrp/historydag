@@ -541,7 +541,12 @@ log_natural_probability_funcs = AddFuncDict(
 according to the natural distribution induced by the DAG topology."""
 
 
-def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
+def sum_rfdistance_funcs(
+    reference_dag: "HistoryDag",
+    rooted: bool = False,
+    one_sided: str = None,
+    one_sided_coefficients: Tuple[float, float] = (1, 1),
+):
     """Provides functions to compute the sum over all histories in the provided
     reference DAG, of rooted RF distances to those histories.
 
@@ -559,6 +564,8 @@ def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
     The weights are represented by an IntState object and are shifted by a constant K,
     which is the sum of number of clades in each tree in the DAG.
     """
+    # TODO rooted is not used
+    # TODO one_sided and one_sided_coefficients not used
     N = reference_dag.count_nodes(collapse=True)
 
     # Remove the UA node clade union from N
