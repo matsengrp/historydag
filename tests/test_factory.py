@@ -629,44 +629,61 @@ def test_rf_unrooted_distances():
                     print("computed RF: ", comp_dist)
                     assert False
 
+
 def test_optimal_sum_rf_distance():
-    rooted=True
+    # Can only use unrooted sum RF distances on dags containing trees all on
+    # the same taxon set.
+
+    def one_taxon_set(dag):
+        return len({n.clade_union() for n in dag.dagroot.children()}) == 1
+
+    dags_to_test = [dag for dag in dags if one_taxon_set(dag)]
+    assert len(dags_to_test) > 5
 
     def other(side):
-        return {'right': 'left', 'left': 'right', None: None}[side]
+        return {"right": "left", "left": "right", None: None}[side]
 
-    for dag_idx, ref_dag in enumerate(dags):
+    for dag_idx, ref_dag in enumerate(dags_to_test):
         print("dagnum ", dag_idx)
         # let's just do this test for three trees in each dag:
         for tree_idx, tree in zip(range(3), ref_dag):
-            for one_sided in ('left', 'right', None):
-                print("treenum ", tree_idx)
-                print("one_side ", one_sided)
-                print("rooted ", rooted)
-                # First let's just make sure that when the ref_dag is just a single
-                # tree, optimal_sum_rf_distance agrees with normal rf_distance.
-                single_tree_dag = ref_dag[0]
-                # Here we get all the distances between trees in 'single_tree_dag' and the
-                # reference tree 'tree' (there's only one, since 'single_tree_dag'
-                # only contains one tree:
-                expected = single_tree_dag.count_rf_distances(tree, rooted=rooted, one_sided=one_sided)
-                expected_sum = sum(expected.elements())
-                calculated_sum = tree.optimal_sum_rf_distance(single_tree_dag, rooted=rooted, one_sided=other(one_sided))
-                assert calculated_sum == expected_sum
+            for one_sided in ("left", "right", None):
+                for rooted in (True, False):
+                    print("treenum ", tree_idx)
+                    print("one_side ", one_sided)
+                    print("rooted ", rooted)
+                    # First let's just make sure that when the ref_dag is just a single
+                    # tree, optimal_sum_rf_distance agrees with normal rf_distance.
+                    single_tree_dag = ref_dag[0]
+                    # Here we get all the distances between trees in 'single_tree_dag' and the
+                    # reference tree 'tree' (there's only one, since 'single_tree_dag'
+                    # only contains one tree:
+                    expected = single_tree_dag.count_rf_distances(
+                        tree, rooted=rooted, one_sided=one_sided
+                    )
+                    expected_sum = sum(expected.elements())
+                    calculated_sum = tree.optimal_sum_rf_distance(
+                        single_tree_dag, rooted=rooted, one_sided=other(one_sided)
+                    )
+                    assert calculated_sum == expected_sum
 
-                # Now let's try computing the summed rf distance on tree relative
-                # to ref_dag...
+                    # Now let's try computing the summed rf distance on tree relative
+                    # to ref_dag...
 
-                # Here we get all the distances between trees in 'dag' and the
-                # reference tree 'tree':
-                expected = ref_dag.count_rf_distances(tree, rooted=rooted, one_sided=one_sided)
-                # Here we sum all elements in the counter, with multiplicity:
-                # in other words we sum all distances from trees in 'dag' to 'tree'
-                expected_sum = sum(expected.elements())
-                # This should calculate the sum RF distance from 'tree' to all
-                # trees in 'dag':
-                calculated_sum = tree.optimal_sum_rf_distance(ref_dag, rooted=rooted, one_sided=other(one_sided))
-                assert calculated_sum == expected_sum
+                    # Here we get all the distances between trees in 'dag' and the
+                    # reference tree 'tree':
+                    expected = ref_dag.count_rf_distances(
+                        tree, rooted=rooted, one_sided=one_sided
+                    )
+                    # Here we sum all elements in the counter, with multiplicity:
+                    # in other words we sum all distances from trees in 'dag' to 'tree'
+                    expected_sum = sum(expected.elements())
+                    # This should calculate the sum RF distance from 'tree' to all
+                    # trees in 'dag':
+                    calculated_sum = tree.optimal_sum_rf_distance(
+                        ref_dag, rooted=rooted, one_sided=other(one_sided)
+                    )
+                    assert calculated_sum == expected_sum
 
 
 # ############# END RF Distance Tests: ###############
@@ -773,18 +790,44 @@ def test_weight_range_annotate():
 def test_sum_all_pair_rf_distance():
     dag = dags[-1]
 
-    # check 0 on single-tree dag vs itself:
-    assert dag[0].sum_rf_distances() == 0
-    assert dag[0].sum_rf_distances(reference_dag=dag[0]) == 0
+    small_dag_1 = dag[0] | (dag[i] for i in range(1, 7))
+    small_dag_2 = dag[-1] | (dag[i] for i in range(60, 67))
+    small_dag_1.summary()
+    small_dag_2.summary()
+    for rooted in (False, True):
+        for one_sided in ("left", "right", None):
+            # check 0 on single-tree dag vs itself:
+            assert dag[0].sum_rf_distances(rooted=rooted, one_sided=one_sided) == 0
+            assert (
+                dag[0].sum_rf_distances(
+                    reference_dag=dag[0], rooted=rooted, one_sided=one_sided
+                )
+                == 0
+            )
 
-    # check matches single rf distance between two single-tree dags:
-    udag = dag.unlabel()
-    assert udag[0].sum_rf_distances(reference_dag=udag[-1]) == udag[
-        0
-    ].optimal_rf_distance(udag[-1])
+            # check matches single rf distance between two single-tree dags:
+            udag = dag.unlabel()
+            assert udag[0].sum_rf_distances(
+                reference_dag=udag[-1], rooted=rooted, one_sided=one_sided
+            ) == udag[0].optimal_rf_distance(
+                udag[-1], rooted=rooted, one_sided=one_sided
+            )
 
-    # check matches truth on whole DAG vs self:
-    assert dag.sum_rf_distances() == sum(dag.count_sum_rf_distances(dag).elements())
+            # check matches truth on whole DAG vs self:
+            assert dag.sum_rf_distances(rooted=rooted, one_sided=one_sided) == sum(
+                dag.count_sum_rf_distances(
+                    dag, rooted=rooted, one_sided=one_sided
+                ).elements()
+            )
+
+            # check matches truth on dag1 vs dag2
+            assert small_dag_1.sum_rf_distances(
+                reference_dag=small_dag_2, rooted=rooted, one_sided=one_sided
+            ) == sum(
+                small_dag_1.count_sum_rf_distances(
+                    small_dag_2, rooted=rooted, one_sided=one_sided
+                ).elements()
+            )
 
 
 def test_sum_weight():
@@ -934,7 +977,7 @@ def test_count_nodes():
 
     # Now counting splits:
     dag = dags[-1].copy()
-    
+
     def history_to_splits(history):
         splits = set()
         all_taxa = next(history.dagroot.children()).clade_union()
@@ -947,6 +990,7 @@ def test_count_nodes():
     split_counts = dag.count_nodes(collapse=True, rooted=False)
     for split, count in split_counts.items():
         assert count == sum(1 for s in split_sets if split in s)
+
 
 def test_likelihoods():
     dag = dags[-1]

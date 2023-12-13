@@ -30,6 +30,10 @@ Label = Union[NamedTuple, "UALabel"]
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+class TaxaError(ValueError):
+    pass
+
+
 class UALabel(str):
     _fields: Tuple = tuple()
 
@@ -541,31 +545,7 @@ log_natural_probability_funcs = AddFuncDict(
 according to the natural distribution induced by the DAG topology."""
 
 
-def sum_rfdistance_funcs(
-    reference_dag: "HistoryDag",
-    rooted: bool = True,
-    one_sided: str = None,
-    one_sided_coefficients: Tuple[float, float] = (1, 1),
-):
-    """Provides functions to compute the sum over all histories in the provided
-    reference DAG, of rooted RF distances to those histories.
-
-    Args:
-        reference_dag: The reference DAG. The sum will be computed over all RF
-            distances to histories in this DAG
-
-    The reference DAG must have the same taxa as all the trees in the DAG on which these count
-    functions are used.
-
-    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under
-    the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF
-    distances, meaning that the clade below each edge is used for RF distance computation.
-
-    The weights are represented by an IntState object and are shifted by a constant K,
-    which is the sum of number of clades in each tree in the DAG.
-    """
-    # TODO rooted is not used
-    assert rooted
+def _process_rf_one_sided_coefficients(one_sided, one_sided_coefficients):
     rf_type_suffix = "distance"
     if one_sided_coefficients != (1, 1):
         rf_type_suffix = "nonstandard"
@@ -584,9 +564,63 @@ def sum_rfdistance_funcs(
         )
 
     s, t = one_sided_coefficients
+    return s, t, rf_type_suffix
+
+
+def sum_rfdistance_funcs(
+    reference_dag: "HistoryDag",
+    rooted: bool = True,
+    one_sided: str = None,
+    one_sided_coefficients: Tuple[float, float] = (1, 1),
+):
+    """Provides functions to compute the sum over all histories in the provided
+    reference DAG, of rooted RF distances to those histories.
+
+    Args:
+        reference_dag: The reference DAG. The sum will be computed over all RF
+            distances to histories in this DAG
+        rooted: If False, use edges' splits for RF distance computation. Otherwise, use
+            the clade below each edge.
+        one_sided: May be 'left', 'right', or None. 'left' means that we count
+            splits (or clades, in the rooted case) which are in the reference trees but not
+            in the DAG tree, especially useful if trees in the DAG might be resolutions of
+            multifurcating trees in the reference DAG. 'right' means that we count splits or clades in
+            the DAG tree which are not in the reference trees, useful if the reference trees
+            are possibly resolutions of multifurcating trees in the DAG. If not None,
+            one_sided_coefficients are ignored.
+        one_sided_coefficients: coefficients for non-standard symmetric difference calculations
+            (explained in notes below)
+
+    The reference DAG must have the same taxa as all the trees in the DAG on which these count
+    functions are used. If this is not true, methods using the keyword arguments produced by this
+    function may fail silently, returning values which mean nothing.
+
+    This function allows computation of sums of a Robinson-Foulds distance generalized by the
+    coefficients ``(s, t)`` provided to the ``one_sided_coefficients`` argument (or implicitly
+    set by the ``one_sided`` argument). Given a tree in the DAG with set of clades (or splits) A, and
+    a tree in the reference DAG with set of clades B, this distance is given by:
+
+    ``d_{s,t}(A, B) = s|B - A| + t|A - B|``
+
+    Notice that when s and t are both 1, this is the symmetric difference of A and B, the standard RF
+    distance.
+
+    For each tree A in a DAG, the AddFuncDict returned by this function computes the sum of this distance
+    over all trees B in the reference DAG.
+
+
+    Note that when computing unrooted weights, the sums are over all rooted trees in the reference
+    DAG, so a single unrooted tree contained twice in the reference DAG with different rootings
+    will be counted twice.
+
+    Weights are represented by an IntState object and are shifted by a constant K,
+    which is the sum of number of clades in each tree in the DAG.
+    """
+    s, t, rf_type_suffix = _process_rf_one_sided_coefficients(
+        one_sided, one_sided_coefficients
+    )
 
     N = reference_dag.count_nodes(collapse=True, rooted=rooted)
-
 
     # K is the constant that the weights are shifted by
     K = s * sum(N.values())
@@ -613,47 +647,64 @@ def sum_rfdistance_funcs(
                     sum(w.state for w in wlist)
                 ),  # summation over edge weights
             },
-            name="RF_rooted_sum",
+            name="RF_rooted_sum_" + rf_type_suffix,
         )
 
     else:
         taxa = next(reference_dag.dagroot.children()).clade_union()
+        n_taxa = len(taxa)
+
+        def is_history_root(n):
+            # TODO this is slow and dirty! Make more efficient
+            return len(list(n.clade_union())) == n_taxa
 
         def split(node):
             cu = node.clade_union()
             return frozenset({cu, taxa - cu})
+
         # We accumulate tuples, where the first number contains the weight,
         # except any contribution of a split below a bifurcating root node
         # is contained in the second number. This way its contribution can be
         # added exactly once
 
-        def make_intstate(n):
-            return IntState(n[0] + n[1] + K, state=n)
-
+        def make_intstate(tup):
+            return IntState(tup[0] + tup[1] + K, state=tup)
 
         def summer(tupseq):
+            tupseq = list(tupseq)
             a = 0
             for ia, _ in tupseq:
                 a += ia
             # second value should only be counted once. Any nonzero
             # values of the second value will always be identical
-            b = max(tupseq, key=lambda tup: abs(tup[1]))[1]
+            if len(tupseq) == 0:
+                b = 0
+            else:
+                b = max(tupseq, key=lambda tup: abs(tup[1]))[1]
             return (a, b)
 
         def edge_func(n1, n2):
             spl = split(n2)
+            spl_count = N.get(spl, 0)
             if n1.is_ua_node():
                 return make_intstate((0, 0))
-            if len(n1.clades) == 2 and is_history_root(n1):
-                if spl in ref_splits:
-                    return make_intstate((0, -1))
-                else:
-                    return make_intstate((0, 1))
             else:
-                if spl in ref_splits:
-                    return make_intstate((-s, 0))
+                val = num_trees - ((s + t) * spl_count)
+                if len(n1.clades) == 2 and is_history_root(n1):
+                    return make_intstate((0, val))
                 else:
-                    return make_intstate((t, 0))
+                    return make_intstate((val, 0))
+
+        kwargs = AddFuncDict(
+            {
+                "start_func": lambda n: make_intstate((0, 0)),
+                "edge_weight_func": edge_func,
+                "accum_func": lambda wlist: make_intstate(
+                    summer(w.state for w in wlist)
+                ),  # summation over edge weights
+            },
+            name="RF_unrooted_sum_" + rf_type_suffix,
+        )
 
     return kwargs
 
@@ -707,7 +758,7 @@ def make_rfdistance_countfuncs(
     ``one_sided_coefficients`` ``(s, t)``, which affect how much weight is given to
     the right and left differences in the RF distance calculation:
 
-    ``|B ^ A| = s|B - A| + t|A - B| = |B| - |A n B| + |A - B|``
+    ``|B ^ A| = s|B - A| + t|A - B| = s(|B| - |A n B|) + t|A - B|``
 
     When both ``s`` and ``t`` are 1, we get the standard RF distance.
     When ``s=1`` and ``t=0``, then we have a one-sided "left" RF difference, counting
@@ -726,24 +777,9 @@ def make_rfdistance_countfuncs(
     of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
 
-    rf_type_suffix = "distance"
-    if one_sided_coefficients != (1, 1):
-        rf_type_suffix = "nonstandard"
-
-    if one_sided is None:
-        pass
-    elif one_sided.lower() == "left":
-        one_sided_coefficients = (1, 0)
-        rf_type_suffix = "left_difference"
-    elif one_sided.lower() == "right":
-        one_sided_coefficients = (0, 1)
-        rf_type_suffix = "right_difference"
-    else:
-        raise ValueError(
-            f"Argument `one_sided` must have value 'left', 'right', or None, not {one_sided}"
-        )
-
-    s, t = one_sided_coefficients
+    s, t, rf_type_suffix = _process_rf_one_sided_coefficients(
+        one_sided, one_sided_coefficients
+    )
 
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
