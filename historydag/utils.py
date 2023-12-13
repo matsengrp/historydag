@@ -543,7 +543,7 @@ according to the natural distribution induced by the DAG topology."""
 
 def sum_rfdistance_funcs(
     reference_dag: "HistoryDag",
-    rooted: bool = False,
+    rooted: bool = True,
     one_sided: str = None,
     one_sided_coefficients: Tuple[float, float] = (1, 1),
 ):
@@ -565,42 +565,96 @@ def sum_rfdistance_funcs(
     which is the sum of number of clades in each tree in the DAG.
     """
     # TODO rooted is not used
-    # TODO one_sided and one_sided_coefficients not used
-    N = reference_dag.count_nodes(collapse=True)
+    assert rooted
+    rf_type_suffix = "distance"
+    if one_sided_coefficients != (1, 1):
+        rf_type_suffix = "nonstandard"
 
-    # Remove the UA node clade union from N
-    try:
-        N.pop(frozenset())
-    except KeyError:
+    if one_sided is None:
         pass
+    elif one_sided.lower() == "left":
+        one_sided_coefficients = (1, 0)
+        rf_type_suffix = "left_difference"
+    elif one_sided.lower() == "right":
+        one_sided_coefficients = (0, 1)
+        rf_type_suffix = "right_difference"
+    else:
+        raise ValueError(
+            f"Argument `one_sided` must have value 'left', 'right', or None, not {one_sided}"
+        )
+
+    s, t = one_sided_coefficients
+
+    N = reference_dag.count_nodes(collapse=True, rooted=rooted)
+
 
     # K is the constant that the weights are shifted by
-    K = sum(N.values())
+    K = s * sum(N.values())
 
-    num_trees = reference_dag.count_histories()
+    # We also scale num_trees by s...
+    num_trees = t * reference_dag.count_histories()
 
-    def make_intstate(n):
-        return IntState(n + K, state=n)
+    if rooted:
 
-    def edge_func(n1, n2):
-        clade = n2.clade_union()
-        if clade in N:
-            weight = num_trees - (2 * N[n2.clade_union()])
-        else:
-            # This clade's count should then just be 0:
-            weight = num_trees
-        return make_intstate(weight)
+        def make_intstate(n):
+            return IntState(n + K, state=n)
 
-    kwargs = AddFuncDict(
-        {
-            "start_func": lambda n: make_intstate(0),
-            "edge_weight_func": edge_func,
-            "accum_func": lambda wlist: make_intstate(
-                sum(w.state for w in wlist)
-            ),  # summation over edge weights
-        },
-        name="RF_rooted_sum",
-    )
+        def edge_func(n1, n2):
+            clade = n2.clade_union()
+            clade_count = N.get(clade, 0)
+            weight = num_trees - ((s + t) * clade_count)
+            return make_intstate(weight)
+
+        kwargs = AddFuncDict(
+            {
+                "start_func": lambda n: make_intstate(0),
+                "edge_weight_func": edge_func,
+                "accum_func": lambda wlist: make_intstate(
+                    sum(w.state for w in wlist)
+                ),  # summation over edge weights
+            },
+            name="RF_rooted_sum",
+        )
+
+    else:
+        taxa = next(reference_dag.dagroot.children()).clade_union()
+
+        def split(node):
+            cu = node.clade_union()
+            return frozenset({cu, taxa - cu})
+        # We accumulate tuples, where the first number contains the weight,
+        # except any contribution of a split below a bifurcating root node
+        # is contained in the second number. This way its contribution can be
+        # added exactly once
+
+        def make_intstate(n):
+            return IntState(n[0] + n[1] + K, state=n)
+
+
+        def summer(tupseq):
+            a = 0
+            for ia, _ in tupseq:
+                a += ia
+            # second value should only be counted once. Any nonzero
+            # values of the second value will always be identical
+            b = max(tupseq, key=lambda tup: abs(tup[1]))[1]
+            return (a, b)
+
+        def edge_func(n1, n2):
+            spl = split(n2)
+            if n1.is_ua_node():
+                return make_intstate((0, 0))
+            if len(n1.clades) == 2 and is_history_root(n1):
+                if spl in ref_splits:
+                    return make_intstate((0, -1))
+                else:
+                    return make_intstate((0, 1))
+            else:
+                if spl in ref_splits:
+                    return make_intstate((-s, 0))
+                else:
+                    return make_intstate((t, 0))
+
     return kwargs
 
 

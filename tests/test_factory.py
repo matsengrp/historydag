@@ -629,37 +629,44 @@ def test_rf_unrooted_distances():
                     print("computed RF: ", comp_dist)
                     assert False
 
-
 def test_optimal_sum_rf_distance():
+    rooted=True
+
+    def other(side):
+        return {'right': 'left', 'left': 'right', None: None}[side]
+
     for dag_idx, ref_dag in enumerate(dags):
         print("dagnum ", dag_idx)
         # let's just do this test for three trees in each dag:
         for tree_idx, tree in zip(range(3), ref_dag):
-            print("treenum ", tree_idx)
-            # First let's just make sure that when the ref_dag is just a single
-            # tree, optimal_sum_rf_distance agrees with normal rf_distance.
-            single_tree_dag = ref_dag[0]
-            # Here we get all the distances between trees in 'single_tree_dag' and the
-            # reference tree 'tree' (there's only one, since 'single_tree_dag'
-            # only contains one tree:
-            expected = single_tree_dag.count_rf_distances(tree, rooted=True)
-            expected_sum = sum(expected.elements())
-            calculated_sum = tree.optimal_sum_rf_distance(single_tree_dag)
-            assert calculated_sum == expected_sum
+            for one_sided in ('left', 'right', None):
+                print("treenum ", tree_idx)
+                print("one_side ", one_sided)
+                print("rooted ", rooted)
+                # First let's just make sure that when the ref_dag is just a single
+                # tree, optimal_sum_rf_distance agrees with normal rf_distance.
+                single_tree_dag = ref_dag[0]
+                # Here we get all the distances between trees in 'single_tree_dag' and the
+                # reference tree 'tree' (there's only one, since 'single_tree_dag'
+                # only contains one tree:
+                expected = single_tree_dag.count_rf_distances(tree, rooted=rooted, one_sided=one_sided)
+                expected_sum = sum(expected.elements())
+                calculated_sum = tree.optimal_sum_rf_distance(single_tree_dag, rooted=rooted, one_sided=other(one_sided))
+                assert calculated_sum == expected_sum
 
-            # Now let's try computing the summed rf distance on tree relative
-            # to ref_dag...
+                # Now let's try computing the summed rf distance on tree relative
+                # to ref_dag...
 
-            # Here we get all the distances between trees in 'dag' and the
-            # reference tree 'tree':
-            expected = dag.count_rf_distances(tree, rooted=True)
-            # Here we sum all elements in the counter, with multiplicity:
-            # in other words we sum all distances from trees in 'dag' to 'tree'
-            expected_sum = sum(expected.elements())
-            # This should calculate the sum RF distance from 'tree' to all
-            # trees in 'dag':
-            calculated_sum = tree.optimal_sum_rf_distance(dag)
-            assert calculated_sum == expected_sum
+                # Here we get all the distances between trees in 'dag' and the
+                # reference tree 'tree':
+                expected = ref_dag.count_rf_distances(tree, rooted=rooted, one_sided=one_sided)
+                # Here we sum all elements in the counter, with multiplicity:
+                # in other words we sum all distances from trees in 'dag' to 'tree'
+                expected_sum = sum(expected.elements())
+                # This should calculate the sum RF distance from 'tree' to all
+                # trees in 'dag':
+                calculated_sum = tree.optimal_sum_rf_distance(ref_dag, rooted=rooted, one_sided=other(one_sided))
+                assert calculated_sum == expected_sum
 
 
 # ############# END RF Distance Tests: ###############
@@ -925,6 +932,21 @@ def test_count_nodes():
     for edge in edge_counts:
         assert edge_counts[edge] == round(edge_supports[edge] * n_histories)
 
+    # Now counting splits:
+    dag = dags[-1].copy()
+    
+    def history_to_splits(history):
+        splits = set()
+        all_taxa = next(history.dagroot.children()).clade_union()
+        for node in history.preorder(skip_ua_node=True):
+            node_clade = node.clade_union()
+            splits.add(frozenset({node_clade, all_taxa - node_clade}))
+        return splits - frozenset({all_taxa, frozenset()})
+
+    split_sets = [history_to_splits(history) for history in dag]
+    split_counts = dag.count_nodes(collapse=True, rooted=False)
+    for split, count in split_counts.items():
+        assert count == sum(1 for s in split_sets if split in s)
 
 def test_likelihoods():
     dag = dags[-1]

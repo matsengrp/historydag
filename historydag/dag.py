@@ -1977,7 +1977,7 @@ class HistoryDag:
 
         return downward_weights, upward_weights
 
-    def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
+    def count_nodes(self, collapse=False, rooted=True) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
 
         For node supports with respect to a uniform distribution on trees, use
@@ -1987,6 +1987,11 @@ class HistoryDag:
             collapse: A flag that when set to true, treats nodes as clade unions and
                 ignores label information. Then, the returned dictionary is keyed by
                 clade union sets.
+            rooted: A flag which is ignored unless ``collapse`` is ``True``. When ``rooted`` is also ``False``,
+                the returned dictionary is keyed by splits -- that is, sets containing each clade
+                union and its complement, with values the number of (rooted) trees in the DAG containing
+                each split. Splits are not double-counted when a tree has a bifurcating root.
+                If False, dag is expected to have trees all on the same set of leaf labels.
 
         Returns:
             A dictionary mapping each node in the DAG to the number of trees
@@ -2031,7 +2036,35 @@ class HistoryDag:
                     collapsed_n2c[clade] = 0
 
                 collapsed_n2c[clade] += node2count[node]
-            return collapsed_n2c
+            if rooted:
+                # Remove the UA node clade union from N
+                try:
+                    collapsed_n2c.pop(frozenset())
+                except KeyError:
+                    pass
+                return collapsed_n2c
+            else:
+                # Create dictionary counting in how many trees each split
+                # occurs as child of bifurcating root
+                split2adjustment = {}
+                all_taxa = next(self.dagroot.children()).clade_union()
+                if any(all_taxa != n.clade_union() for n in self.dagroot.children()):
+                    raise ValueError("Unrooted splits cannot be counted properly because"
+                                      " trees in this dag are on different sets of taxa.")
+                for treeroot in self.dagroot.children():
+                    if len(treeroot.clades) == 2:
+                        split = frozenset(treeroot.clades.keys())
+                        before = split2adjustment.get(split, 0)
+                        split2adjustment[split] = before + node2count[treeroot]
+                split2count = {}
+                for clade, count in collapsed_n2c.items():
+                    split = frozenset({clade, all_taxa - clade})
+                    before = split2count.get(split, 0)
+                    split2count[split] = before + count
+                for split, adjustment in split2adjustment.items():
+                    split2count[split] -= adjustment
+                split2count.pop(frozenset({all_taxa, frozenset()}), None)
+                return split2count
         else:
             return node2count
 
@@ -2258,6 +2291,9 @@ class HistoryDag:
     def optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
+        rooted: bool = True,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Returns the optimal (min or max) summed rooted RF distance to all
@@ -2269,12 +2305,20 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history DAG.
         """
-        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        kwargs = utils.sum_rfdistance_funcs(
+            reference_dag,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients
+        )
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
     def trim_optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
+        rooted: bool = True,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Trims the DAG to contain only histories with the optimal (min or
@@ -2289,7 +2333,12 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        kwargs = utils.sum_rfdistance_funcs(
+            reference_dag,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients
+        )
         return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
 
     def trim_optimal_rf_distance(
