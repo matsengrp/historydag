@@ -2500,7 +2500,7 @@ class HistoryDag:
         Note that when computing one-sided distances, or when the one_sided_coefficients values are not
         equal, this 'distance' is no longer symmetric.
         """
-        s, t, _ = utils._process_rf_one_sided_coefficients(
+        s, t, _, _ = utils._process_rf_one_sided_coefficients(
             one_sided, one_sided_coefficients
         )
 
