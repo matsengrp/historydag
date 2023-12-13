@@ -34,7 +34,6 @@ def dag_from_beast_trees(
         include_sequence_names_in_labels: If True, augment leaf node labels with a ``name`` attribute
             containing the name of the corresponding sequence. Useful for distinguishing leaves when
             observed sequences are not unique.
-
     """
     dp_trees = load_beast_trees(
         beast_xml_file,
