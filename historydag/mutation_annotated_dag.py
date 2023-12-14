@@ -47,6 +47,24 @@ class HDagJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+class CGLeafIDHistoryDag(HistoryDag):
+    """A HistoryDag subclass with node labels containing CompactGenome objects,
+    and leaf nodes labeled with a unique Leaf ID string, not interpretable as
+    sequence data.
+
+    The constructor for this class requires that each node label contain
+    a 'compact_genome' field, which is expected to hold a
+    :class:`compact_genome.CompactGenome` object, and a 'LeafID' field,
+    containing a string.
+
+    The purpose of this subclass is to accept data from Larch's MADAG protobuf
+    format. Leaf compact genomes can then be inferred from parent edges of each leaf,
+    producing a CGHistoryDag or AmbiguousLeafCGHistoryDag.
+
+    This subclass provides specialized methods for interfacing with
+    Larch's MADAG protobuf format
+    """
+
 class CGHistoryDag(HistoryDag):
     """A HistoryDag subclass with node labels containing CompactGenome objects.
 
@@ -493,7 +511,7 @@ def unflatten(flat_dag):
 
 
 def load_MAD_protobuf(pbdata):
-    """Convert a MAD protobuf to a CGHistoryDag with compact genomes in the
+    """Convert a MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
     `compact_genome` label attribute."""
     # use HistoryDag.__setstate__ to make this happen
     # all of a node's parent edges
@@ -513,33 +531,40 @@ def load_MAD_protobuf(pbdata):
     ]
 
     @functools.lru_cache(maxsize=None)
-    def get_node_compact_genome(node_id):
+    def get_node_label(node_id):
+        # recursively builds CGs for all nodes except for leaf nodes, assuming
+        # that leaf nodes always will have their unique leaf ID as the first
+        # entry in the condensed_leaves record.
         if node_id == ua_node_id:
-            return CompactGenome(frozendict(), reference)
+            return (CompactGenome(frozendict(), reference), None)
+        elif len(child_edges[node_id]) == 0:
+            _node_name_record = pbdata.node_names[node_id]
+            assert node_id == _node_name_record.node_id
+            return (None, _node_name_record.condensed_leaves[0])
         else:
             edge = parent_edges[node_id][0]
-            parent_seq = get_node_compact_genome(edge.parent_node)
+            parent_seq, _ = get_node_label(edge.parent_node)
             str_mutations = tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
-            return parent_seq.apply_muts(str_mutations)
+            return (parent_seq.apply_muts(str_mutations), None)
 
     label_list = []
     label_dict = {}
 
     for node_record in pbdata.node_names:
-        cg = get_node_compact_genome(node_record.node_id)
-        if cg in label_dict:
-            cg_idx = label_dict[cg]
+        label = get_node_label(node_record.node_id)
+        if label in label_dict:
+            label_idx = label_dict[label]
         else:
-            cg_idx = len(label_list)
-            label_dict[cg] = cg_idx
-            label_list.append(cg)
+            label_idx = len(label_list)
+            label_dict[label] = label_idx
+            label_list.append(label)
 
     # now build clade unions by dynamic programming:
     @functools.lru_cache(maxsize=None)
     def get_clade_union(node_id):
         if len(child_edges[node_id]) == 0:
             # it's a leaf node
-            return frozenset({label_dict[get_node_compact_genome(node_id)]})
+            return frozenset({label_dict[get_node_label(node_id)]})
         else:
             return frozenset(
                 {
@@ -574,7 +599,7 @@ def load_MAD_protobuf(pbdata):
     node_index_d = {node_id: idx for idx, node_id in enumerate(id_postorder)}
     node_list = [
         (
-            label_dict[get_node_compact_genome(node_id)],
+            label_dict[get_node_label(node_id)],
             get_child_clades(node_id),
             {"node_id": node_id},
         )
@@ -586,7 +611,6 @@ def load_MAD_protobuf(pbdata):
         for edge in pbdata.edges
     ]
     # fix label list
-    label_list = [(item,) for item in label_list]
     label_list.append(None)
     ua_node = list(node_list[-1])
     ua_node[0] = len(label_list) - 1
@@ -594,14 +618,14 @@ def load_MAD_protobuf(pbdata):
     dag = HistoryDag(UANode(EdgeSet()))
     dag.__setstate__(
         {
-            "label_fields": ("compact_genome",),
+            "label_fields": ("compact_genome", "leaf_id"),
             "label_list": label_list,
             "node_list": node_list,
             "edge_list": edge_list,
             "attr": {"refseqid": pbdata.reference_id},
         }
     )
-    return CGHistoryDag.from_history_dag(dag)
+    return CGLeafIDHistoryDag.from_history_dag(dag)
 
 
 def load_MAD_protobuf_file(filename):
