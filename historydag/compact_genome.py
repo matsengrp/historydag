@@ -1,6 +1,7 @@
 from frozendict import frozendict
 from typing import Dict, Sequence
 from warnings import warn
+from historydag.parsimony_utils import standard_nt_ambiguity_map
 
 
 class CompactGenome:
@@ -117,6 +118,8 @@ class CompactGenome:
 
         Each tuple should contain (one-based site, from_base, to_base)
         """
+        # Is this tested? What does raw mean? Are there checks? What's mutate
+        # for?
         res = dict(self.mutations)
         for site, from_base, to_base in muts:
             ref = self.reference[site - 1]
@@ -346,3 +349,41 @@ def cg_diff(parent_cg: CompactGenome, child_cg: CompactGenome):
         child_base = child_cg.get_site(key)
         if parent_base != child_base:
             yield (parent_base, child_base, key)
+
+def reconcile_cgs(cg_list, check_references=True):
+    """Returns a compact genome containing ambiguous bases, representing the
+    least ambiguous sequence of which all provided cgs in `cg_list` are resolutions.
+    Also returns a flag indicating whether the resulting CG contains ambiguities.
+
+    If `check_references` is False, reference sequences will be assumed equal."""
+    #TODO: TEST
+    ambiguous_flag = False
+    if len(cg_list) == 1:
+        return (cg_list[0], ambiguous_flag)
+
+    cg_list = list(cg_list)
+    model_cg = cg_list[0]
+    reference = model_cg.reference
+    if check_references:
+        assert all(cg.reference == reference for cg in cg_list)
+
+    # This can almost certainly be made more efficient
+    difference_sites = dict()
+    for ocg in cg_list[1:]:
+        diff = list(cg_diff(model_cg, ocg))
+        if len(diff) > 0:
+            ambiguous_flag = True
+        for parent_nuc, child_nuc, one_idx in diff:
+            if one_idx not in difference_sites:
+                difference_sites[one_idx] = {parent_nuc, child_nuc}
+            else:
+                # Parent nuc must already be added!
+                difference_sites.add(child_nuc)
+
+
+    mutstring_list = [
+        model_cg.get(idx) + str(idx) + standard_nt_ambiguity_map[charset]
+        for idx, charset in difference_sites.items()
+    ]
+
+    return (model_cg.apply_muts(mutstring_list), ambiguous_flag)

@@ -584,7 +584,6 @@ class HistoryDag:
             # ... and there are no duplicate parents:
             if len(parents[node]) != len(set(parents[node])):
                 raise ValueError("Found duplicate parents")
-
         return True
 
     def serialize(self) -> bytes:
