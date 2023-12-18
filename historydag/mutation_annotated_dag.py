@@ -600,7 +600,9 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
     if topology_only:
         label_fields = ("node_id",)
         ReturnType = NodeIDHistoryDag
-        def get_node_label(node_id):
+        def get_node_label(node_id, check_idx=None):
+            if check_idx is not None:
+                assert check_idx == node_id
             if len(child_edges[node_id]) == 0:
                 id_string = pbdata.node_names[node_id].condensed_leaves[0]
             else:
@@ -613,14 +615,18 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
             ReturnType = AmbiguousLeafCGHistoryDag
         else:
             ReturnType = CGHistoryDag
-        def get_node_label(node_id):
+        def get_node_label(node_id, check_idx=None):
+            if check_idx is not None:
+                assert check_idx == node_id
             if len(child_edges[node_id]) == 0:
                 id_string = pbdata.node_names[node_id].condensed_leaves[0]
             else:
                 id_string = None
 
             return (node_cg_dict[node_id], id_string)
-
+    
+    # A list mapping node ids to labels
+    node_labels = [get_node_label(_nr.node_id, check_idx=idx) for idx, _nr in enumerate(pbdata.node_names)]
             
     # @functools.lru_cache(maxsize=None)
     # def get_node_label(node_id):
@@ -645,7 +651,7 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
     label_idx_dict = {}
 
     for node_record in pbdata.node_names:
-        label = get_node_label(node_record.node_id)
+        label = node_labels[node_record.node_id]
         if label in label_idx_dict:
             label_idx = label_idx_dict[label]
         else:
@@ -655,34 +661,51 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
 
     # now build clade unions by dynamic programming:
     # TODO avoid recursion using postorder traversal already built
-    @functools.lru_cache(maxsize=None)
-    def get_clade_union(node_id):
+    
+    clade_union_dict = {}
+    for node_id in id_postorder:
         if len(child_edges[node_id]) == 0:
             # it's a leaf node
-            return frozenset({label_idx_dict[get_node_label(node_id)]})
+            clade_union_dict[node_id] = frozenset({label_idx_dict[node_labels[node_id]]})
         else:
-            return frozenset(
+            clade_union_dict[node_id] = frozenset(
                 {
                     label
                     for child_edge in child_edges[node_id]
-                    for label in get_clade_union(child_edge.child_node)
+                    for label in clade_union_dict[child_edge.child_node]
                 }
             )
 
+
+    # # Old recursive clade union building
+    # @functools.lru_cache(maxsize=None)
+    # def get_clade_union(node_id):
+    #     if len(child_edges[node_id]) == 0:
+    #         # it's a leaf node
+    #         return frozenset({label_idx_dict[get_node_label(node_id)]})
+    #     else:
+    #         return frozenset(
+    #             {
+    #                 label
+    #                 for child_edge in child_edges[node_id]
+    #                 for label in get_clade_union(child_edge.child_node)
+    #             }
+    #         )
+
+    # End old recursive clade union building
+
     def get_child_clades(node_id):
         return tuple(
-            get_clade_union(child_edge.child_node)
+            clade_union_dict[child_edge.child_node]
             for child_edge in child_edges[node_id]
         )
-        # maybe we need this??
-        # return frozenset({get_clade_union(child_edge.child_node) for child_edge in child_edges[node_id]})
 
     # Start building DAG data
     postorder_index_d = {node_id: idx for idx, node_id in enumerate(id_postorder)}
     # node records in post order
     node_list = [
         (
-            label_idx_dict[get_node_label(node_id)],
+            label_idx_dict[node_labels[node_id]],
             get_child_clades(node_id),
             {"node_id": node_id},
         )
