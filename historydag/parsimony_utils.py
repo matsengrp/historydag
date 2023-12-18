@@ -413,17 +413,23 @@ class TransitionModel:
 
         Returns:
             A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning
-            a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or 0 if
-            n1 is the UA node.
+            a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or 
+            the number of mutations between the reference and the CG of n2 if n1 is the UA node.
 
         Sites where parent_cg and child_cg
         both match their reference sequence are ignored, so this method is not suitable for weighted parsimony
         for transition matrices that contain nonzero entries along the diagonal.
         """
 
-        @utils.access_nodefield_default(field_name, 0)
         def edge_weight(parent, child):
-            return self.weighted_cg_hamming_distance(parent, child)
+            # Get the number of mutations on a branch pointing to the UA node
+            if parent.is_ua_node():
+                return len(getattr(child.label, field_name).mutations)
+            else:
+                return self.weighted_cg_hamming_distance(
+                    getattr(parent.label, field_name),
+                    getattr(child.label, field_name)
+                )
 
         return edge_weight
 
@@ -479,7 +485,7 @@ class TransitionModel:
 
         def edge_weight(parent, child):
             if parent.is_ua_node():
-                return 0
+                return len(getattr(child.label, field_name).mutations)
             elif child.is_leaf():
                 return self.min_weighted_cg_hamming_distance(
                     getattr(parent.label, field_name), getattr(child.label, field_name)

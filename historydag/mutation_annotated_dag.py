@@ -109,13 +109,13 @@ class CGHistoryDag(HistoryDag):
     # #### CGHistoryDag-Specific Methods ####
 
     def to_protobuf(self, leaf_data_func=None):
-        """Convert a DAG with compact genome data on each node, to a MAD
-        protobuf with mutation information on edges.
+        """Convert a DAG with compact genome data on each node, and unique
+        leaf IDs on leaf nodes, to a MAD protobuf with mutation information on edges.
 
         Args:
-            dag: the history DAG to be converted
             leaf_data_func: a function taking a DAG node and returning a string to store
-                in the protobuf node_name field `condensed_leaves` of leaf nodes
+                in the protobuf node_name field `condensed_leaves` of leaf nodes. On leaf
+                nodes, this data is appended after the unique leaf ID.
         """
 
         refseq = next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
@@ -140,8 +140,9 @@ class CGHistoryDag(HistoryDag):
             node_dict[node] = idx
             node_name = data.node_names.add()
             node_name.node_id = idx
-            if leaf_data_func is not None:
-                if node.is_leaf():
+            if node.is_leaf():
+                node_name.condensed_leaves.append(node.label.node_id)
+                if leaf_data_func is not None:
                     node_name.condensed_leaves.append(leaf_data_func(node))
 
         for node in self.postorder():
@@ -501,21 +502,23 @@ def unflatten(flat_dag):
     return dag
 
 
-def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_cgs=None):
+def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True, leaf_sequence_file=None, leaf_cgs=None):
     """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
     `compact_genome` label attribute.
 
     Args:
         pbdata: loaded protobuf data object
-        topology_only: If True, returns a NodeIDHistoryDag with node labels
-            containing only the `node_id` field. On leaves this will be the unique string
-            leaf identifier, and on internal nodes this will be an integer node ID from Larch.
-            No sequence information will be preserved in the resulting object. If False,
-            returns a CGHistoryDag or AmbiguousLeafCGHistoryDag object, with labels containing
-            `node_id` and `compact_genome` fields. If no leaf sequence data is provided,
-            leaf compact genomes will be inferred from pendant edge mutations, and will
-            include ambiguities when mutations on two pendant edges pointing to the same
-            leaf would otherwise contradict. `node_id` field on internal nodes will be None.
+        compact_genomes: If True, returns a CGHistoryDag or AmbiguousLeafCGHistoryDag
+            object, with labels containing `node_id` and `compact_genome` fields.
+            If no leaf sequence data is provided, leaf compact genomes will be
+            inferred from pendant edge mutations, and will include ambiguities when
+            mutations on two pendant edges pointing to the same leaf would otherwise
+            contradict. `node_id` field on internal nodes will be None, unless
+            `node_ids` argument is True. If False, this function will return a NodeIDHistoryDag.
+        node_ids: If True, node IDs will be included on all nodes' labels. If False, internal
+            nodes' `node_id` label fields will be `None`. Unique leaf sequence IDs are always
+            included in the `node_id` label field of leaf nodes, to ensure that leaf node
+            labels are unique.
         leaf_sequence_file: A vcf or fasta file containing leaf sequence data, keyed by sequence
             names which match unique string leaf IDs in the input protobuf data
         leaf_cgs: A dictionary keyed by unique string leaf IDs containing CompactGenomes
@@ -597,7 +600,35 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
 
 
 
-    if topology_only:
+    if compact_genomes:
+        node_cg_dict, ambiguous_flag = build_compact_genomes()
+        label_fields = ("compact_genome", "node_id")
+        if ambiguous_flag:
+            ReturnType = AmbiguousLeafCGHistoryDag
+        else:
+            ReturnType = CGHistoryDag
+
+        if node_ids:
+            def get_node_label(node_id, check_idx=None):
+                if check_idx is not None:
+                    assert check_idx == node_id
+                if len(child_edges[node_id]) == 0:
+                    id_string = pbdata.node_names[node_id].condensed_leaves[0]
+                else:
+                    id_string = str(node_id)
+
+                return (node_cg_dict[node_id], id_string)
+        else:
+            def get_node_label(node_id, check_idx=None):
+                if check_idx is not None:
+                    assert check_idx == node_id
+                if len(child_edges[node_id]) == 0:
+                    id_string = pbdata.node_names[node_id].condensed_leaves[0]
+                else:
+                    id_string = None
+
+                return (node_cg_dict[node_id], id_string)
+    else:
         label_fields = ("node_id",)
         ReturnType = NodeIDHistoryDag
         def get_node_label(node_id, check_idx=None):
@@ -608,43 +639,10 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
             else:
                 id_string = str(node_id)
             return (id_string,)
-    else:
-        node_cg_dict, ambiguous_flag = build_compact_genomes()
-        label_fields = ("compact_genome", "node_id")
-        if ambiguous_flag:
-            ReturnType = AmbiguousLeafCGHistoryDag
-        else:
-            ReturnType = CGHistoryDag
-        def get_node_label(node_id, check_idx=None):
-            if check_idx is not None:
-                assert check_idx == node_id
-            if len(child_edges[node_id]) == 0:
-                id_string = pbdata.node_names[node_id].condensed_leaves[0]
-            else:
-                id_string = None
-
-            return (node_cg_dict[node_id], id_string)
     
-    # A list mapping node ids to labels
+    # A list mapping protobuf node ids to labels
     node_labels = [get_node_label(_nr.node_id, check_idx=idx) for idx, _nr in enumerate(pbdata.node_names)]
             
-    # @functools.lru_cache(maxsize=None)
-    # def get_node_label(node_id):
-    #     # recursively builds CGs for all nodes except for leaf nodes, assuming
-    #     # that leaf nodes always will have their unique leaf ID as the first
-    #     # entry in the condensed_leaves record.
-    #     if node_id == ua_node_id:
-    #         return (CompactGenome(frozendict(), reference), None)
-    #     elif len(child_edges[node_id]) == 0:
-    #         _node_name_record = pbdata.node_names[node_id]
-    #         assert node_id == _node_name_record.node_id
-    #         return (None, _node_name_record.condensed_leaves[0])
-    #     else:
-    #         edge = parent_edges[node_id][0]
-    #         parent_seq, _ = get_node_label(edge.parent_node)
-    #         str_mutations = tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
-    #         return (parent_seq.apply_muts(str_mutations), None)
-
     # Labels are stored in a label_list without duplicates, and clade unions are sets of
     # label indices in this list (not sets of labels). 
     label_list = []
@@ -659,44 +657,25 @@ def load_MAD_protobuf(pbdata, topology_only=True, leaf_sequence_file=None, leaf_
             label_idx_dict[label] = label_idx
             label_list.append(label)
 
-    # now build clade unions by dynamic programming:
-    # TODO avoid recursion using postorder traversal already built
     
-    clade_union_dict = {}
+    # This list is a mapping from protobuf node_id indices to clade unions
+    clade_union_list = [None] * len(pbdata.node_names)
     for node_id in id_postorder:
         if len(child_edges[node_id]) == 0:
             # it's a leaf node
-            clade_union_dict[node_id] = frozenset({label_idx_dict[node_labels[node_id]]})
+            clade_union_list[node_id] = frozenset({label_idx_dict[node_labels[node_id]]})
         else:
-            clade_union_dict[node_id] = frozenset(
+            clade_union_list[node_id] = frozenset(
                 {
                     label
                     for child_edge in child_edges[node_id]
-                    for label in clade_union_dict[child_edge.child_node]
+                    for label in clade_union_list[child_edge.child_node]
                 }
             )
 
-
-    # # Old recursive clade union building
-    # @functools.lru_cache(maxsize=None)
-    # def get_clade_union(node_id):
-    #     if len(child_edges[node_id]) == 0:
-    #         # it's a leaf node
-    #         return frozenset({label_idx_dict[get_node_label(node_id)]})
-    #     else:
-    #         return frozenset(
-    #             {
-    #                 label
-    #                 for child_edge in child_edges[node_id]
-    #                 for label in get_clade_union(child_edge.child_node)
-    #             }
-    #         )
-
-    # End old recursive clade union building
-
     def get_child_clades(node_id):
         return tuple(
-            clade_union_dict[child_edge.child_node]
+            clade_union_list[child_edge.child_node]
             for child_edge in child_edges[node_id]
         )
 
