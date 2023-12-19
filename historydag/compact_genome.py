@@ -126,7 +126,7 @@ class CompactGenome:
             if ref != to_base:
                 res[site] = (ref, to_base)
             else:
-                res.pop(site)
+                res.pop(site, None)
         return CompactGenome(res, self.reference)
 
     def apply_muts(self, muts: Sequence[str], reverse: bool = False, debug=False):
@@ -350,13 +350,12 @@ def cg_diff(parent_cg: CompactGenome, child_cg: CompactGenome):
         if parent_base != child_base:
             yield (parent_base, child_base, key)
 
-def reconcile_cgs(cg_list, check_references=True):
+def reconcile_cgs(cg_list, check_references=True, ambiguitymap=standard_nt_ambiguity_map):
     """Returns a compact genome containing ambiguous bases, representing the
     least ambiguous sequence of which all provided cgs in `cg_list` are resolutions.
     Also returns a flag indicating whether the resulting CG contains ambiguities.
 
     If `check_references` is False, reference sequences will be assumed equal."""
-    #TODO: TEST
     ambiguous_flag = False
     if len(cg_list) == 1:
         return (cg_list[0], ambiguous_flag)
@@ -378,11 +377,19 @@ def reconcile_cgs(cg_list, check_references=True):
                 difference_sites[one_idx] = {parent_nuc, child_nuc}
             else:
                 # Parent nuc must already be added!
-                difference_sites.add(child_nuc)
+                difference_sites[one_idx].add(child_nuc)
 
+
+    def process_charset(charset):
+        diff = charset - ambiguitymap.bases
+        if len(diff) > 0:
+            charset.intersection_update(ambiguitymap.bases)
+            for char in diff:
+                charset.update(ambiguitymap[char])
+        return frozenset(charset)
 
     mutstring_list = [
-        model_cg.get(idx) + str(idx) + standard_nt_ambiguity_map[charset]
+        model_cg.get_site(idx) + str(idx) + ambiguitymap.reversed[process_charset(charset)]
         for idx, charset in difference_sites.items()
     ]
 

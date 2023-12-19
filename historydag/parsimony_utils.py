@@ -48,12 +48,16 @@ class AmbiguityMap:
     Args:
         ambiguity_character_map: A mapping from ambiguity codes to collections of bases represented by that code.
         bases: A collection of bases. If not provided, this will be inferred from the ambiguity_character_map.
+        reversed_defaults: When `ambiguity_character_map` is not injective (i.e. multiple ambiguous characters
+            map to the same set of bases) one might want to specify which character that set of bases maps to in
+            the reversed map. If not provided, the choice will be made arbitrarily.
     """
 
     def __init__(
         self,
         ambiguity_character_map: Mapping[Character, Iterable[Character]],
         bases: Iterable[Character] = None,
+        reversed_defaults: Mapping[Iterable[Character], Character] = {},
     ):
         ambiguous_values = {
             char: frozenset(bases) for char, bases in ambiguity_character_map.items()
@@ -67,9 +71,11 @@ class AmbiguityMap:
 
         ambiguous_values.update({base: frozenset({base}) for base in self.bases})
         self.ambiguous_values = frozendict(ambiguous_values)
-        self.reversed = ReversedAmbiguityMap(
-            {bases: char for char, bases in self.ambiguous_values.items()}
-        )
+        reversed_map = {bases: char for char, bases in self.ambiguous_values.items()}
+        reversed_map.update({frozenset(key): char
+                             for key, char in reversed_defaults.items()
+                             if frozenset(key) in reversed_map})
+        self.reversed = ReversedAmbiguityMap(reversed_map)
         self.uninformative_chars = frozenset(
             char
             for char, base_set in self.ambiguous_values.items()
@@ -175,7 +181,7 @@ _ambiguous_dna_values_gap_as_char.update({"?": "GATC-", "-": "-"})
 _ambiguous_dna_values = Bio.Data.IUPACData.ambiguous_dna_values.copy()
 _ambiguous_dna_values.update({"?": "GATC", "-": "GATC"})
 
-standard_nt_ambiguity_map = AmbiguityMap(_ambiguous_dna_values, "AGCT")
+standard_nt_ambiguity_map = AmbiguityMap(_ambiguous_dna_values, "AGCT", reversed_defaults={"AGCT": "N"})
 """The standard IUPAC nucleotide ambiguity map, in which 'N', '?', and '-' are
 all considered fully ambiguous."""
 
