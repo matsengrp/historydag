@@ -503,8 +503,34 @@ def unflatten(flat_dag):
     return dag
 
 def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
+    """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
+    `compact_genome` label attribute.
+
+    Args:
+        pbdata: loaded protobuf data object
+        compact_genomes: If True, returns a CGHistoryDag or AmbiguousLeafCGHistoryDag
+            object, with labels containing `node_id` and `compact_genome` fields.
+            If no leaf sequence data is provided, leaf compact genomes will be
+            inferred from pendant edge mutations, and will include ambiguities when
+            mutations on two pendant edges pointing to the same leaf would otherwise
+            contradict. `node_id` field on internal nodes will be None, unless
+            `node_ids` argument is True. If False, this function will return a NodeIDHistoryDag.
+        node_ids: If True, node IDs will be included on all nodes' labels. If False, internal
+            nodes' `node_id` label fields will be `None`. Unique leaf sequence IDs are always
+            included in the `node_id` label field of leaf nodes, to ensure that leaf node
+            labels are unique.
+        leaf_sequence_file: (not implemented) A vcf or fasta file containing leaf sequence data, keyed by sequence
+            names which match unique string leaf IDs in the input protobuf data
+        leaf_cgs: (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes
+
+    Note that if leaf sequences in the original alignment do not contain ambiguities, it is not
+    necessary to provide alignment data; leaf sequences can be completely inferred without it.
+            """
 
     class PBDAG:
+        """This class doesn't do much, just provides an interface to the protobuf data, as
+        a DAG of integer node IDs, and provides methods to get history DAG node data for a
+        given node ID."""
         def __init__(self, pbdata):
             self.pbdata = pbdata
             self.reference = pbdata.reference_seq
@@ -516,6 +542,10 @@ def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
                 child_edges[edge.parent_node].append(edge)
             self.child_edges = child_edges
             self.parent_edges = parent_edges
+
+            print("loading protobuf dag with ", len(pbdata.edges), "edges")
+            # Subtract ua node from number of nodes, like dag.summary() method
+            print("and", len(pbdata.node_names) - 1, "nodes")
 
             # now each node id is in parent_edges and child_edges as a key,
             # fix the UA node's compact genome (could be done in function but this
@@ -541,6 +571,8 @@ def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
                 yield from traverse(node_id)
 
             self.id_postorder = list(traverse_postorder(ua_node_id))
+            # TODO remove check that traversal visits each node only once
+            assert len(self.id_postorder) == len(set(self.id_postorder))
             self.id_reverse_postorder = list(reversed(self.id_postorder))
             self.node_id_to_cg = None
 
@@ -562,7 +594,7 @@ def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
                 self.label_fields = ("compact_genome", "node_id")
                 self._label_funcs = (self.get_compact_genome, _id_func)
             else:
-                self.label_fields = ("node_id")
+                self.label_fields = ("node_id",)
                 self._label_funcs = (_id_func,)
                 self.return_type = NodeIDHistoryDag
 
@@ -637,238 +669,27 @@ def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
                 {child_clade: EdgeSet() for child_clade in child_clades},
                 {"node_id": node_id}
             )
-        # # Use the node already created, if it exists (TODO if we trust
-        # # protobuf, maybe omit this?)
-        # this_node = node_to_node_d.get(this_node, this_node)
-        # node_to_node_d[this_node] = this_node
+        # (TODO) These two lines shouldn't affect the returned DAG when
+        # compact genomes are in labels but node IDs aren't, but they do!
+        # This seems to imply that there are multiple nodes in the protobuf
+        # with the same child clades and compact genome, but different node
+        # IDs.
+        # (to clarify, these lines should affect result when compact genomes
+        # aren't in the labels)
+        this_node = node_to_node_d.get(this_node, this_node)
+        node_to_node_d[this_node] = this_node
 
         # Update node_id dictionary
         node_id_to_node[node_id] = this_node
 
         # Add child edges of this_node
         for child in children:
-            this_node.add_edge(child, weight=0, prob=0, prob_norm=False)
+            this_node.add_edge(child, weight=1, prob=1, prob_norm=False)
 
     # Last node in postorder should be UA node
     assert this_node.is_ua_node()
     dag = HistoryDag(this_node)
     return pbdag.return_type.from_history_dag(dag)
-
-
-def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True, leaf_sequence_file=None, leaf_cgs=None):
-    """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
-    `compact_genome` label attribute.
-
-    Args:
-        pbdata: loaded protobuf data object
-        compact_genomes: If True, returns a CGHistoryDag or AmbiguousLeafCGHistoryDag
-            object, with labels containing `node_id` and `compact_genome` fields.
-            If no leaf sequence data is provided, leaf compact genomes will be
-            inferred from pendant edge mutations, and will include ambiguities when
-            mutations on two pendant edges pointing to the same leaf would otherwise
-            contradict. `node_id` field on internal nodes will be None, unless
-            `node_ids` argument is True. If False, this function will return a NodeIDHistoryDag.
-        node_ids: If True, node IDs will be included on all nodes' labels. If False, internal
-            nodes' `node_id` label fields will be `None`. Unique leaf sequence IDs are always
-            included in the `node_id` label field of leaf nodes, to ensure that leaf node
-            labels are unique.
-        leaf_sequence_file: A vcf or fasta file containing leaf sequence data, keyed by sequence
-            names which match unique string leaf IDs in the input protobuf data
-        leaf_cgs: A dictionary keyed by unique string leaf IDs containing CompactGenomes
-
-    Note that if leaf sequences in the original alignment do not contain ambiguities, it is not
-    necessary to provide alignment data; leaf sequences can be completely inferred without it.
-            """
-    # use HistoryDag.__setstate__ to make this happen
-    # all of a node's parent edges
-    reference = pbdata.reference_seq
-    parent_edges = {node.node_id: [] for node in pbdata.node_names}
-    # a list of list of a node's child edges
-    child_edges = {node.node_id: [] for node in pbdata.node_names}
-    for edge in pbdata.edges:
-        parent_edges[edge.child_node].append(edge)
-        child_edges[edge.parent_node].append(edge)
-
-    # now each node id is in parent_edges and child_edges as a key,
-    # fix the UA node's compact genome (could be done in function but this
-    # asserts only one node has no parent edges)
-    (ua_node_id,) = [
-        node_id for node_id, eset in parent_edges.items() if len(eset) == 0
-    ]
-
-    def traverse_postorder(node_id):
-        # order node_ids in postordering
-        visited = set()
-
-        def traverse(node_id):
-            visited.add(node_id)
-            child_ids = [edge.child_node for edge in child_edges[node_id]]
-            if len(child_ids) > 0:
-                for child_id in child_ids:
-                    if child_id not in visited:
-                        yield from traverse(child_id)
-            yield node_id
-
-        yield from traverse(node_id)
-
-    id_postorder = list(traverse_postorder(ua_node_id))
-    id_reverse_postorder = list(reversed(id_postorder))
-    
-    def build_compact_genomes():
-        # These are built from ua node down, so must be built in
-        # reverse postorder:
-        # Also returns flag indicating if any compact genomes are ambiguous
-        node_id_to_cg = {ua_node_id: CompactGenome(frozendict(), reference)}
-        assert id_reverse_postorder[0] == ua_node_id
-        ambiguous_flag = False
-
-        if leaf_cgs is not None:
-            def get_leaf_cg(node_id):
-                leaf_id = pbdata.node_names[node_id].condensed_leaves[0]
-                return (leaf_cgs[leaf_id], True)
-
-        else:
-            def get_leaf_cg(node_id):
-                edges = parent_edges[node_id]
-                str_mutations = [tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
-                                 for edge in edges]
-                return reconcile_cgs([node_id_to_cg[edge.parent_node].apply_muts(muts)
-                                      for edge, muts in zip(edges, str_mutations)])
-
-
-
-        for node_id in id_reverse_postorder[1:]:
-            if len(child_edges[node_id]) > 0:
-                edge = parent_edges[node_id][0]
-                parent_cg = node_id_to_cg[edge.parent_node]
-                str_mutations = tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
-                node_id_to_cg[node_id] = parent_cg.apply_muts(str_mutations)
-            else:
-                # node_id belongs to leaf, must look at all parent edges to
-                # look for contradictions (implying ambiguities)
-                node_id_to_cg[node_id], ambig_flag = get_leaf_cg(node_id)
-                ambiguous_flag = ambiguous_flag or ambig_flag
-
-        return (node_id_to_cg, ambiguous_flag)
-
-
-
-    if compact_genomes:
-        node_cg_dict, ambiguous_flag = build_compact_genomes()
-        label_fields = ("compact_genome", "node_id")
-        if ambiguous_flag:
-            ReturnType = AmbiguousLeafCGHistoryDag
-        else:
-            ReturnType = CGHistoryDag
-
-        if node_ids:
-            def get_node_label(node_id, check_idx=None):
-                if check_idx is not None:
-                    assert check_idx == node_id
-                if len(child_edges[node_id]) == 0:
-                    id_string = pbdata.node_names[node_id].condensed_leaves[0]
-                else:
-                    id_string = str(node_id)
-
-                return (node_cg_dict[node_id], id_string)
-        else:
-            def get_node_label(node_id, check_idx=None):
-                if check_idx is not None:
-                    assert check_idx == node_id
-                if len(child_edges[node_id]) == 0:
-                    id_string = pbdata.node_names[node_id].condensed_leaves[0]
-                else:
-                    id_string = None
-
-                return (node_cg_dict[node_id], id_string)
-    else:
-        label_fields = ("node_id",)
-        ReturnType = NodeIDHistoryDag
-        def get_node_label(node_id, check_idx=None):
-            if check_idx is not None:
-                assert check_idx == node_id
-            if len(child_edges[node_id]) == 0:
-                id_string = pbdata.node_names[node_id].condensed_leaves[0]
-            else:
-                id_string = str(node_id)
-            return (id_string,)
-    
-    # A list mapping protobuf node ids to labels
-    node_labels = [get_node_label(_nr.node_id, check_idx=idx) for idx, _nr in enumerate(pbdata.node_names)]
-            
-    # Labels are stored in a label_list without duplicates, and clade unions are sets of
-    # label indices in this list (not sets of labels). 
-    label_list = []
-    label_idx_dict = {}
-
-    for node_record in pbdata.node_names:
-        label = node_labels[node_record.node_id]
-        if label in label_idx_dict:
-            label_idx = label_idx_dict[label]
-        else:
-            label_idx = len(label_list)
-            label_idx_dict[label] = label_idx
-            label_list.append(label)
-
-    
-    # This list is a mapping from protobuf node_id indices to clade unions
-    clade_union_list = [None] * len(pbdata.node_names)
-    for node_id in id_postorder:
-        if len(child_edges[node_id]) == 0:
-            # it's a leaf node
-            clade_union_list[node_id] = frozenset({label_idx_dict[node_labels[node_id]]})
-        else:
-            clade_union_list[node_id] = frozenset(
-                {
-                    label
-                    for child_edge in child_edges[node_id]
-                    for label in clade_union_list[child_edge.child_node]
-                }
-            )
-    assert all(it is not None for it in clade_union_list)
-
-    def get_child_clades(node_id):
-        return frozenset(
-            clade_union_list[child_edge.child_node]
-            for child_edge in child_edges[node_id]
-        )
-
-    # Start building DAG data
-    postorder_index_d = {node_id: idx for idx, node_id in enumerate(id_postorder)}
-    # node records in post order
-    node_list = [
-        (
-            label_idx_dict[node_labels[node_id]],
-            get_child_clades(node_id),
-            {"node_id": node_id},
-        )
-        for node_id in id_postorder
-    ]
-
-    # Edge list order doesn't matter, but indices identifying nodes are
-    # postorder indices
-    edge_list = [
-        (postorder_index_d[edge.parent_node], postorder_index_d[edge.child_node], 0, 1)
-        for edge in pbdata.edges
-    ]
-    # fix label list, adding None for UA node at end
-    label_list.append(None)
-    # Add tuple for ua node to node_list
-    ua_node = list(node_list[-1])
-    ua_node[0] = len(label_list) - 1
-    node_list[-1] = tuple(ua_node)
-    dag = HistoryDag(UANode(EdgeSet()))
-    dag.__setstate__(
-        {
-            "label_fields": label_fields,
-            "label_list": label_list,
-            "node_list": node_list,
-            "edge_list": edge_list,
-            "attr": {"refseqid": pbdata.reference_id},
-        }
-    )
-    # return (ReturnType.from_history_dag(dag), (label_fields, label_list, node_list, edge_list))
-    return ReturnType.from_history_dag(dag)
 
 
 def load_MAD_protobuf_file(filename, **kwargs):

@@ -814,6 +814,9 @@ class HistoryDag:
             relax_type: Whether to require the returned HistoryDag to be of the same subclass as self.
                 If True, the returned HistoryDag will be of the abstract type `HistoryDag`
         """
+        # TODO: Sometimes this fails because multiple children are identical
+        # after relabeling. Rewrite using
+        # mutation_annotated_dag.load_MAD_protobuf as template.
 
         leaf_label_dict = {leaf.label: relabel_func(leaf) for leaf in self.get_leaves()}
         if len(leaf_label_dict) != len(set(leaf_label_dict.values())):
@@ -1475,6 +1478,7 @@ class HistoryDag:
     def summary(self):
         """Print summary info about the history DAG."""
         print(type(self))
+        print(f"Label fields:\t{self.get_label_type()._fields}")
         print(f"Nodes:\t{self.num_nodes()}")
         print(f"Edges:\t{self.num_edges()}")
         print(f"Histories:\t{self.count_histories()}")
