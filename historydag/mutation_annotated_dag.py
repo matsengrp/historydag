@@ -502,7 +502,7 @@ def unflatten(flat_dag):
     dag.recompute_parents()
     return dag
 
-def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
+def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
     """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
     `compact_genome` label attribute.
 
@@ -698,4 +698,4 @@ def load_MAD_protobuf_file(filename, **kwargs):
     with open(filename, "rb") as fh:
         pb_data = dpb.data()
         pb_data.ParseFromString(fh.read())
-    return load_MAD_protobuf_direct(pb_data, **kwargs)
+    return load_MAD_protobuf(pb_data, **kwargs)
