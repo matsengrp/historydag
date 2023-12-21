@@ -118,6 +118,7 @@ class CGHistoryDag(HistoryDag):
                 nodes, this data is appended after the unique leaf ID.
         """
 
+        #TODO fix when node ids aren't available for internal nodes
         refseq = next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
         empty_cg = CompactGenome(dict(), refseq)
 
@@ -501,6 +502,158 @@ def unflatten(flat_dag):
     dag.recompute_parents()
     return dag
 
+def load_MAD_protobuf_direct(pbdata, compact_genomes=False, node_ids=True):
+
+    class PBDAG:
+        def __init__(self, pbdata):
+            self.pbdata = pbdata
+            self.reference = pbdata.reference_seq
+            parent_edges = {node.node_id: [] for node in pbdata.node_names}
+            # a list of list of a node's child edges
+            child_edges = {node.node_id: [] for node in pbdata.node_names}
+            for edge in pbdata.edges:
+                parent_edges[edge.child_node].append(edge)
+                child_edges[edge.parent_node].append(edge)
+            self.child_edges = child_edges
+            self.parent_edges = parent_edges
+
+            # now each node id is in parent_edges and child_edges as a key,
+            # fix the UA node's compact genome (could be done in function but this
+            # asserts only one node has no parent edges)
+            (ua_node_id,) = [
+                node_id for node_id, eset in parent_edges.items() if len(eset) == 0
+            ]
+            self.ua_node_id = ua_node_id
+
+            def traverse_postorder(node_id):
+                # order node_ids in postordering
+                visited = set()
+
+                def traverse(node_id):
+                    visited.add(node_id)
+                    child_ids = [edge.child_node for edge in child_edges[node_id]]
+                    if len(child_ids) > 0:
+                        for child_id in child_ids:
+                            if child_id not in visited:
+                                yield from traverse(child_id)
+                    yield node_id
+
+                yield from traverse(node_id)
+
+            self.id_postorder = list(traverse_postorder(ua_node_id))
+            self.id_reverse_postorder = list(reversed(self.id_postorder))
+            self.node_id_to_cg = None
+
+            if node_ids:
+                def _id_func(nid):
+                    if self.is_leaf(nid):
+                        return pbdata.node_names[node_id].condensed_leaves[0]
+                    else:
+                        return str(nid)
+            else:
+                def _id_func(nid):
+                    if self.is_leaf(nid):
+                        return pbdata.node_names[node_id].condensed_leaves[0]
+                    else:
+                        return None
+
+            if compact_genomes:
+                self.return_type = CGHistoryDag
+                self.label_fields = ("compact_genome", "node_id")
+                self._label_funcs = (self.get_compact_genome, _id_func)
+            else:
+                self.label_fields = ("node_id")
+                self._label_funcs = (_id_func,)
+                self.return_type = NodeIDHistoryDag
+
+
+        def _build_compact_genomes(self):
+            # These are built from ua node down, so must be built in
+            # reverse postorder:
+            # Also returns flag indicating if any compact genomes are ambiguous
+            node_id_to_cg = {self.ua_node_id: CompactGenome(frozendict(), self.reference)}
+            assert self.id_reverse_postorder[0] == self.ua_node_id
+            ambiguous_flag = False
+
+            def get_leaf_cg(node_id):
+                edges = self.parent_edges[node_id]
+                str_mutations = [tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
+                                 for edge in edges]
+                return reconcile_cgs([node_id_to_cg[edge.parent_node].apply_muts(muts)
+                                      for edge, muts in zip(edges, str_mutations)])
+
+
+
+            for node_id in self.id_reverse_postorder[1:]:
+                if len(self.child_edges[node_id]) > 0:
+                    edge = self.parent_edges[node_id][0]
+                    parent_cg = node_id_to_cg[edge.parent_node]
+                    str_mutations = tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
+                    node_id_to_cg[node_id] = parent_cg.apply_muts(str_mutations)
+                else:
+                    # node_id belongs to leaf, must look at all parent edges to
+                    # look for contradictions (implying ambiguities)
+                    node_id_to_cg[node_id], ambig_flag = get_leaf_cg(node_id)
+                    ambiguous_flag = ambiguous_flag or ambig_flag
+
+            self.node_id_to_cg = node_id_to_cg
+            if ambiguous_flag:
+                self.return_type = AmbiguousLeafCGHistoryDag
+
+        def get_compact_genome(self, node_id):
+            if self.node_id_to_cg is None:
+                self._build_compact_genomes()
+            return self.node_id_to_cg[node_id]
+
+        def get_label(self, node_id):
+            return tuple([lfunc(node_id) for lfunc in self._label_funcs])
+
+        def is_leaf(self, node_id):
+            return len(self.child_edges[node_id]) == 0
+
+        def get_children(self, node_id):
+            return [edge.child_node for edge in self.child_edges[node_id]]
+
+        def get_parents(self, node_id):
+            return [edge.parent_node for edge in self.parent_edges[node_id]]
+
+
+
+    pbdag = PBDAG(pbdata)
+
+    node_to_node_d = dict()
+    node_id_to_node = dict()
+    Label = NamedTuple("Label", [(label, any) for label in pbdag.label_fields])  # type: ignore
+
+    for node_id in pbdag.id_postorder:
+        # These have all been created already
+        children = [node_id_to_node[child_id] for child_id in pbdag.get_children(node_id)]
+        child_clades = frozenset({child.clade_union() for child in children})
+        if node_id == pbdag.ua_node_id:
+            this_node = UANode(EdgeSet())
+        else:
+            this_node = HistoryDagNode(
+                Label(*pbdag.get_label(node_id)),
+                {child_clade: EdgeSet() for child_clade in child_clades},
+                {"node_id": node_id}
+            )
+        # # Use the node already created, if it exists (TODO if we trust
+        # # protobuf, maybe omit this?)
+        # this_node = node_to_node_d.get(this_node, this_node)
+        # node_to_node_d[this_node] = this_node
+
+        # Update node_id dictionary
+        node_id_to_node[node_id] = this_node
+
+        # Add child edges of this_node
+        for child in children:
+            this_node.add_edge(child, weight=0, prob=0, prob_norm=False)
+
+    # Last node in postorder should be UA node
+    assert this_node.is_ua_node()
+    dag = HistoryDag(this_node)
+    return pbdag.return_type.from_history_dag(dag)
+
 
 def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True, leaf_sequence_file=None, leaf_cgs=None):
     """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
@@ -672,9 +825,10 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True, leaf_sequenc
                     for label in clade_union_list[child_edge.child_node]
                 }
             )
+    assert all(it is not None for it in clade_union_list)
 
     def get_child_clades(node_id):
-        return tuple(
+        return frozenset(
             clade_union_list[child_edge.child_node]
             for child_edge in child_edges[node_id]
         )
@@ -713,6 +867,7 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True, leaf_sequenc
             "attr": {"refseqid": pbdata.reference_id},
         }
     )
+    # return (ReturnType.from_history_dag(dag), (label_fields, label_list, node_list, edge_list))
     return ReturnType.from_history_dag(dag)
 
 
@@ -722,4 +877,4 @@ def load_MAD_protobuf_file(filename, **kwargs):
     with open(filename, "rb") as fh:
         pb_data = dpb.data()
         pb_data.ParseFromString(fh.read())
-    return load_MAD_protobuf(pb_data, **kwargs)
+    return load_MAD_protobuf_direct(pb_data, **kwargs)

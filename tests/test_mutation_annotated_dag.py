@@ -5,18 +5,30 @@ from historydag.mutation_annotated_dag import (
 from historydag.sequence_dag import SequenceHistoryDag
 from math import isclose, log
 
-pbdag = load_MAD_protobuf_file("sample_data/full_dag.pb")
+# pbdag = load_MAD_protobuf_file("sample_data/full_dag.pb")
+pbdag = load_MAD_protobuf_file("sample_data/node_id_dag.pb")
 
 
 def test_load_protobuf():
-    dag = load_MAD_protobuf_file("sample_data/full_dag.pb")
-    dag._check_valid()
+    cg_nid_dag = load_MAD_protobuf_file("sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False)
+    nid_dag = load_MAD_protobuf_file("sample_data/node_id_dag.pb", compact_genomes=False, node_ids=True)
+    cg_dag = load_MAD_protobuf_file("sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False)
+
+    # These values are from Larch, and may not actually be correct
+    for dag in [cg_nid_dag, nid_dag, cg_dag]:
+        assert dag.count_histories() == 120679531678039887072
+        assert dag._check_valid()
+
+    for dag in [cg_nid_dag, cg_dag]:
+        assert dag.optimal_weight_annotate() == 428
+        assert dag.optimal_weight_annotate() == 1008
+
     test_filename = "_test_write_pb.pb"
-    dag.to_protobuf_file(test_filename)
+    cg_nid_dag.to_protobuf_file(test_filename)
     ndag = load_MAD_protobuf_file(test_filename)
     ndag._check_valid()
     ndag.convert_to_collapsed()
-    assert dag.weight_count() == ndag.weight_count()
+    assert cg_nid_dag.weight_count() == ndag.weight_count()
 
 
 def test_load_json():

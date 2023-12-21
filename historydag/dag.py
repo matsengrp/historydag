@@ -1117,6 +1117,22 @@ class HistoryDag:
         return newick(next(self.dagroot.children())) + ";"
 
     @utils._history_method
+    def to_ascii(
+        self,
+        name_func,
+        show_internal=False,
+        compact=False,
+    ):
+        """A convenience function that uses the :meth:`to_ete` method
+        and ete3's ASCII drawing tools to render a history.
+
+        Provide a function taking a HistoryDagNode and returning a string,
+        and this string will label the corresponding node in the ascii
+        representation."""
+        t = self.to_ete(name_func=name_func)
+        return t.get_ascii(show_internal=show_internal, compact=compact)
+
+    @utils._history_method
     def to_ete(
         self,
         name_func: Callable[[HistoryDagNode], str] = lambda n: "unnamed",
