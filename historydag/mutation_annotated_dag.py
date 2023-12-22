@@ -116,11 +116,23 @@ class CGHistoryDag(HistoryDag):
             leaf_data_func: a function taking a DAG node and returning a string to store
                 in the protobuf node_name field `condensed_leaves` of leaf nodes. On leaf
                 nodes, this data is appended after the unique leaf ID.
+
+        Note that internal node IDs will be reassigned, even if internal nodes have node IDs
+        in their label data.
         """
 
-        #TODO fix when node ids aren't available for internal nodes
         refseq = next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
         empty_cg = CompactGenome(dict(), refseq)
+
+        # Create unique leaf IDs if the node_id field isn't available
+        if "node_id" in self.get_label_type()._fields:
+            def get_leaf_id(node):
+                return node.label.node_id
+        else:
+            leaf_id_map = {n: f"s{idx}" for idx, n in enumerate(self.get_leaves())}
+
+            def get_leaf_id(node):
+                return leaf_id_map[node]
 
         def mut_func(pnode, cnode):
             if pnode.is_ua_node():
@@ -142,7 +154,7 @@ class CGHistoryDag(HistoryDag):
             node_name = data.node_names.add()
             node_name.node_id = idx
             if node.is_leaf():
-                node_name.condensed_leaves.append(node.label.node_id)
+                node_name.condensed_leaves.append(get_leaf_id(node))
                 if leaf_data_func is not None:
                     node_name.condensed_leaves.append(leaf_data_func(node))
 
