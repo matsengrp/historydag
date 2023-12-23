@@ -7,10 +7,15 @@ from historydag.sequence_dag import SequenceHistoryDag
 from math import isclose, log
 
 # pbdag = load_MAD_protobuf_file("sample_data/full_dag.pb")
-pbdag = load_MAD_protobuf_file("sample_data/node_id_dag.pb")
+pbdag = load_MAD_protobuf_file(
+    "sample_data/node_id_dag.pb", compact_genomes=True, node_ids=True
+)
 
 
 def test_load_protobuf():
+    top_dag = load_MAD_protobuf_file(
+        "sample_data/node_id_dag.pb", compact_genomes=False, node_ids=False
+    )
     cg_nid_dag = load_MAD_protobuf_file(
         "sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False
     )
@@ -34,6 +39,7 @@ def test_load_protobuf():
     ndag._check_valid()
     ndag = load_MAD_protobuf(cg_dag.to_protobuf())
     ndag._check_valid()
+    assert top_dag.count_histories() == cg_nid_dag.unlabel().count_histories()
 
 
 def test_load_json():
