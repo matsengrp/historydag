@@ -553,8 +553,12 @@ class HistoryDag:
             if not node.is_ua_node():
                 # *** Clades are pairwise disjoint:
                 if not node.is_leaf():
-                    if len(node.clade_union()) != sum(len(clade) for clade in node.clades):
-                        raise ValueError("Found a node whose child clades are not pairwise disjoint")
+                    if len(node.clade_union()) != sum(
+                        len(clade) for clade in node.clades
+                    ):
+                        raise ValueError(
+                            "Found a node whose child clades are not pairwise disjoint"
+                        )
                 for clade, eset in node.clades.items():
                     for child in eset.targets:
                         # ***Parent clade equals child clade union for all edges:
@@ -825,13 +829,17 @@ class HistoryDag:
         node_to_node_d = dict()
 
         for old_node in self.postorder():
-            new_children = [old_node_to_node_d[old_child] for old_child in old_node.children()]
+            new_children = [
+                old_node_to_node_d[old_child] for old_child in old_node.children()
+            ]
             child_clades = frozenset({child.clade_union() for child in new_children})
             if len(child_clades) != len(old_node.clades):
-                warnings.warn(f"relabel_func {relabel_func.__name__} maps multiple"
-                              " leaf nodes to the same label. This is not supported"
-                              " and may fail with an error or silently. If you ignore"
-                              " this warning, at least run _check_valid() on the result")
+                warnings.warn(
+                    f"relabel_func {relabel_func.__name__} maps multiple"
+                    " leaf nodes to the same label. This is not supported"
+                    " and may fail with an error or silently. If you ignore"
+                    " this warning, at least run _check_valid() on the result"
+                )
             if old_node.is_ua_node():
                 new_node = UANode(EdgeSet())
             else:
@@ -856,7 +864,6 @@ class HistoryDag:
         else:
             return type(self).from_history_dag(dag)
 
-        
     def add_label_fields(self, new_field_names=[], new_field_values=lambda n: []):
         """Returns a copy of the DAG in which each node's label is extended to
         include the new fields listed in `new_field_names`.
@@ -1130,12 +1137,13 @@ class HistoryDag:
         show_internal=False,
         compact=False,
     ):
-        """A convenience function that uses the :meth:`to_ete` method
-        and ete3's ASCII drawing tools to render a history.
+        """A convenience function that uses the :meth:`to_ete` method and
+        ete3's ASCII drawing tools to render a history.
 
-        Provide a function taking a HistoryDagNode and returning a string,
-        and this string will label the corresponding node in the ascii
-        representation."""
+        Provide a function taking a HistoryDagNode and returning a
+        string, and this string will label the corresponding node in the
+        ascii representation.
+        """
         t = self.to_ete(name_func=name_func)
         return t.get_ascii(show_internal=show_internal, compact=compact)
 
@@ -3536,12 +3544,13 @@ def ascii_compare_histories(
     history1,
     history2,
     name_func,
-    name_func2 = None,
+    name_func2=None,
     show_internal=False,
     sort=False,
     compact=False,
 ):
-    """A convenience function to print two histories as ascii art trees side-by-side.
+    """A convenience function to print two histories as ascii art trees side-
+    by-side.
 
     Args:
         history1: The first history to compare. Will appear on the left
@@ -3551,7 +3560,8 @@ def ascii_compare_histories(
             ``name_func`` will be used.
         show_internal: whether to show internal node names
         sort: Whether to sort trees by node names
-        compact: Whether to represent trees in a more compact way"""
+        compact: Whether to represent trees in a more compact way
+    """
     if name_func2 is None:
         name_func2 = name_func
     t1 = history1.to_ete(name_func=name_func)
@@ -3562,10 +3572,13 @@ def ascii_compare_histories(
             for node in tree.traverse(strategy="postorder"):
                 node.children.sort(key=lambda n: n.name)
 
-    a1, a2 = [t.get_ascii(show_internal=show_internal, compact=compact).split('\n') for t in trees]
+    a1, a2 = [
+        t.get_ascii(show_internal=show_internal, compact=compact).split("\n")
+        for t in trees
+    ]
 
     # There are no tabs in the ascii lines
-    offset = max(len(l) for l in a1) + 2
+    offset = max(len(it) for it in a1) + 2
     # expand all lines in a1 so they have len offset
     a1padded = []
     for line in a1:

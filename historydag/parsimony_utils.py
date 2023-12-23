@@ -72,9 +72,13 @@ class AmbiguityMap:
         ambiguous_values.update({base: frozenset({base}) for base in self.bases})
         self.ambiguous_values = frozendict(ambiguous_values)
         reversed_map = {bases: char for char, bases in self.ambiguous_values.items()}
-        reversed_map.update({frozenset(key): char
-                             for key, char in reversed_defaults.items()
-                             if frozenset(key) in reversed_map})
+        reversed_map.update(
+            {
+                frozenset(key): char
+                for key, char in reversed_defaults.items()
+                if frozenset(key) in reversed_map
+            }
+        )
         self.reversed = ReversedAmbiguityMap(reversed_map)
         self.uninformative_chars = frozenset(
             char
@@ -181,7 +185,9 @@ _ambiguous_dna_values_gap_as_char.update({"?": "GATC-", "-": "-"})
 _ambiguous_dna_values = Bio.Data.IUPACData.ambiguous_dna_values.copy()
 _ambiguous_dna_values.update({"?": "GATC", "-": "GATC"})
 
-standard_nt_ambiguity_map = AmbiguityMap(_ambiguous_dna_values, "AGCT", reversed_defaults={"AGCT": "N"})
+standard_nt_ambiguity_map = AmbiguityMap(
+    _ambiguous_dna_values, "AGCT", reversed_defaults={"AGCT": "N"}
+)
 """The standard IUPAC nucleotide ambiguity map, in which 'N', '?', and '-' are
 all considered fully ambiguous."""
 
@@ -419,7 +425,7 @@ class TransitionModel:
 
         Returns:
             A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning
-            a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or 
+            a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or
             the number of mutations between the reference and the CG of n2 if n1 is the UA node.
 
         Sites where parent_cg and child_cg
@@ -433,8 +439,7 @@ class TransitionModel:
                 return len(getattr(child.label, field_name).mutations)
             else:
                 return self.weighted_cg_hamming_distance(
-                    getattr(parent.label, field_name),
-                    getattr(child.label, field_name)
+                    getattr(parent.label, field_name), getattr(child.label, field_name)
                 )
 
         return edge_weight

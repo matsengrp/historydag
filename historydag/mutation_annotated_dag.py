@@ -6,7 +6,6 @@ The resulting history DAG contains labels with 'compact genomes', and a
 relative to the reference.
 """
 
-import functools
 from frozendict import frozendict
 from historydag.dag import HistoryDag, HistoryDagNode, UANode, EdgeSet
 import historydag.utils
@@ -49,11 +48,14 @@ class HDagJSONEncoder(json.JSONEncoder):
 
 
 class NodeIDHistoryDag(HistoryDag):
-    """A HistoryDag subclass with node labels containing string node_id objects.
+    """A HistoryDag subclass with node labels containing string node_id
+    objects.
 
-    For leaf nodes this string is a unique leaf identifier, and for internal nodes
-    this is a string representation of an integer node ID.
+    For leaf nodes this string is a unique leaf identifier, and for
+    internal nodes this is a string representation of an integer node
+    ID.
     """
+
 
 class CGHistoryDag(HistoryDag):
     """A HistoryDag subclass with node labels containing CompactGenome objects.
@@ -109,8 +111,9 @@ class CGHistoryDag(HistoryDag):
     # #### CGHistoryDag-Specific Methods ####
 
     def to_protobuf(self, leaf_data_func=None):
-        """Convert a DAG with compact genome data on each node, and unique
-        leaf IDs on leaf nodes, to a MAD protobuf with mutation information on edges.
+        """Convert a DAG with compact genome data on each node, and unique leaf
+        IDs on leaf nodes, to a MAD protobuf with mutation information on
+        edges.
 
         Args:
             leaf_data_func: a function taking a DAG node and returning a string to store
@@ -126,8 +129,10 @@ class CGHistoryDag(HistoryDag):
 
         # Create unique leaf IDs if the node_id field isn't available
         if "node_id" in self.get_label_type()._fields:
+
             def get_leaf_id(node):
                 return node.label.node_id
+
         else:
             leaf_id_map = {n: f"s{idx}" for idx, n in enumerate(self.get_leaves())}
 
@@ -514,9 +519,10 @@ def unflatten(flat_dag):
     dag.recompute_parents()
     return dag
 
+
 def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
-    """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the
-    `compact_genome` label attribute.
+    """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact
+    genomes in the `compact_genome` label attribute.
 
     Args:
         pbdata: loaded protobuf data object
@@ -537,12 +543,13 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
 
     Note that if leaf sequences in the original alignment do not contain ambiguities, it is not
     necessary to provide alignment data; leaf sequences can be completely inferred without it.
-            """
+    """
 
     class PBDAG:
-        """This class doesn't do much, just provides an interface to the protobuf data, as
-        a DAG of integer node IDs, and provides methods to get history DAG node data for a
-        given node ID."""
+        """This class doesn't do much, just provides an interface to the
+        protobuf data, as a DAG of integer node IDs, and provides methods to
+        get history DAG node data for a given node ID."""
+
         def __init__(self, pbdata):
             self.pbdata = pbdata
             self.reference = pbdata.reference_seq
@@ -589,12 +596,15 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
             self.node_id_to_cg = None
 
             if node_ids:
+
                 def _id_func(nid):
                     if self.is_leaf(nid):
                         return pbdata.node_names[node_id].condensed_leaves[0]
                     else:
                         return str(nid)
+
             else:
+
                 def _id_func(nid):
                     if self.is_leaf(nid):
                         return pbdata.node_names[node_id].condensed_leaves[0]
@@ -610,29 +620,36 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
                 self._label_funcs = (_id_func,)
                 self.return_type = NodeIDHistoryDag
 
-
         def _build_compact_genomes(self):
             # These are built from ua node down, so must be built in
             # reverse postorder:
             # Also returns flag indicating if any compact genomes are ambiguous
-            node_id_to_cg = {self.ua_node_id: CompactGenome(frozendict(), self.reference)}
+            node_id_to_cg = {
+                self.ua_node_id: CompactGenome(frozendict(), self.reference)
+            }
             assert self.id_reverse_postorder[0] == self.ua_node_id
             ambiguous_flag = False
 
             def get_leaf_cg(node_id):
                 edges = self.parent_edges[node_id]
-                str_mutations = [tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
-                                 for edge in edges]
-                return reconcile_cgs([node_id_to_cg[edge.parent_node].apply_muts(muts)
-                                      for edge, muts in zip(edges, str_mutations)])
-
-
+                str_mutations = [
+                    tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
+                    for edge in edges
+                ]
+                return reconcile_cgs(
+                    [
+                        node_id_to_cg[edge.parent_node].apply_muts(muts)
+                        for edge, muts in zip(edges, str_mutations)
+                    ]
+                )
 
             for node_id in self.id_reverse_postorder[1:]:
                 if len(self.child_edges[node_id]) > 0:
                     edge = self.parent_edges[node_id][0]
                     parent_cg = node_id_to_cg[edge.parent_node]
-                    str_mutations = tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
+                    str_mutations = tuple(
+                        _pb_mut_to_str(mut) for mut in edge.edge_mutations
+                    )
                     node_id_to_cg[node_id] = parent_cg.apply_muts(str_mutations)
                 else:
                     # node_id belongs to leaf, must look at all parent edges to
@@ -661,8 +678,6 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
         def get_parents(self, node_id):
             return [edge.parent_node for edge in self.parent_edges[node_id]]
 
-
-
     pbdag = PBDAG(pbdata)
 
     node_to_node_d = dict()
@@ -671,7 +686,9 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
 
     for node_id in pbdag.id_postorder:
         # These have all been created already
-        children = [node_id_to_node[child_id] for child_id in pbdag.get_children(node_id)]
+        children = [
+            node_id_to_node[child_id] for child_id in pbdag.get_children(node_id)
+        ]
         child_clades = frozenset({child.clade_union() for child in children})
         if node_id == pbdag.ua_node_id:
             this_node = UANode(EdgeSet())
@@ -679,7 +696,7 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
             this_node = HistoryDagNode(
                 Label(*pbdag.get_label(node_id)),
                 {child_clade: EdgeSet() for child_clade in child_clades},
-                {"node_id": node_id}
+                {"node_id": node_id},
             )
         # (TODO) These two lines shouldn't affect the returned DAG when
         # compact genomes are in labels but node IDs aren't, but they do!

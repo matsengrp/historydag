@@ -11,9 +11,15 @@ pbdag = load_MAD_protobuf_file("sample_data/node_id_dag.pb")
 
 
 def test_load_protobuf():
-    cg_nid_dag = load_MAD_protobuf_file("sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False)
-    nid_dag = load_MAD_protobuf_file("sample_data/node_id_dag.pb", compact_genomes=False, node_ids=True)
-    cg_dag = load_MAD_protobuf_file("sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False)
+    cg_nid_dag = load_MAD_protobuf_file(
+        "sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False
+    )
+    nid_dag = load_MAD_protobuf_file(
+        "sample_data/node_id_dag.pb", compact_genomes=False, node_ids=True
+    )
+    cg_dag = load_MAD_protobuf_file(
+        "sample_data/node_id_dag.pb", compact_genomes=True, node_ids=False
+    )
 
     # These values are from Larch, and may not actually be correct
     for dag in [cg_nid_dag, nid_dag, cg_dag]:

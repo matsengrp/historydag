@@ -94,6 +94,7 @@ def test_ambiguous_cg_distance():
     assert default_nt_transitions.min_weighted_cg_hamming_distance(s4, s2) == 1
     assert default_nt_transitions.min_weighted_cg_hamming_distance(s4, s3) == 1
 
+
 def test_reconcile_cgs():
     # ambiguitymap = historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char
     ambiguitymap = historydag.parsimony_utils.standard_nt_ambiguity_map
@@ -127,4 +128,3 @@ def test_reconcile_cgs():
 
     for cgs, answer in testcases:
         assert compact_genome.reconcile_cgs(cgs, ambiguitymap=ambiguitymap)[0] == answer
-
