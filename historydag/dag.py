@@ -3532,6 +3532,51 @@ def from_tree(
     return HistoryDag(dagroot)
 
 
+def ascii_compare_histories(
+    history1,
+    history2,
+    name_func,
+    name_func2 = None,
+    show_internal=False,
+    sort=False,
+    compact=False,
+):
+    """A convenience function to print two histories as ascii art trees side-by-side.
+
+    Args:
+        history1: The first history to compare. Will appear on the left
+        history2: The second history to compare. Will appear on the right
+        name_func: A function mapping each HistoryDagNode to a node name string.
+        name_func2: A different name_func to be used for history2. If not provided,
+            ``name_func`` will be used.
+        show_internal: whether to show internal node names
+        sort: Whether to sort trees by node names
+        compact: Whether to represent trees in a more compact way"""
+    if name_func2 is None:
+        name_func2 = name_func
+    t1 = history1.to_ete(name_func=name_func)
+    t2 = history2.to_ete(name_func=name_func2)
+    trees = [t1, t2]
+    if sort:
+        for tree in trees:
+            for node in tree.traverse(strategy="postorder"):
+                node.children.sort(key=lambda n: n.name)
+
+    a1, a2 = [t.get_ascii(show_internal=show_internal, compact=compact).split('\n') for t in trees]
+
+    # There are no tabs in the ascii lines
+    offset = max(len(l) for l in a1) + 2
+    # expand all lines in a1 so they have len offset
+    a1padded = []
+    for line in a1:
+        add = offset - len(line)
+        a1padded.append(line + (" " * add))
+
+    # print
+    for l1, l2 in zip(a1padded, a2):
+        print(l1 + l2)
+
+
 def history_dag_from_trees(
     treelist: List[ete3.TreeNode],
     label_features: List[str],

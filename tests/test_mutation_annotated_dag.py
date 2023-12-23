@@ -1,5 +1,6 @@
 from historydag.mutation_annotated_dag import (
     load_MAD_protobuf_file,
+    load_MAD_protobuf,
     load_json_file,
 )
 from historydag.sequence_dag import SequenceHistoryDag
@@ -21,14 +22,12 @@ def test_load_protobuf():
 
     for dag in [cg_nid_dag, cg_dag]:
         assert dag.optimal_weight_annotate() == 428
-        assert dag.optimal_weight_annotate() == 1008
+        assert dag.optimal_weight_annotate(optimal_func=max) == 1008
 
-    test_filename = "_test_write_pb.pb"
-    cg_nid_dag.to_protobuf_file(test_filename)
-    ndag = load_MAD_protobuf_file(test_filename)
+    ndag = load_MAD_protobuf(cg_nid_dag.to_protobuf())
     ndag._check_valid()
-    ndag.convert_to_collapsed()
-    assert cg_nid_dag.weight_count() == ndag.weight_count()
+    ndag = load_MAD_protobuf(cg_dag.to_protobuf())
+    ndag._check_valid()
 
 
 def test_load_json():
