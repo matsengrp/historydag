@@ -1131,16 +1131,44 @@ def count_labeled_binary_topologies(n):
     return prod(range(1, 2 * n - 2, 2))
 
 
-def load_fasta(fastapath):
-    fasta_records = []
+def read_fasta(fastapath, sequence_type=str):
+    """Load a fasta file as a generator which yields (sequence ID, sequence) pairs.
+
+    The function ``sequence_type`` will be called on each sequence as it
+    is read from the fasta file, and the resulting object will be yielded as the second
+    item in each sequence record pair."""
+    seqids = set()
     with open(fastapath, "r") as fh:
+        seqid = None
+        sequence = ""
         for line in fh:
             if line[0] == ">":
-                fasta_records.append([line[1:].strip(), ""])
+                if seqid is not None:
+                    yield (seqid, sequence_type(sequence))
+                    seqids.add(seqid)
+                seqid = line[1:].strip()
+                sequence = ""
+                if seqid in seqids:
+                    raise ValueError(
+                        "Duplicate records with matching identifier in fasta file"
+                    )
             else:
-                fasta_records[-1][-1] += line.strip()
-    return dict(fasta_records)
+                if seqid is None and line.strip():
+                    raise ValueError(
+                        "First non-blank line in fasta does not contain identifier"
+                    )
+                else:
+                    sequence += line.strip().upper()
+        yield (seqid, sequence_type(sequence))
 
+def load_fasta(fastapath, sequence_type=str):
+    """Load a fasta file as a dictionary, with sequence ids as keys and
+    sequences as values.
+
+    The function ``sequence_type`` will be called on each sequence as it
+    is read from the fasta file, and the returned objects will be the values
+    in the resulting alignment dictionary."""
+    return dict(read_fasta(fastapath, sequence_type=sequence_type))
 
 def _deprecate_message(message):
     def _deprecate(func):

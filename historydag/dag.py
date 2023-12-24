@@ -198,11 +198,13 @@ class HistoryDag:
                     f", which requires label field '{fieldname}'."
                 )
             if fieldname in required_fields_set:
-                message += (
-                    " Automatic conversion from label fields"
-                    f" {' or '.join([str(converttuple[0]) for converttuple in cls._required_label_fields[fieldname]])}"
-                    " is supported."
-                )
+                fromtuples = cls._required_label_fields[fieldname]
+                if len(fromtuples) > 0:
+                    message += (
+                        " Automatic conversion from label fields"
+                        f" {' or '.join([str(converttuple[0]) for converttuple in fromtuples])}"
+                        " is supported."
+                    )
             raise TypeError(message)
 
         precursor_fields = set()

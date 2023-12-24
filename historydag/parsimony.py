@@ -3,11 +3,12 @@ import random
 import ete3
 import numpy as np
 from itertools import product
+import historydag.utils as utils
+from historydag.utils import load_fasta
 from historydag.dag import (
     history_dag_from_histories,
     history_dag_from_etes,
     HistoryDag,
-    utils,
 )
 from copy import deepcopy
 import historydag.parsimony_utils as parsimony_utils
@@ -450,31 +451,6 @@ def disambiguate(
                 node.up.sequence, node.sequence
             )
     return tree
-
-
-def load_fasta(fastapath):
-    """Load a fasta file as a dictionary, with sequence ids as keys and
-    sequences as values."""
-    fasta_map = {}
-    with open(fastapath, "r") as fh:
-        seqid = None
-        for line in fh:
-            if line[0] == ">":
-                seqid = line[1:].strip()
-                if seqid in fasta_map:
-                    raise ValueError(
-                        "Duplicate records with matching identifier in fasta file"
-                    )
-                else:
-                    fasta_map[seqid] = ""
-            else:
-                if seqid is None and line.strip():
-                    raise ValueError(
-                        "First non-blank line in fasta does not contain identifier"
-                    )
-                else:
-                    fasta_map[seqid] += line.strip().upper()
-    return fasta_map
 
 
 def build_tree(

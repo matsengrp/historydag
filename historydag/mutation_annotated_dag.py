@@ -56,7 +56,11 @@ class NodeIDHistoryDag(HistoryDag):
     ID.
     """
     _required_label_fields = {"node_id": []}
-
+    _default_args = frozendict({
+        "start_func": (lambda n: 0),
+        "optimal_func": min,
+        "accum_func": sum,
+    })
 
 class CGHistoryDag(HistoryDag):
     """A HistoryDag subclass with node labels containing CompactGenome objects.
@@ -522,7 +526,12 @@ def unflatten(flat_dag):
     return dag
 
 
-def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
+def load_MAD_protobuf(
+    pbdata,
+    compact_genomes=False,
+    node_ids=True,
+    leaf_cgs={},
+):
     """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact
     genomes in the `compact_genome` label attribute.
 
@@ -539,9 +548,8 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
             nodes' `node_id` label fields will be `None`. Unique leaf sequence IDs are always
             included in the `node_id` label field of leaf nodes, to ensure that leaf node
             labels are unique.
-        leaf_sequence_file: (not implemented) A vcf or fasta file containing leaf sequence data, keyed by sequence
-            names which match unique string leaf IDs in the input protobuf data
-        leaf_cgs: (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes
+        leaf_cgs: (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes.
+            Use :meth:`compact_genome.read_alignment` to read an alignment from a file.
 
     Note that if leaf sequences in the original alignment do not contain ambiguities, it is not
     necessary to provide alignment data; leaf sequences can be completely inferred without it.
@@ -563,10 +571,6 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
                 child_edges[edge.parent_node].append(edge)
             self.child_edges = child_edges
             self.parent_edges = parent_edges
-
-            print("loading protobuf dag with ", len(pbdata.edges), "edges")
-            # Subtract ua node from number of nodes, like dag.summary() method
-            print("and", len(pbdata.node_names) - 1, "nodes")
 
             # now each node id is in parent_edges and child_edges as a key,
             # fix the UA node's compact genome (could be done in function but this
@@ -592,8 +596,6 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
                 yield from traverse(node_id)
 
             self.id_postorder = list(traverse_postorder(ua_node_id))
-            # TODO remove check that traversal visits each node only once
-            assert len(self.id_postorder) == len(set(self.id_postorder))
             self.id_reverse_postorder = list(reversed(self.id_postorder))
             self.node_id_to_cg = None
 
@@ -633,17 +635,26 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
             ambiguous_flag = False
 
             def get_leaf_cg(node_id):
-                edges = self.parent_edges[node_id]
-                str_mutations = [
-                    tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
-                    for edge in edges
-                ]
-                return reconcile_cgs(
-                    [
-                        node_id_to_cg[edge.parent_node].apply_muts(muts)
-                        for edge, muts in zip(edges, str_mutations)
+                leaf_id = pbdata.node_names[node_id].condensed_leaves[0]
+                cg = leaf_cgs.get(leaf_id, None)
+                if cg is not None:
+                    # If we're provided a leaf sequence dictionary, just assume
+                    # leaf sequences are ambiguous (otherwise it would be
+                    # unnecessary, except for speedup). If this assumption is
+                    # untrue, it can be fixed with HistoryDag subtype conversion
+                    return cg, True
+                else:
+                    edges = self.parent_edges[node_id]
+                    str_mutations = [
+                        tuple(_pb_mut_to_str(mut) for mut in edge.edge_mutations)
+                        for edge in edges
                     ]
-                )
+                    return reconcile_cgs(
+                        [
+                            node_id_to_cg[edge.parent_node].apply_muts(muts)
+                            for edge, muts in zip(edges, str_mutations)
+                        ]
+                    )
 
             for node_id in self.id_reverse_postorder[1:]:
                 if len(self.child_edges[node_id]) > 0:
@@ -700,13 +711,9 @@ def load_MAD_protobuf(pbdata, compact_genomes=False, node_ids=True):
                 {child_clade: EdgeSet() for child_clade in child_clades},
                 {"node_id": node_id},
             )
-        # (TODO) These two lines shouldn't affect the returned DAG when
-        # compact genomes are in labels but node IDs aren't, but they do!
-        # This seems to imply that there are multiple nodes in the protobuf
-        # with the same child clades and compact genome, but different node
-        # IDs.
-        # (to clarify, these lines should affect result when compact genomes
-        # aren't in the labels)
+        # These lines are important when choice of label data
+        # results in multiple protobuf nodes being the same in the
+        # loaded DAG.
         this_node = node_to_node_d.get(this_node, this_node)
         node_to_node_d[this_node] = this_node
 
