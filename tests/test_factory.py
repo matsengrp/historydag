@@ -1007,3 +1007,13 @@ def test_bifurcating_count():
         assert dag.count_histories(bifurcating=True) >= dag.count_histories(
             bifurcating=False
         )
+
+def test_ascii_visualization():
+    dag = dags[-1]
+    history = dag[0]
+    print(history.to_ascii(lambda n: hash(n)))
+    print(history.to_ascii(lambda n: hash(n), sort_method="ladderize"))
+    print(history.to_ascii(lambda n: hash(n), sort_method="child-name"))
+    print(history.to_ascii(lambda n: hash(n), sort_method="leaf-name"))
+
+    hdag.ascii_compare_histories(history, dag[1], lambda n: hash(n))

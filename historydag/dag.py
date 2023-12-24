@@ -1136,15 +1136,47 @@ class HistoryDag:
         name_func,
         show_internal=False,
         compact=False,
+        sort_method=None,
     ):
         """A convenience function that uses the :meth:`to_ete` method and
         ete3's ASCII drawing tools to render a history.
 
-        Provide a function taking a HistoryDagNode and returning a
-        string, and this string will label the corresponding node in the
-        ascii representation.
+        Args:
+            name_func: A function taking a HistoryDagNode and returning a string
+                to identify that node in the ascii tree.
+            show_internal: Whether to show internal node names.
+            compact: Whether to show the tree in a more compact format
+            sort_method: Either None, `ladderize`, `leaf-name`, or `child-name`.
+                `leaf-name` sorts children by the alphabetically first leaf name
+                below each child node. `child-name` sorts directly by child name.
+        Returns:
+            A string including whitespace and newlines (no tabs) which when printed
+            shows the structure of the history.
         """
         t = self.to_ete(name_func=name_func)
+        def child_name_sort(tree):
+            for node in tree.traverse(strategy="postorder"):
+                node.children.sort(key=lambda n: n.name)
+
+        def leaf_name_sort(tree):
+            for node in tree.traverse(strategy="postorder"):
+                if node.is_leaf():
+                    node.firstleaf = node.name
+                else:
+                    node.children.sort(key=lambda n: n.firstleaf)
+                    node.firstleaf = node.children[0].firstleaf
+
+        try:
+            sort_func = {
+                None: (lambda tree: None),
+                "ladderize": t.ladderize,
+                "leaf-name": leaf_name_sort,
+                "child-name": child_name_sort,
+            }[sort_method]
+        except KeyError:
+            raise KeyError("to_ascii method accepts sort_method None, `ladderize`, "
+                           f"`child-name`, or `leaf-name`, not {sort_method}.")
+        sort_func(t)
         return t.get_ascii(show_internal=show_internal, compact=compact)
 
     @utils._history_method
@@ -3540,14 +3572,16 @@ def from_tree(
     return HistoryDag(dagroot)
 
 
+        # name_func,
+        # show_internal=False,
+        # compact=False,
+        # sort_method=None,
 def ascii_compare_histories(
     history1,
     history2,
     name_func,
     name_func2=None,
-    show_internal=False,
-    sort=False,
-    compact=False,
+    **kwargs,
 ):
     """A convenience function to print two histories as ascii art trees side-
     by-side.
@@ -3558,26 +3592,15 @@ def ascii_compare_histories(
         name_func: A function mapping each HistoryDagNode to a node name string.
         name_func2: A different name_func to be used for history2. If not provided,
             ``name_func`` will be used.
-        show_internal: whether to show internal node names
-        sort: Whether to sort trees by node names
-        compact: Whether to represent trees in a more compact way
+        kwargs: This function also accepts all keyword arguments allowed by
+            :meth:`HistoryDag.to_ascii`
     """
     if name_func2 is None:
         name_func2 = name_func
-    t1 = history1.to_ete(name_func=name_func)
-    t2 = history2.to_ete(name_func=name_func2)
-    trees = [t1, t2]
-    if sort:
-        for tree in trees:
-            for node in tree.traverse(strategy="postorder"):
-                node.children.sort(key=lambda n: n.name)
+    a1 = history1.to_ascii(name_func=name_func, **kwargs).split("\n")
+    a2 = history2.to_ascii(name_func=name_func2, **kwargs).split("\n")
 
-    a1, a2 = [
-        t.get_ascii(show_internal=show_internal, compact=compact).split("\n")
-        for t in trees
-    ]
-
-    # There are no tabs in the ascii lines
+    # There are no tabs in the ascii lines, only constant-width characters.
     offset = max(len(it) for it in a1) + 2
     # expand all lines in a1 so they have len offset
     a1padded = []
@@ -3585,7 +3608,6 @@ def ascii_compare_histories(
         add = offset - len(line)
         a1padded.append(line + (" " * add))
 
-    # print
     for l1, l2 in zip(a1padded, a2):
         print(l1 + l2)
 
