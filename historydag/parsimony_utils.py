@@ -415,13 +415,16 @@ class TransitionModel:
         return edge_weight
 
     def weighted_cg_hamming_edge_weight(
-        self, field_name: str
+        self, field_name: str, count_root_muts: bool = True,
     ) -> Callable[["HistoryDagNode", "HistoryDagNode"], float]:
         """Returns a function for computing weighted hamming distance between
         two nodes' compact genomes.
 
         Args:
             field_name: The name of the node label field which contains compact genomes.
+            count_root_muts: If True, the reference sequence of root nodes' compact
+                genomes is considered to be the ancestral sequence of each history,
+                and mutations from the reference to the history root CG are counted.
 
         Returns:
             A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning
@@ -436,7 +439,10 @@ class TransitionModel:
         def edge_weight(parent, child):
             # Get the number of mutations on a branch pointing to the UA node
             if parent.is_ua_node():
-                return len(getattr(child.label, field_name).mutations)
+                if count_root_muts:
+                    return len(getattr(child.label, field_name).mutations)
+                else:
+                    return 0
             else:
                 return self.weighted_cg_hamming_distance(
                     getattr(parent.label, field_name), getattr(child.label, field_name)
@@ -477,7 +483,7 @@ class TransitionModel:
         return edge_weight
 
     def min_weighted_cg_hamming_edge_weight(
-        self, field_name: str
+        self, field_name: str, count_root_muts: bool = True,
     ) -> Callable[["HistoryDagNode", "HistoryDagNode"], float]:
         """Returns a function for computing weighted hamming distance between
         two nodes' compact genomes.
@@ -487,6 +493,9 @@ class TransitionModel:
 
         Args:
             field_name: The name of the node label field which contains compact genomes.
+            count_root_muts: If True, the reference sequence of root nodes' compact
+                genomes is considered to be the ancestral sequence of each history,
+                and mutations from the reference to the history root CG are counted.
 
         Returns:
             A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning
@@ -496,13 +505,16 @@ class TransitionModel:
 
         def edge_weight(parent, child):
             if parent.is_ua_node():
-                return len(getattr(child.label, field_name).mutations)
+                if count_root_muts:
+                    return len(getattr(child.label, field_name).mutations)
+                else:
+                    return 0
             elif child.is_leaf():
                 return self.min_weighted_cg_hamming_distance(
                     getattr(parent.label, field_name), getattr(child.label, field_name)
                 )
             else:
-                return self.weighted_cg_hamming_distance(
+                return self.weighted_cg_hamming_edge_weight(
                     getattr(parent.label, field_name), getattr(child.label, field_name)
                 )
 
@@ -512,6 +524,7 @@ class TransitionModel:
         self,
         field_name: str,
         leaf_ambiguities: bool = False,
+        count_root_muts: bool = True,
         name: str = "WeightedParsimony",
     ) -> AddFuncDict:
         """Create a :class:`historydag.utils.AddFuncDict` object for counting
@@ -521,12 +534,15 @@ class TransitionModel:
         Args:
             field_name: the label field name in which compact genomes can be found
             leaf_ambiguities: if True, leaf compact genomes are permitted to contain ambiguity codes
+            count_root_muts: If True, the reference sequence of root nodes' compact
+                genomes is considered to be the ancestral sequence of each history,
+                and mutations from the reference to the history root CG are counted.
             name: the name for the returned AddFuncDict object
         """
         if leaf_ambiguities:
-            edge_weight = self.min_weighted_cg_hamming_edge_weight(field_name)
+            edge_weight = self.min_weighted_cg_hamming_edge_weight(field_name, count_root_muts=count_root_muts)
         else:
-            edge_weight = self.weighted_cg_hamming_edge_weight(field_name)
+            edge_weight = self.weighted_cg_hamming_edge_weight(field_name, count_root_muts=count_root_muts)
         return AddFuncDict(
             {
                 "start_func": lambda n: 0,

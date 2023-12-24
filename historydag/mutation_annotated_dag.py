@@ -48,13 +48,14 @@ class HDagJSONEncoder(json.JSONEncoder):
 
 
 class NodeIDHistoryDag(HistoryDag):
-    """A HistoryDag subclass with node labels containing string node_id
-    objects.
+    """A HistoryDag subclass with node labels containing string ``node_id``
+    fields.
 
     For leaf nodes this string is a unique leaf identifier, and for
     internal nodes this is a string representation of an integer node
     ID.
     """
+    _required_label_fields = {"node_id": []}
 
 
 class CGHistoryDag(HistoryDag):
@@ -266,9 +267,10 @@ class CGHistoryDag(HistoryDag):
         }
 
     def test_equal(self, other):
-        """Test whether two history DAGs are equal.
+        """Deprecated test for whether two history DAGs are equal.
 
         Compares sorted JSON representation.
+        Only works when "compact_genome" is the only label field, on all nodes.
         """
         flatdag1 = self.flatten()
         flatdag2 = other.flatten()
