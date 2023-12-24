@@ -415,7 +415,9 @@ class TransitionModel:
         return edge_weight
 
     def weighted_cg_hamming_edge_weight(
-        self, field_name: str, count_root_muts: bool = True,
+        self,
+        field_name: str,
+        count_root_muts: bool = True,
     ) -> Callable[["HistoryDagNode", "HistoryDagNode"], float]:
         """Returns a function for computing weighted hamming distance between
         two nodes' compact genomes.
@@ -483,7 +485,9 @@ class TransitionModel:
         return edge_weight
 
     def min_weighted_cg_hamming_edge_weight(
-        self, field_name: str, count_root_muts: bool = True,
+        self,
+        field_name: str,
+        count_root_muts: bool = True,
     ) -> Callable[["HistoryDagNode", "HistoryDagNode"], float]:
         """Returns a function for computing weighted hamming distance between
         two nodes' compact genomes.
@@ -540,9 +544,13 @@ class TransitionModel:
             name: the name for the returned AddFuncDict object
         """
         if leaf_ambiguities:
-            edge_weight = self.min_weighted_cg_hamming_edge_weight(field_name, count_root_muts=count_root_muts)
+            edge_weight = self.min_weighted_cg_hamming_edge_weight(
+                field_name, count_root_muts=count_root_muts
+            )
         else:
-            edge_weight = self.weighted_cg_hamming_edge_weight(field_name, count_root_muts=count_root_muts)
+            edge_weight = self.weighted_cg_hamming_edge_weight(
+                field_name, count_root_muts=count_root_muts
+            )
         return AddFuncDict(
             {
                 "start_func": lambda n: 0,

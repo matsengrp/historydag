@@ -1132,11 +1132,13 @@ def count_labeled_binary_topologies(n):
 
 
 def read_fasta(fastapath, sequence_type=str):
-    """Load a fasta file as a generator which yields (sequence ID, sequence) pairs.
+    """Load a fasta file as a generator which yields (sequence ID, sequence)
+    pairs.
 
     The function ``sequence_type`` will be called on each sequence as it
     is read from the fasta file, and the resulting object will be yielded as the second
-    item in each sequence record pair."""
+    item in each sequence record pair.
+    """
     seqids = set()
     with open(fastapath, "r") as fh:
         seqid = None
@@ -1161,14 +1163,17 @@ def read_fasta(fastapath, sequence_type=str):
                     sequence += line.strip().upper()
         yield (seqid, sequence_type(sequence))
 
+
 def load_fasta(fastapath, sequence_type=str):
     """Load a fasta file as a dictionary, with sequence ids as keys and
     sequences as values.
 
     The function ``sequence_type`` will be called on each sequence as it
     is read from the fasta file, and the returned objects will be the values
-    in the resulting alignment dictionary."""
+    in the resulting alignment dictionary.
+    """
     return dict(read_fasta(fastapath, sequence_type=sequence_type))
+
 
 def _deprecate_message(message):
     def _deprecate(func):

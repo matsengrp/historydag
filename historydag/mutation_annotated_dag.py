@@ -55,12 +55,16 @@ class NodeIDHistoryDag(HistoryDag):
     internal nodes this is a string representation of an integer node
     ID.
     """
+
     _required_label_fields = {"node_id": []}
-    _default_args = frozendict({
-        "start_func": (lambda n: 0),
-        "optimal_func": min,
-        "accum_func": sum,
-    })
+    _default_args = frozendict(
+        {
+            "start_func": (lambda n: 0),
+            "optimal_func": min,
+            "accum_func": sum,
+        }
+    )
+
 
 class CGHistoryDag(HistoryDag):
     """A HistoryDag subclass with node labels containing CompactGenome objects.
@@ -273,8 +277,8 @@ class CGHistoryDag(HistoryDag):
     def test_equal(self, other):
         """Deprecated test for whether two history DAGs are equal.
 
-        Compares sorted JSON representation.
-        Only works when "compact_genome" is the only label field, on all nodes.
+        Compares sorted JSON representation. Only works when
+        "compact_genome" is the only label field, on all nodes.
         """
         flatdag1 = self.flatten()
         flatdag2 = other.flatten()

@@ -1156,6 +1156,7 @@ class HistoryDag:
             shows the structure of the history.
         """
         t = self.to_ete(name_func=name_func)
+
         def child_name_sort(tree):
             for node in tree.traverse(strategy="postorder"):
                 node.children.sort(key=lambda n: n.name)
@@ -1176,8 +1177,10 @@ class HistoryDag:
                 "child-name": child_name_sort,
             }[sort_method]
         except KeyError:
-            raise KeyError("to_ascii method accepts sort_method None, `ladderize`, "
-                           f"`child-name`, or `leaf-name`, not {sort_method}.")
+            raise KeyError(
+                "to_ascii method accepts sort_method None, `ladderize`, "
+                f"`child-name`, or `leaf-name`, not {sort_method}."
+            )
         sort_func(t)
         return t.get_ascii(show_internal=show_internal, compact=compact)
 
@@ -3573,11 +3576,12 @@ def from_tree(
     dagroot = UANode(EdgeSet([dag], weights=[edge_weight_func(treeroot)]))
     return HistoryDag(dagroot)
 
+    # name_func,
+    # show_internal=False,
+    # compact=False,
+    # sort_method=None,
 
-        # name_func,
-        # show_internal=False,
-        # compact=False,
-        # sort_method=None,
+
 def ascii_compare_histories(
     history1,
     history2,

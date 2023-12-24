@@ -13,19 +13,27 @@ pbdag = load_MAD_protobuf_file(
     "sample_data/small_test_proto.pb", compact_genomes=True, node_ids=True
 )
 
+
 def test_provided_leaf_seqs():
     reference = pbdag.get_reference_sequence()
     # first one just to make sure we can read an alignment without providing
     # a reference
     read_alignment("sample_data/small_test_proto.fa")
 
-    alignment = read_alignment("sample_data/small_test_proto.fa", reference_sequence=reference)
+    alignment = read_alignment(
+        "sample_data/small_test_proto.fa", reference_sequence=reference
+    )
     assert len(alignment) == 43
     odag = load_MAD_protobuf_file(
-        "sample_data/small_test_proto.pb", compact_genomes=True, node_ids=True,
-        leaf_cgs = alignment
+        "sample_data/small_test_proto.pb",
+        compact_genomes=True,
+        node_ids=True,
+        leaf_cgs=alignment,
     )
-    assert set(n.label for n in pbdag.get_leaves()) == set(n.label for n in odag.get_leaves())
+    assert set(n.label for n in pbdag.get_leaves()) == set(
+        n.label for n in odag.get_leaves()
+    )
+
 
 def test_load_protobuf():
     top_dag = load_MAD_protobuf_file(

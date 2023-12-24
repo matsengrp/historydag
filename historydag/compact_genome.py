@@ -402,9 +402,10 @@ def reconcile_cgs(
 
     return (model_cg.apply_muts(mutstring_list), ambiguous_flag)
 
+
 def read_alignment(alignment_file, reference_sequence: CharacterSequence = None):
-    """Read a fasta or vcf alignment and return a dictionary mapping
-    sequence ID strings to CompactGenomes.
+    """Read a fasta or vcf alignment and return a dictionary mapping sequence
+    ID strings to CompactGenomes.
 
     Args:
         alignment_file: A file containing a fasta or vcf alignment. File format
@@ -413,7 +414,7 @@ def read_alignment(alignment_file, reference_sequence: CharacterSequence = None)
             file will be used as the compact genome reference sequence, unless one
             is explicitly provided to this keyword argument.
     """
-    extension = alignment_file.split('.')[-1].lower()
+    extension = alignment_file.split(".")[-1].lower()
 
     if extension in ("fa", "fasta"):
         fasta_gen = read_fasta(alignment_file)
@@ -422,11 +423,14 @@ def read_alignment(alignment_file, reference_sequence: CharacterSequence = None)
             # Now we just have to add an empty CG to the alignment
             refseq_id, reference_sequence = next(fasta_gen)
             cg_dict[refseq_id] = CompactGenome({}, reference_sequence)
-        cg_dict.update((seqid, compact_genome_from_sequence(seq, reference_sequence)) for seqid, seq in fasta_gen)
+        cg_dict.update(
+            (seqid, compact_genome_from_sequence(seq, reference_sequence))
+            for seqid, seq in fasta_gen
+        )
     elif extension in ("vcf",):
         raise NotImplementedError
     else:
-        raise ValueError(f"Unrecognized extension '.{extension}'. Provide a .fa, .fasta, or .vcf file.")
+        raise ValueError(
+            f"Unrecognized extension '.{extension}'. Provide a .fa, .fasta, or .vcf file."
+        )
     return cg_dict
-
-

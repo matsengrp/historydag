@@ -5,6 +5,7 @@ pbdag = load_MAD_protobuf_file(
     "sample_data/small_test_proto.pb", compact_genomes=True, node_ids=True
 )
 
+
 def test_load_protobuf():
     dag = load_MAD_protobuf_file(
         "sample_data/small_test_proto.pb", compact_genomes=True, node_ids=True

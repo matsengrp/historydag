@@ -1008,6 +1008,7 @@ def test_bifurcating_count():
             bifurcating=False
         )
 
+
 def test_ascii_visualization():
     dag = dags[-1]
     history = dag[0]
