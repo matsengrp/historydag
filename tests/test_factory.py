@@ -1017,5 +1017,7 @@ def test_ascii_visualization():
     print(history.to_ascii(lambda n: hash(n), sort_method="child-name"))
     print(history.to_ascii(lambda n: hash(n), sort_method="leaf-name"))
 
-    hdag.ascii_compare_histories(history, dag[1], lambda n: hash(n), sort_method="child-name")
+    hdag.ascii_compare_histories(
+        history, dag[1], lambda n: hash(n), sort_method="child-name"
+    )
     hdag.ascii_compare_histories(history.dagroot, dag[1].dagroot, lambda n: hash(n))

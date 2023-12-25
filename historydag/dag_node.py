@@ -292,7 +292,6 @@ class HistoryDagNode:
         sort_func(t)
         return t.get_ascii(show_internal=show_internal, compact=compact)
 
-
     def to_ete(
         self,
         name_func: Callable[["HistoryDagNode"], str] = lambda n: "unnamed",
