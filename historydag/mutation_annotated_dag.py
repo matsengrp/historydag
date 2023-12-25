@@ -13,6 +13,7 @@ from historydag.compact_genome import (
     CompactGenome,
     compact_genome_from_sequence,
     cg_diff,
+    ambiguous_cg_diff,
     reconcile_cgs,
 )
 from historydag.parsimony_utils import (
@@ -119,6 +120,19 @@ class CGHistoryDag(HistoryDag):
 
     # #### CGHistoryDag-Specific Methods ####
 
+    def _get_mut_func(self):
+        refseq = self.get_reference_sequence()
+        empty_cg = CompactGenome(dict(), refseq)
+
+        def mut_func(pnode, cnode):
+            if pnode.is_ua_node():
+                parent_seq = empty_cg
+            else:
+                parent_seq = pnode.label.compact_genome
+            return cg_diff(parent_seq, cnode.label.compact_genome)
+
+        return mut_func
+
     def to_protobuf(self, leaf_data_func=None):
         """Convert a DAG with compact genome data on each node, and unique leaf
         IDs on leaf nodes, to a MAD protobuf with mutation information on
@@ -133,8 +147,7 @@ class CGHistoryDag(HistoryDag):
         in their label data.
         """
 
-        refseq = next(self.preorder(skip_ua_node=True)).label.compact_genome.reference
-        empty_cg = CompactGenome(dict(), refseq)
+        mut_func = self._get_mut_func()
 
         # Create unique leaf IDs if the node_id field isn't available
         if "node_id" in self.get_label_type()._fields:
@@ -147,13 +160,6 @@ class CGHistoryDag(HistoryDag):
 
             def get_leaf_id(node):
                 return leaf_id_map[node]
-
-        def mut_func(pnode, cnode):
-            if pnode.is_ua_node():
-                parent_seq = empty_cg
-            else:
-                parent_seq = pnode.label.compact_genome
-            return cg_diff(parent_seq, child.label.compact_genome)
 
         def key_func(cladeitem):
             clade, _ = cladeitem
@@ -453,6 +459,25 @@ class AmbiguousLeafCGHistoryDag(CGHistoryDag):
     }
 
     # #### Overridden Methods ####
+
+    def _get_mut_func(self):
+        refseq = self.get_reference_sequence()
+        empty_cg = CompactGenome(dict(), refseq)
+
+        def mut_func(pnode, cnode):
+            if pnode.is_ua_node():
+                parent_seq = empty_cg
+            else:
+                parent_seq = pnode.label.compact_genome
+            if cnode.is_leaf():
+                # have to choose non-ambiguous mutations that minimize
+                # edge weight.
+                return ambiguous_cg_diff(parent_seq, cnode.label.compact_genome)
+            else:
+                return cg_diff(parent_seq, cnode.label.compact_genome)
+
+        return mut_func
+
     def hamming_parsimony_count(self):
         """See :meth:`historydag.sequence_dag.SequenceHistoryDag.hamming_parsim
         ony_count`"""
