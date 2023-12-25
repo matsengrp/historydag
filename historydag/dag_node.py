@@ -238,7 +238,62 @@ class HistoryDagNode:
             parent.remove_edge_by_clade_and_id(self, self.clade_union())
         self.removed = True
 
-    def to_ete_recursive(
+    def to_ascii(
+        self,
+        name_func,
+        show_internal=False,
+        compact=False,
+        sort_method=None,
+    ):
+        """A convenience function that uses the :meth:`to_ete` method and
+        ete3's ASCII drawing tools to render a sub-history below self.
+
+        Expects that this node is part of a tree-shaped history DAG. If this is not
+        true, this method may fail silently.
+
+        Args:
+            name_func: A function taking a HistoryDagNode and returning a string
+                to identify that node in the ascii tree.
+            show_internal: Whether to show internal node names.
+            compact: Whether to show the tree in a more compact format
+            sort_method: Either None, `ladderize`, `leaf-name`, or `child-name`.
+                `leaf-name` sorts children by the alphabetically first leaf name
+                below each child node. `child-name` sorts directly by child name.
+        Returns:
+            A string including whitespace and newlines (no tabs) which when printed
+            shows the structure of the history.
+        """
+        t = self.to_ete(name_func=name_func)
+
+        def child_name_sort(tree):
+            for node in tree.traverse(strategy="postorder"):
+                node.children.sort(key=lambda n: n.name)
+
+        def leaf_name_sort(tree):
+            for node in tree.traverse(strategy="postorder"):
+                if node.is_leaf():
+                    node.firstleaf = node.name
+                else:
+                    node.children.sort(key=lambda n: n.firstleaf)
+                    node.firstleaf = node.children[0].firstleaf
+
+        try:
+            sort_func = {
+                None: (lambda tree: None),
+                "ladderize": t.ladderize,
+                "leaf-name": leaf_name_sort,
+                "child-name": child_name_sort,
+            }[sort_method]
+        except KeyError:
+            raise KeyError(
+                "to_ascii method accepts sort_method None, `ladderize`, "
+                f"`child-name`, or `leaf-name`, not {sort_method}."
+            )
+        sort_func(t)
+        return t.get_ascii(show_internal=show_internal, compact=compact)
+
+
+    def to_ete(
         self,
         name_func: Callable[["HistoryDagNode"], str] = lambda n: "unnamed",
         feature_funcs: Mapping[str, Callable[["HistoryDagNode"], str]] = {},
@@ -261,7 +316,7 @@ class HistoryDagNode:
         for feature, func in feature_funcs.items():
             node.add_feature(feature, func(self))
         for child in self.children():
-            node.add_child(child.to_ete_recursive(name_func, feature_funcs, sort_func))
+            node.add_child(child.to_ete(name_func, feature_funcs, sort_func))
         return node
 
     def _sample(

@@ -1136,53 +1136,17 @@ class HistoryDag:
     def to_ascii(
         self,
         name_func,
-        show_internal=False,
-        compact=False,
-        sort_method=None,
+        **kwargs,
     ):
         """A convenience function that uses the :meth:`to_ete` method and
         ete3's ASCII drawing tools to render a history.
 
-        Args:
-            name_func: A function taking a HistoryDagNode and returning a string
-                to identify that node in the ascii tree.
-            show_internal: Whether to show internal node names.
-            compact: Whether to show the tree in a more compact format
-            sort_method: Either None, `ladderize`, `leaf-name`, or `child-name`.
-                `leaf-name` sorts children by the alphabetically first leaf name
-                below each child node. `child-name` sorts directly by child name.
-        Returns:
-            A string including whitespace and newlines (no tabs) which when printed
-            shows the structure of the history.
+        See :meth:`HistoryDagNode.to_ascii` for details.
         """
-        t = self.to_ete(name_func=name_func)
-
-        def child_name_sort(tree):
-            for node in tree.traverse(strategy="postorder"):
-                node.children.sort(key=lambda n: n.name)
-
-        def leaf_name_sort(tree):
-            for node in tree.traverse(strategy="postorder"):
-                if node.is_leaf():
-                    node.firstleaf = node.name
-                else:
-                    node.children.sort(key=lambda n: n.firstleaf)
-                    node.firstleaf = node.children[0].firstleaf
-
-        try:
-            sort_func = {
-                None: (lambda tree: None),
-                "ladderize": t.ladderize,
-                "leaf-name": leaf_name_sort,
-                "child-name": child_name_sort,
-            }[sort_method]
-        except KeyError:
-            raise KeyError(
-                "to_ascii method accepts sort_method None, `ladderize`, "
-                f"`child-name`, or `leaf-name`, not {sort_method}."
-            )
-        sort_func(t)
-        return t.get_ascii(show_internal=show_internal, compact=compact)
+        return self.dagroot.to_ascii(
+            name_func,
+            **kwargs,
+        )
 
     @utils._history_method
     def to_ete(
@@ -3591,6 +3555,9 @@ def ascii_compare_histories(
 ):
     """A convenience function to print two histories as ascii art trees side-
     by-side.
+
+    Provided histories can be HistoryDag or HistoryDagNode objects, so all or part
+    of two histories may be compared.
 
     Args:
         history1: The first history to compare. Will appear on the left
