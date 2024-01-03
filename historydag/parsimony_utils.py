@@ -506,21 +506,18 @@ class TransitionModel:
             a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or 0 if
             n1 is the UA node.
         """
+        unambiguous_edge_weight = self.weighted_cg_hamming_edge_weight(
+            field_name,
+            count_root_muts=count_root_muts,
+        )
 
         def edge_weight(parent, child):
-            if parent.is_ua_node():
-                if count_root_muts:
-                    return len(getattr(child.label, field_name).mutations)
-                else:
-                    return 0
-            elif child.is_leaf():
+            if child.is_leaf():
                 return self.min_weighted_cg_hamming_distance(
                     getattr(parent.label, field_name), getattr(child.label, field_name)
                 )
             else:
-                return self.weighted_cg_hamming_edge_weight(
-                    getattr(parent.label, field_name), getattr(child.label, field_name)
-                )
+                return unambiguous_edge_weight(parent, child)
 
         return edge_weight
 

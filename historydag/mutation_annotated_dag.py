@@ -124,7 +124,7 @@ class CGHistoryDag(HistoryDag):
         refseq = self.get_reference_sequence()
         empty_cg = CompactGenome(dict(), refseq)
 
-        def mut_func(pnode, cnode):
+        def mut_func(pnode, cnode, **kwargs):
             if pnode.is_ua_node():
                 parent_seq = empty_cg
             else:
@@ -133,7 +133,7 @@ class CGHistoryDag(HistoryDag):
 
         return mut_func
 
-    def to_protobuf(self, leaf_data_func=None):
+    def to_protobuf(self, leaf_data_func=None, randomize_leaf_muts=False):
         """Convert a DAG with compact genome data on each node, and unique leaf
         IDs on leaf nodes, to a MAD protobuf with mutation information on
         edges.
@@ -142,6 +142,7 @@ class CGHistoryDag(HistoryDag):
             leaf_data_func: a function taking a DAG node and returning a string to store
                 in the protobuf node_name field `condensed_leaves` of leaf nodes. On leaf
                 nodes, this data is appended after the unique leaf ID.
+            randomize_leaf_muts: When leaf node sequences contain ambiguities, if True the mutations on pendant edges will be randomized, when there are multiple choices.
 
         Note that internal node IDs will be reassigned, even if internal nodes have node IDs
         in their label data.
@@ -187,7 +188,9 @@ class CGHistoryDag(HistoryDag):
                     edge.parent_node = node_dict[node]
                     edge.parent_clade = cladeidx
                     edge.child_node = node_dict[child]
-                    for par_nuc, child_nuc, idx in mut_func(node, child):
+                    for par_nuc, child_nuc, idx in mut_func(
+                        node, child, randomize=randomize_leaf_muts
+                    ):
                         mut = edge.edge_mutations.add()
                         mut.position = idx
                         mut.par_nuc = _pb_nuc_codes[par_nuc.upper()]
@@ -198,10 +201,14 @@ class CGHistoryDag(HistoryDag):
         )
         return data
 
-    def to_protobuf_file(self, filename, leaf_data_func=None):
+    def to_protobuf_file(
+        self, filename, leaf_data_func=None, randomize_leaf_muts=False
+    ):
         """Write this CGHistoryDag to a Mutation Annotated DAG protobuf for use
         with Larch."""
-        data = self.to_protobuf(leaf_data_func=leaf_data_func)
+        data = self.to_protobuf(
+            leaf_data_func=leaf_data_func, randomize_leaf_muts=randomize_leaf_muts
+        )
         with open(filename, "wb") as fh:
             fh.write(data.SerializeToString())
 
@@ -464,7 +471,7 @@ class AmbiguousLeafCGHistoryDag(CGHistoryDag):
         refseq = self.get_reference_sequence()
         empty_cg = CompactGenome(dict(), refseq)
 
-        def mut_func(pnode, cnode):
+        def mut_func(pnode, cnode, randomize=False):
             if pnode.is_ua_node():
                 parent_seq = empty_cg
             else:
@@ -472,7 +479,9 @@ class AmbiguousLeafCGHistoryDag(CGHistoryDag):
             if cnode.is_leaf():
                 # have to choose non-ambiguous mutations that minimize
                 # edge weight.
-                return ambiguous_cg_diff(parent_seq, cnode.label.compact_genome)
+                return ambiguous_cg_diff(
+                    parent_seq, cnode.label.compact_genome, randomize=randomize
+                )
             else:
                 return cg_diff(parent_seq, cnode.label.compact_genome)
 

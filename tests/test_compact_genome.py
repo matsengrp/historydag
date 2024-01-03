@@ -128,3 +128,13 @@ def test_reconcile_cgs():
 
     for cgs, answer in testcases:
         assert compact_genome.reconcile_cgs(cgs, ambiguitymap=ambiguitymap)[0] == answer
+
+
+def test_ambiguous_cg_diff():
+    ref = "AAAAAA"
+    c1 = compact_genome.CompactGenome({}, ref)
+    c2 = compact_genome.CompactGenome(
+        {1: ("A", "C"), 2: ("A", "N"), 4: ("A", "K")}, ref
+    )
+    muts = set(compact_genome.ambiguous_cg_diff(c1, c2))
+    assert muts == {("A", "C", 1), ("A", "A", 2), ("A", "G", 4)}

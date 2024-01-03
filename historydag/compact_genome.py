@@ -356,11 +356,16 @@ def ambiguous_cg_diff(
     parent_cg: CompactGenome,
     child_cg: CompactGenome,
     ambiguitymap=standard_nt_ambiguity_map,
+    randomize=False,
 ):
     """Yields a minimal collection of mutations in the format (parent_nuc,
     child_nuc, one-based sequence_index) distinguishing two compact genomes,
     such that applying the resulting mutations to `parent_cg` would yield a
-    compact genome compatible with the possibly ambiguous `child_cg`."""
+    compact genome compatible with the possibly ambiguous `child_cg`.
+
+    If randomize is True, mutations will be randomized when there are
+    multiple possible min-weight choices.
+    """
     for parent_base, child_base, key in cg_diff(parent_cg, child_cg):
         if child_base not in ambiguitymap.bases:
             options = ambiguitymap[child_base]
@@ -370,7 +375,13 @@ def ambiguous_cg_diff(
                 yield (parent_base, parent_base, key)
             else:
                 # Totally arbitrary choice of base here -- see TODO above
-                yield (parent_base, next(iter(options)), key)
+                if randomize:
+                    nbase = random.choice(options)
+                else:
+                    nbase = next(iter(options))
+                yield (parent_base, nbase, key)
+        else:
+            yield (parent_base, child_base, key)
 
 
 def reconcile_cgs(

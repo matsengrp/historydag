@@ -1143,7 +1143,7 @@ class HistoryDag:
 
         See :meth:`HistoryDagNode.to_ascii` for details.
         """
-        return self.dagroot.to_ascii(
+        return next(self.dagroot.children()).to_ascii(
             name_func,
             **kwargs,
         )

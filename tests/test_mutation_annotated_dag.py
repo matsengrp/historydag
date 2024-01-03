@@ -1,12 +1,15 @@
+import ete3
 from historydag.mutation_annotated_dag import (
     load_MAD_protobuf_file,
     load_MAD_protobuf,
     load_json_file,
+    AmbiguousLeafCGHistoryDag,
 )
 from historydag.sequence_dag import SequenceHistoryDag
 from math import isclose, log
 from historydag.parsimony_utils import default_nt_transitions
 from historydag.compact_genome import read_alignment
+from historydag import from_tree
 
 # pbdag = load_MAD_protobuf_file("sample_data/full_dag.pb")
 pbdag = load_MAD_protobuf_file(
@@ -63,6 +66,40 @@ def test_load_protobuf():
     ndag = load_MAD_protobuf(cg_dag.to_protobuf())
     ndag._check_valid()
     assert top_dag.count_histories() == cg_nid_dag.unlabel().count_histories()
+
+
+def test_load_ambiguous_protobuf():
+    reference_id = "GL"
+
+    alignment = {
+        "GL": "AAAAAAAA",
+        "seq1": "CAAAGAAG",
+        "seq2": "CGAAGATG",
+        "seq3": "AGTANNNN",
+        "seq4": "AGTAGAAA",
+        "seq5": "CATAAAAG",
+    }
+
+    reference_seq = alignment[reference_id]
+
+    def make_tree(internal="GL"):
+        internal_seq = alignment[internal]
+        t = ete3.Tree()
+        t.populate(len(alignment), names_library=alignment)
+        for n in t.traverse():
+            if n.is_leaf():
+                n.add_feature("sequence", alignment[n.name])
+            else:
+                n.add_feature("sequence", internal_seq)
+        dag = from_tree(t, ["sequence"], label_functions={"node_id": lambda n: n.name})
+        dag = AmbiguousLeafCGHistoryDag.from_history_dag(dag, reference=reference_seq)
+        return dag
+
+    dag = make_tree() | make_tree("seq1") | make_tree("seq2")
+
+    pb = dag.to_protobuf(randomize_leaf_muts=True)
+    cdag = load_MAD_protobuf(pb, compact_genomes=True)
+    assert isinstance(cdag, AmbiguousLeafCGHistoryDag)
 
 
 def test_load_json():
