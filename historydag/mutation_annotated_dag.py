@@ -20,6 +20,7 @@ from historydag.parsimony_utils import (
     compact_genome_hamming_distance_countfuncs,
     leaf_ambiguous_compact_genome_hamming_distance_countfuncs,
     default_nt_transitions,
+    standard_nt_ambiguity_map,
 )
 import historydag.dag_pb2 as dpb
 import json
@@ -588,6 +589,7 @@ def load_MAD_protobuf(
     compact_genomes=False,
     node_ids=True,
     leaf_cgs={},
+    ambiguity_map=standard_nt_ambiguity_map,
 ):
     """Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact
     genomes in the `compact_genome` label attribute.
@@ -607,6 +609,8 @@ def load_MAD_protobuf(
             labels are unique.
         leaf_cgs: (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes.
             Use :meth:`compact_genome.read_alignment` to read an alignment from a file.
+        ambiguity_map: A :meth:`historydag.parsimony_utils.AmbiguityMap` object
+            to determine how conflicting pendant edge mutations are represented.
 
     Note that if leaf sequences in the original alignment do not contain ambiguities, it is not
     necessary to provide alignment data; leaf sequences can be completely inferred without it.
@@ -710,7 +714,8 @@ def load_MAD_protobuf(
                         [
                             node_id_to_cg[edge.parent_node].apply_muts(muts)
                             for edge, muts in zip(edges, str_mutations)
-                        ]
+                        ],
+                        ambiguitymap=ambiguity_map,
                     )
 
             for node_id in self.id_reverse_postorder[1:]:
