@@ -15,6 +15,7 @@ and :class:`SitewiseTransitionModel`, which allows transition costs to depend on
 location in a sequence in which a transition occurs.
 """
 import numpy as np
+import random
 import historydag.utils as utils
 from historydag.utils import AddFuncDict, Label
 import Bio.Data.IUPACData
@@ -340,6 +341,29 @@ class TransitionModel:
             for site in s1 | s2
         )
 
+    def min_character_mutation(
+        self,
+        parent_char: Character,
+        child_char: Character,
+        site=None,
+        **kwargs,
+    ) -> float:
+        """Allowing child_char to be ambiguous, returns the minimum possible
+        transition weight between parent_char and child_char, preceded in a
+        tuple by the unambiguous child character that achieves that weight.
+
+        Keyword argument ``site`` is ignored in this base class.
+        """
+        child_set = sorted(list(self.ambiguity_map[child_char]))
+        p_idx = self.base_indices[parent_char]
+        return min(
+            (
+                (cbase, self.transition_weights[p_idx][self.base_indices[cbase]])
+                for cbase in child_set
+            ),
+            key=lambda it: it[-1],
+        )
+
     def min_character_distance(
         self, parent_char: Character, child_char: Character, site=None
     ) -> float:
@@ -348,12 +372,11 @@ class TransitionModel:
 
         Keyword argument ``site`` is ignored in this base class.
         """
-        child_set = self.ambiguity_map[child_char]
-        p_idx = self.base_indices[parent_char]
-        return min(
-            self.transition_weights[p_idx][self.base_indices[cbase]]
-            for cbase in child_set
-        )
+        return self.min_character_mutation(
+            parent_char,
+            child_char,
+            site=site,
+        )[1]
 
     def min_weighted_hamming_distance(
         self, parent_seq: CharacterSequence, child_seq: CharacterSequence
@@ -611,18 +634,33 @@ class UnitTransitionModel(TransitionModel):
         """
         return int(parent_char != child_char)
 
-    def min_character_distance(
-        self, parent_char: Character, child_char: Character, site: int = None
-    ) -> int:
+    def min_character_mutation(
+        self,
+        parent_char: Character,
+        child_char: Character,
+        site=None,
+        randomize=False,
+        **kwargs,
+    ) -> float:
         """Allowing child_char to be ambiguous, returns the minimum possible
-        transition weight between parent_char and child_char.
+        transition weight between parent_char and child_char, preceded in a
+        tuple by the unambiguous child character that achieves that weight.
 
-        Keyword argument ``site`` is ignored in this subclass.
+        Keyword argument ``site`` is ignored in this base class.
         """
         if parent_char == child_char:
-            return 0  # TODO do we really want this?
+            return (child_char, 0)
         else:
-            return int(parent_char not in self.ambiguity_map[child_char])
+            options = self.ambiguity_map[child_char]
+            if parent_char in options:
+                return (parent_char, 0)
+            else:
+                if randomize:
+                    base = random.choice(list(sorted(options)))
+                else:
+                    # arbitrary, but deterministic
+                    base = min(options)
+                return (base, 1)
 
     def get_weighted_cg_parsimony_countfuncs(
         self,
@@ -696,18 +734,30 @@ class SitewiseTransitionModel(TransitionModel):
         """
         return self.sitewise_transition_matrix[site - 1][parent_char][child_char]
 
-    def min_character_distance(
-        self, parent_char: Character, child_char: Character, site: int
+    def min_character_mutation(
+        self,
+        parent_char: Character,
+        child_char: Character,
+        site=None,
+        **kwargs,
     ) -> float:
         """Allowing child_char to be ambiguous, returns the minimum possible
-        transition weight between parent_char and child_char, given that these
-        characters are found at the (one-based) site in their respective
-        sequences."""
-        child_set = self.ambiguity_map[child_char]
+        transition weight between parent_char and child_char, preceded in a
+        tuple by the unambiguous child character that achieves that weight.
+
+        Keyword argument ``site`` is ignored in this base class.
+        """
+        child_set = sorted(list(self.ambiguity_map[child_char]))
         p_idx = self.base_indices[parent_char]
         return min(
-            self.transition_weights[site - 1][p_idx][self.base_indices[cbase]]
-            for cbase in child_set
+            (
+                (
+                    cbase,
+                    self.transition_weights[site - 1][p_idx][self.base_indices[cbase]],
+                )
+                for cbase in child_set
+            ),
+            key=lambda it: it[-1],
         )
 
     def get_adjacency_array(self, seq_len):

@@ -75,7 +75,7 @@ def test_load_ambiguous_protobuf():
         "GL": "AAAAAAAA",
         "seq1": "CAAAGAAG",
         "seq2": "CGAAGATG",
-        "seq3": "AGTANNNN",
+        "seq3": "AGTANNSN",
         "seq4": "AGTAGAAA",
         "seq5": "CATAAAAG",
     }
@@ -100,6 +100,7 @@ def test_load_ambiguous_protobuf():
     pb = dag.to_protobuf(randomize_leaf_muts=True)
     cdag = load_MAD_protobuf(pb, compact_genomes=True)
     assert isinstance(cdag, AmbiguousLeafCGHistoryDag)
+    assert cdag.weight_count() == dag.weight_count()
 
 
 def test_load_json():

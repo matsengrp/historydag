@@ -137,4 +137,7 @@ def test_ambiguous_cg_diff():
         {1: ("A", "C"), 2: ("A", "N"), 4: ("A", "K")}, ref
     )
     muts = set(compact_genome.ambiguous_cg_diff(c1, c2))
-    assert muts == {("A", "C", 1), ("A", "A", 2), ("A", "G", 4)}
+    assert muts == {("A", "C", 1), ("A", "G", 4)} or muts == {
+        ("A", "C", 1),
+        ("A", "T", 4),
+    }

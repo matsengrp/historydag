@@ -19,6 +19,7 @@ from historydag.compact_genome import (
 from historydag.parsimony_utils import (
     compact_genome_hamming_distance_countfuncs,
     leaf_ambiguous_compact_genome_hamming_distance_countfuncs,
+    default_nt_transitions,
 )
 import historydag.dag_pb2 as dpb
 import json
@@ -133,7 +134,12 @@ class CGHistoryDag(HistoryDag):
 
         return mut_func
 
-    def to_protobuf(self, leaf_data_func=None, randomize_leaf_muts=False):
+    def to_protobuf(
+        self,
+        leaf_data_func=None,
+        randomize_leaf_muts=False,
+        transition_model=default_nt_transitions,
+    ):
         """Convert a DAG with compact genome data on each node, and unique leaf
         IDs on leaf nodes, to a MAD protobuf with mutation information on
         edges.
@@ -142,10 +148,15 @@ class CGHistoryDag(HistoryDag):
             leaf_data_func: a function taking a DAG node and returning a string to store
                 in the protobuf node_name field `condensed_leaves` of leaf nodes. On leaf
                 nodes, this data is appended after the unique leaf ID.
-            randomize_leaf_muts: When leaf node sequences contain ambiguities, if True the mutations on pendant edges will be randomized, when there are multiple choices.
+            randomize_leaf_muts: When leaf node sequences contain ambiguities, if
+                True the mutations on pendant edges will be randomized, when
+                there are multiple choices.
+            transition_model: A :meth:`historydag.parsimony_utils.TransitionModel` object,
+                used to decide which bases to record on pendant edge mutations with
+                ambiguous bases as targets.
 
-        Note that internal node IDs will be reassigned, even if internal nodes have node IDs
-        in their label data.
+        Note that internal node IDs will be reassigned, even if internal nodes have
+        node IDs in their label data.
         """
 
         mut_func = self._get_mut_func()
@@ -189,7 +200,10 @@ class CGHistoryDag(HistoryDag):
                     edge.parent_clade = cladeidx
                     edge.child_node = node_dict[child]
                     for par_nuc, child_nuc, idx in mut_func(
-                        node, child, randomize=randomize_leaf_muts
+                        node,
+                        child,
+                        randomize=randomize_leaf_muts,
+                        transition_model=transition_model,
                     ):
                         mut = edge.edge_mutations.add()
                         mut.position = idx
@@ -471,7 +485,9 @@ class AmbiguousLeafCGHistoryDag(CGHistoryDag):
         refseq = self.get_reference_sequence()
         empty_cg = CompactGenome(dict(), refseq)
 
-        def mut_func(pnode, cnode, randomize=False):
+        def mut_func(
+            pnode, cnode, randomize=False, transition_model=default_nt_transitions
+        ):
             if pnode.is_ua_node():
                 parent_seq = empty_cg
             else:
@@ -480,7 +496,10 @@ class AmbiguousLeafCGHistoryDag(CGHistoryDag):
                 # have to choose non-ambiguous mutations that minimize
                 # edge weight.
                 return ambiguous_cg_diff(
-                    parent_seq, cnode.label.compact_genome, randomize=randomize
+                    parent_seq,
+                    cnode.label.compact_genome,
+                    randomize=randomize,
+                    transition_model=transition_model,
                 )
             else:
                 return cg_diff(parent_seq, cnode.label.compact_genome)

@@ -1,7 +1,11 @@
 from frozendict import frozendict
 from typing import Dict, Sequence
 from warnings import warn
-from historydag.parsimony_utils import standard_nt_ambiguity_map, CharacterSequence
+from historydag.parsimony_utils import (
+    standard_nt_ambiguity_map,
+    default_nt_transitions,
+    CharacterSequence,
+)
 from historydag.utils import read_fasta
 
 
@@ -355,7 +359,7 @@ def cg_diff(parent_cg: CompactGenome, child_cg: CompactGenome):
 def ambiguous_cg_diff(
     parent_cg: CompactGenome,
     child_cg: CompactGenome,
-    ambiguitymap=standard_nt_ambiguity_map,
+    transition_model=default_nt_transitions,
     randomize=False,
 ):
     """Yields a minimal collection of mutations in the format (parent_nuc,
@@ -367,21 +371,14 @@ def ambiguous_cg_diff(
     multiple possible min-weight choices.
     """
     for parent_base, child_base, key in cg_diff(parent_cg, child_cg):
-        if child_base not in ambiguitymap.bases:
-            options = ambiguitymap[child_base]
-            # TODO This assumes hamming parsimony - should probably accept
-            # a transition weight object instead of an ambiguitymap.
-            if parent_base in options:
-                yield (parent_base, parent_base, key)
-            else:
-                # Totally arbitrary choice of base here -- see TODO above
-                if randomize:
-                    nbase = random.choice(options)
-                else:
-                    nbase = next(iter(options))
-                yield (parent_base, nbase, key)
-        else:
-            yield (parent_base, child_base, key)
+        nbase, _ = transition_model.min_character_mutation(
+            parent_base,
+            child_base,
+            site=key,
+            randomize=randomize,
+        )
+        if parent_base != nbase:
+            yield (parent_base, nbase, key)
 
 
 def reconcile_cgs(
