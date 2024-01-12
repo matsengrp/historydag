@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.mutation_annotated_dag &mdash; historydag  documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -59,6 +61,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.HDagJSONEncoder.default"><code class="docutils literal notranslate"><span class="pre">HDagJSONEncoder.default()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.mutation_annotated_dag.NodeIDHistoryDag"><code class="docutils literal notranslate"><span class="pre">NodeIDHistoryDag</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag.weight_counts_with_ambiguities"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag.weight_counts_with_ambiguities()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag.summary"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag.summary()</span></code></a></li>
@@ -70,6 +73,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag.get_reference_sequence"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag.get_reference_sequence()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_json"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag.to_json()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_json_file"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag.to_json_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.mutation_annotated_dag.CGHistoryDag.adjusted_node_probabilities"><code class="docutils literal notranslate"><span class="pre">CGHistoryDag.adjusted_node_probabilities()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag"><code class="docutils literal notranslate"><span class="pre">AmbiguousLeafCGHistoryDag</span></code></a><ul>
@@ -116,7 +120,7 @@
            <div itemprop="articleBody">
              
   <section id="module-historydag.mutation_annotated_dag">
-<span id="historydag-mutation-annotated-dag"></span><h1>historydag.mutation_annotated_dag<a class="headerlink" href="#module-historydag.mutation_annotated_dag" title="Permalink to this heading"></a></h1>
+<span id="historydag-mutation-annotated-dag"></span><h1>historydag.mutation_annotated_dag<a class="headerlink" href="#module-historydag.mutation_annotated_dag" title="Link to this heading"></a></h1>
 <p>This module allows the loading and manipulation of Larch mutation annotated
 DAG protobuf files.</p>
 <p>The resulting history DAG contains labels with ‘compact genomes’, and a
@@ -125,10 +129,10 @@ relative to the reference.</p>
 <p class="rubric">Functions</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.load_MAD_protobuf" title="historydag.mutation_annotated_dag.load_MAD_protobuf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_MAD_protobuf</span></code></a>(pbdata)</p></td>
-<td><p>Convert a MAD protobuf to a CGHistoryDag with compact genomes in the <cite>compact_genome</cite> label attribute.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.load_MAD_protobuf" title="historydag.mutation_annotated_dag.load_MAD_protobuf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_MAD_protobuf</span></code></a>(pbdata[, compact_genomes, ...])</p></td>
+<td><p>Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact genomes in the <cite>compact_genome</cite> label attribute.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.load_MAD_protobuf_file" title="historydag.mutation_annotated_dag.load_MAD_protobuf_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_MAD_protobuf_file</span></code></a>(filename)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.load_MAD_protobuf_file" title="historydag.mutation_annotated_dag.load_MAD_protobuf_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_MAD_protobuf_file</span></code></a>(filename, **kwargs)</p></td>
 <td><p>Load a mutation annotated DAG protobuf file and return a CGHistoryDag.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.load_json_file" title="historydag.mutation_annotated_dag.load_json_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_json_file</span></code></a>(filename)</p></td>
@@ -151,11 +155,14 @@ relative to the reference.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.HDagJSONEncoder" title="historydag.mutation_annotated_dag.HDagJSONEncoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HDagJSONEncoder</span></code></a>(*[, skipkeys, ensure_ascii, ...])</p></td>
 <td><p>Constructor for JSONEncoder, with sensible defaults.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.mutation_annotated_dag.NodeIDHistoryDag" title="historydag.mutation_annotated_dag.NodeIDHistoryDag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NodeIDHistoryDag</span></code></a>(dagroot[, attr])</p></td>
+<td><p>A HistoryDag subclass with node labels containing string <code class="docutils literal notranslate"><span class="pre">node_id</span></code> fields.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.HDagJSONEncoder">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">HDagJSONEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipkeys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_ascii</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_circular</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#HDagJSONEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.HDagJSONEncoder" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">HDagJSONEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipkeys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensure_ascii</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_circular</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">separators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#HDagJSONEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.HDagJSONEncoder" title="Link to this definition"></a></dt>
 <dd><p>Constructor for JSONEncoder, with sensible defaults.</p>
 <p>If skipkeys is false, then it is a TypeError to attempt
 encoding of keys that are not str, int, float or None.  If
@@ -187,7 +194,7 @@ that can’t otherwise be serialized.  It should return a JSON encodable
 version of the object or raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.HDagJSONEncoder.default">
-<span class="sig-name descname"><span class="pre">default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#HDagJSONEncoder.default"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.HDagJSONEncoder.default" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#HDagJSONEncoder.default"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.HDagJSONEncoder.default" title="Link to this definition"></a></dt>
 <dd><p>Implement this method in a subclass such that it returns
 a serializable object for <code class="docutils literal notranslate"><span class="pre">o</span></code>, or calls the base implementation
 (to raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>).</p>
@@ -209,8 +216,18 @@ implement default like this:</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="historydag.mutation_annotated_dag.NodeIDHistoryDag">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">NodeIDHistoryDag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dagroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#NodeIDHistoryDag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.NodeIDHistoryDag" title="Link to this definition"></a></dt>
+<dd><p>A HistoryDag subclass with node labels containing string <code class="docutils literal notranslate"><span class="pre">node_id</span></code>
+fields.</p>
+<p>For leaf nodes this string is a unique leaf identifier, and for
+internal nodes this is a string representation of an integer node
+ID.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">CGHistoryDag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dagroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">CGHistoryDag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dagroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag" title="Link to this definition"></a></dt>
 <dd><p>A HistoryDag subclass with node labels containing CompactGenome objects.</p>
 <p>The constructor for this class requires that each node label contain
 a ‘compact_genome’ field, which is expected to hold a
@@ -224,7 +241,7 @@ converted, and the reference sequence to the keyword argument
 Larch’s MADAG protobuf format</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.weight_counts_with_ambiguities">
-<span class="sig-name descname"><span class="pre">weight_counts_with_ambiguities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.weight_counts_with_ambiguities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.weight_counts_with_ambiguities" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">weight_counts_with_ambiguities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.weight_counts_with_ambiguities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.weight_counts_with_ambiguities" title="Link to this definition"></a></dt>
 <dd><p>Template method for counting tree weights in the DAG, with exploded
 labels. Like <code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.weight_count()</span></code>, but creates dictionaries
 of Counter objects at each node, keyed by possible sequences at that
@@ -254,43 +271,52 @@ but if two are the same, they come from different subtrees of the DAG.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.summary">
-<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.summary" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.summary" title="Link to this definition"></a></dt>
 <dd><p>Print summary info about the history DAG.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.hamming_parsimony_count">
-<span class="sig-name descname"><span class="pre">hamming_parsimony_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.hamming_parsimony_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.hamming_parsimony_count" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">hamming_parsimony_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.hamming_parsimony_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.hamming_parsimony_count" title="Link to this definition"></a></dt>
 <dd><p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.sequence_dag.SequenceHistoryDag.hamming_parsim</span>
 <span class="pre">ony_count()</span></code></p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf">
-<span class="sig-name descname"><span class="pre">to_protobuf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leaf_data_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_protobuf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf" title="Permalink to this definition"></a></dt>
-<dd><p>Convert a DAG with compact genome data on each node, to a MAD
-protobuf with mutation information on edges.</p>
+<span class="sig-name descname"><span class="pre">to_protobuf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leaf_data_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomize_leaf_muts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">default_nt_transitions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_protobuf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf" title="Link to this definition"></a></dt>
+<dd><p>Convert a DAG with compact genome data on each node, and unique leaf
+IDs on leaf nodes, to a MAD protobuf with mutation information on
+edges.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dag</strong> – the history DAG to be converted</p></li>
 <li><p><strong>leaf_data_func</strong> – a function taking a DAG node and returning a string to store
-in the protobuf node_name field <cite>condensed_leaves</cite> of leaf nodes</p></li>
+in the protobuf node_name field <cite>condensed_leaves</cite> of leaf nodes. On leaf
+nodes, this data is appended after the unique leaf ID.</p></li>
+<li><p><strong>randomize_leaf_muts</strong> – When leaf node sequences contain ambiguities, if
+True the mutations on pendant edges will be randomized, when
+there are multiple choices.</p></li>
+<li><p><strong>transition_model</strong> – A <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.parsimony_utils.TransitionModel()</span></code> object,
+used to decide which bases to record on pendant edge mutations with
+ambiguous bases as targets.</p></li>
 </ul>
 </dd>
 </dl>
+<p>Note that internal node IDs will be reassigned, even if internal nodes have
+node IDs in their label data.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf_file">
-<span class="sig-name descname"><span class="pre">to_protobuf_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_data_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_protobuf_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf_file" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_protobuf_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_data_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomize_leaf_muts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_protobuf_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf_file" title="Link to this definition"></a></dt>
 <dd><p>Write this CGHistoryDag to a Mutation Annotated DAG protobuf for use
 with Larch.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.flatten">
-<span class="sig-name descname"><span class="pre">flatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sort_compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.flatten"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.flatten" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">flatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sort_compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.flatten"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.flatten" title="Link to this definition"></a></dt>
 <dd><p>Return a dictionary containing four keys:</p>
 <ul class="simple">
 <li><p><cite>refseq</cite> is a list containing the reference sequence id, and the reference sequence
@@ -320,14 +346,15 @@ nucleotide sequence site. If sort_compact_genomes is True, compact genomes and <
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.test_equal">
-<span class="sig-name descname"><span class="pre">test_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.test_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.test_equal" title="Permalink to this definition"></a></dt>
-<dd><p>Test whether two history DAGs are equal.</p>
-<p>Compares sorted JSON representation.</p>
+<span class="sig-name descname"><span class="pre">test_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.test_equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.test_equal" title="Link to this definition"></a></dt>
+<dd><p>Deprecated test for whether two history DAGs are equal.</p>
+<p>Compares sorted JSON representation. Only works when
+“compact_genome” is the only label field, on all nodes.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.get_reference_sequence">
-<span class="sig-name descname"><span class="pre">get_reference_sequence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.get_reference_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.get_reference_sequence" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_reference_sequence</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.get_reference_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.get_reference_sequence" title="Link to this definition"></a></dt>
 <dd><p>Return the reference sequence for this CGHistoryDag.</p>
 <p>This is the sequence with respect to which all node label
 CompactGenomes record mutations.</p>
@@ -335,21 +362,30 @@ CompactGenomes record mutations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.to_json">
-<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sort_compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_json" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sort_compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_json" title="Link to this definition"></a></dt>
 <dd><p>Write this history DAG to a JSON object.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.to_json_file">
-<span class="sig-name descname"><span class="pre">to_json_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_json_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_json_file" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_json_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.to_json_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.to_json_file" title="Link to this definition"></a></dt>
 <dd><p>Write this history DAG to a JSON file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.mutation_annotated_dag.CGHistoryDag.adjusted_node_probabilities">
+<span class="sig-name descname"><span class="pre">adjusted_node_probabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ua_node_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjust_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#CGHistoryDag.adjusted_node_probabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.CGHistoryDag.adjusted_node_probabilities" title="Link to this definition"></a></dt>
+<dd><p>Compute the probability of each node in the DAG, adjusted based on
+the frequency of mutations that define each node.</p>
+<p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.node_probabilities()</span></code> for argument
+descriptions.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">AmbiguousLeafCGHistoryDag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dagroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#AmbiguousLeafCGHistoryDag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">AmbiguousLeafCGHistoryDag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dagroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#AmbiguousLeafCGHistoryDag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag" title="Link to this definition"></a></dt>
 <dd><p>A HistoryDag subclass with node labels containing compact genomes.</p>
 <p>The constructor for this class requires that each node label contain
 a ‘compact_genome’ field, which is expected to hold a
@@ -363,14 +399,14 @@ converted, and the reference sequence to the keyword argument
 ‘reference’.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.hamming_parsimony_count">
-<span class="sig-name descname"><span class="pre">hamming_parsimony_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#AmbiguousLeafCGHistoryDag.hamming_parsimony_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.hamming_parsimony_count" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">hamming_parsimony_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#AmbiguousLeafCGHistoryDag.hamming_parsimony_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.hamming_parsimony_count" title="Link to this definition"></a></dt>
 <dd><p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.sequence_dag.SequenceHistoryDag.hamming_parsim</span>
 <span class="pre">ony_count()</span></code></p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.summary">
-<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#AmbiguousLeafCGHistoryDag.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.summary" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#AmbiguousLeafCGHistoryDag.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.summary" title="Link to this definition"></a></dt>
 <dd><p>Print summary info about the history DAG.</p>
 </dd></dl>
 
@@ -378,28 +414,52 @@ converted, and the reference sequence to the keyword argument
 
 <dl class="py function">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.load_json_file">
-<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">load_json_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#load_json_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.load_json_file" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">load_json_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#load_json_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.load_json_file" title="Link to this definition"></a></dt>
 <dd><p>Load a Mutation Annotated DAG stored in a JSON file and return a
 CGHistoryDag.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.unflatten">
-<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">unflatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flat_dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#unflatten"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.unflatten" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">unflatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flat_dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#unflatten"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.unflatten" title="Link to this definition"></a></dt>
 <dd><p>Takes a dictionary like that returned by flatten, and returns a
 HistoryDag.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.load_MAD_protobuf">
-<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">load_MAD_protobuf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pbdata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#load_MAD_protobuf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.load_MAD_protobuf" title="Permalink to this definition"></a></dt>
-<dd><p>Convert a MAD protobuf to a CGHistoryDag with compact genomes in the
-<cite>compact_genome</cite> label attribute.</p>
+<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">load_MAD_protobuf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pbdata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compact_genomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_cgs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">standard_nt_ambiguity_map</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#load_MAD_protobuf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.load_MAD_protobuf" title="Link to this definition"></a></dt>
+<dd><p>Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact
+genomes in the <cite>compact_genome</cite> label attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pbdata</strong> – loaded protobuf data object</p></li>
+<li><p><strong>compact_genomes</strong> – If True, returns a CGHistoryDag or AmbiguousLeafCGHistoryDag
+object, with labels containing <cite>node_id</cite> and <cite>compact_genome</cite> fields.
+If no leaf sequence data is provided, leaf compact genomes will be
+inferred from pendant edge mutations, and will include ambiguities when
+mutations on two pendant edges pointing to the same leaf would otherwise
+contradict. <cite>node_id</cite> field on internal nodes will be None, unless
+<cite>node_ids</cite> argument is True. If False, this function will return a NodeIDHistoryDag.</p></li>
+<li><p><strong>node_ids</strong> – If True, node IDs will be included on all nodes’ labels. If False, internal
+nodes’ <cite>node_id</cite> label fields will be <cite>None</cite>. Unique leaf sequence IDs are always
+included in the <cite>node_id</cite> label field of leaf nodes, to ensure that leaf node
+labels are unique.</p></li>
+<li><p><strong>leaf_cgs</strong> – (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes.
+Use <code class="xref py py-meth docutils literal notranslate"><span class="pre">compact_genome.read_alignment()</span></code> to read an alignment from a file.</p></li>
+<li><p><strong>ambiguity_map</strong> – A <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.parsimony_utils.AmbiguityMap()</span></code> object
+to determine how conflicting pendant edge mutations are represented.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Note that if leaf sequences in the original alignment do not contain ambiguities, it is not
+necessary to provide alignment data; leaf sequences can be completely inferred without it.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="historydag.mutation_annotated_dag.load_MAD_protobuf_file">
-<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">load_MAD_protobuf_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#load_MAD_protobuf_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.load_MAD_protobuf_file" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">historydag.mutation_annotated_dag.</span></span><span class="sig-name descname"><span class="pre">load_MAD_protobuf_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/mutation_annotated_dag.html#load_MAD_protobuf_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.mutation_annotated_dag.load_MAD_protobuf_file" title="Link to this definition"></a></dt>
 <dd><p>Load a mutation annotated DAG protobuf file and return a
 CGHistoryDag.</p>
 </dd></dl>

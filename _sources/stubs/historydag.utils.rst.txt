@@ -36,6 +36,7 @@
       make_rfdistance_countfuncs
       natural_edge_probability
       prod
+      read_fasta
       sum_rfdistance_funcs
    
    
@@ -57,6 +58,12 @@
    
 
    
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      TaxaError
    
    
 

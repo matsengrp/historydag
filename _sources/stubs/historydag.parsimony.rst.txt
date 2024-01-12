@@ -18,7 +18,6 @@
       build_trees_from_files
       disambiguate
       disambiguate_history
-      load_fasta
       make_weighted_hamming_count_funcs
       parsimony_score
       parsimony_scores_from_files

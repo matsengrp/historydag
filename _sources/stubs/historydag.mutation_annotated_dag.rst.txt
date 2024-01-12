@@ -29,6 +29,7 @@
       AmbiguousLeafCGHistoryDag
       CGHistoryDag
       HDagJSONEncoder
+      NodeIDHistoryDag
    
    
 

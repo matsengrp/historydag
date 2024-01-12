@@ -88,6 +88,7 @@
       ~HistoryDag.sum_rf_distances
       ~HistoryDag.sum_weights
       ~HistoryDag.summary
+      ~HistoryDag.to_ascii
       ~HistoryDag.to_ete
       ~HistoryDag.to_graphviz
       ~HistoryDag.to_newick

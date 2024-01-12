@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.mutation_annotated_dag &mdash; historydag  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -84,7 +86,6 @@
 <span class="sd">relative to the reference.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">from</span> <span class="nn">frozendict</span> <span class="kn">import</span> <span class="n">frozendict</span>
 <span class="kn">from</span> <span class="nn">historydag.dag</span> <span class="kn">import</span> <span class="n">HistoryDag</span><span class="p">,</span> <span class="n">HistoryDagNode</span><span class="p">,</span> <span class="n">UANode</span><span class="p">,</span> <span class="n">EdgeSet</span>
 <span class="kn">import</span> <span class="nn">historydag.utils</span>
@@ -92,14 +93,19 @@
     <span class="n">CompactGenome</span><span class="p">,</span>
     <span class="n">compact_genome_from_sequence</span><span class="p">,</span>
     <span class="n">cg_diff</span><span class="p">,</span>
+    <span class="n">ambiguous_cg_diff</span><span class="p">,</span>
+    <span class="n">reconcile_cgs</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">historydag.parsimony_utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">compact_genome_hamming_distance_countfuncs</span><span class="p">,</span>
     <span class="n">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span><span class="p">,</span>
+    <span class="n">default_nt_transitions</span><span class="p">,</span>
+    <span class="n">standard_nt_ambiguity_map</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">import</span> <span class="nn">historydag.dag_pb2</span> <span class="k">as</span> <span class="nn">dpb</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Callable</span>
 
 
 <span class="n">_pb_nuc_lookup</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;T&quot;</span><span class="p">}</span>
@@ -113,18 +119,48 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="HDagJSONEncoder"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.HDagJSONEncoder">[docs]</a><span class="k">class</span> <span class="nc">HDagJSONEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
-<div class="viewcode-block" id="HDagJSONEncoder.default"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.HDagJSONEncoder.default">[docs]</a>    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+<div class="viewcode-block" id="HDagJSONEncoder">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.HDagJSONEncoder">[docs]</a>
+<span class="k">class</span> <span class="nc">HDagJSONEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<div class="viewcode-block" id="HDagJSONEncoder.default">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.HDagJSONEncoder.default">[docs]</a>
+    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">CompactGenome</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">mutations</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">frozendict</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="CGHistoryDag"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag">[docs]</a><span class="k">class</span> <span class="nc">CGHistoryDag</span><span class="p">(</span><span class="n">HistoryDag</span><span class="p">):</span>
+
+<div class="viewcode-block" id="NodeIDHistoryDag">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.NodeIDHistoryDag">[docs]</a>
+<span class="k">class</span> <span class="nc">NodeIDHistoryDag</span><span class="p">(</span><span class="n">HistoryDag</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A HistoryDag subclass with node labels containing string ``node_id``</span>
+<span class="sd">    fields.</span>
+
+<span class="sd">    For leaf nodes this string is a unique leaf identifier, and for</span>
+<span class="sd">    internal nodes this is a string representation of an integer node</span>
+<span class="sd">    ID.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_required_label_fields</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;node_id&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">_default_args</span> <span class="o">=</span> <span class="n">frozendict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="s2">&quot;optimal_func&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">,</span>
+            <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CGHistoryDag">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag">[docs]</a>
+<span class="k">class</span> <span class="nc">CGHistoryDag</span><span class="p">(</span><span class="n">HistoryDag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A HistoryDag subclass with node labels containing CompactGenome objects.</span>
 
 <span class="sd">    The constructor for this class requires that each node label contain</span>
@@ -158,44 +194,87 @@
     <span class="p">}</span>
     <span class="c1"># #### Overridden Methods ####</span>
 
-<div class="viewcode-block" id="CGHistoryDag.weight_counts_with_ambiguities"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.weight_counts_with_ambiguities">[docs]</a>    <span class="k">def</span> <span class="nf">weight_counts_with_ambiguities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="CGHistoryDag.weight_counts_with_ambiguities">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.weight_counts_with_ambiguities">[docs]</a>
+    <span class="k">def</span> <span class="nf">weight_counts_with_ambiguities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">&quot;This method is only implemented for DAGs with node labels containing sequences.&quot;</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.summary"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.summary">[docs]</a>    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CGHistoryDag.summary">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.summary">[docs]</a>
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">HistoryDag</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">min_pars</span><span class="p">,</span> <span class="n">max_pars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_range_annotate</span><span class="p">(</span>
             <span class="o">**</span><span class="n">compact_genome_hamming_distance_countfuncs</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parsimony score range </span><span class="si">{</span><span class="n">min_pars</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">max_pars</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.hamming_parsimony_count"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.hamming_parsimony_count">[docs]</a>    <span class="k">def</span> <span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CGHistoryDag.hamming_parsimony_count">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.hamming_parsimony_count">[docs]</a>
+    <span class="k">def</span> <span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;See :meth:`historydag.sequence_dag.SequenceHistoryDag.hamming_parsim</span>
 <span class="sd">        ony_count`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_count</span><span class="p">(</span><span class="o">**</span><span class="n">compact_genome_hamming_distance_countfuncs</span><span class="p">)</span></div>
 
+
     <span class="c1"># #### CGHistoryDag-Specific Methods ####</span>
 
-<div class="viewcode-block" id="CGHistoryDag.to_protobuf"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf">[docs]</a>    <span class="k">def</span> <span class="nf">to_protobuf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">leaf_data_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a DAG with compact genome data on each node, to a MAD</span>
-<span class="sd">        protobuf with mutation information on edges.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            dag: the history DAG to be converted</span>
-<span class="sd">            leaf_data_func: a function taking a DAG node and returning a string to store</span>
-<span class="sd">                in the protobuf node_name field `condensed_leaves` of leaf nodes</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">refseq</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preorder</span><span class="p">(</span><span class="n">skip_ua_node</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="o">.</span><span class="n">reference</span>
+    <span class="k">def</span> <span class="nf">_get_mut_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">refseq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference_sequence</span><span class="p">()</span>
         <span class="n">empty_cg</span> <span class="o">=</span> <span class="n">CompactGenome</span><span class="p">(</span><span class="nb">dict</span><span class="p">(),</span> <span class="n">refseq</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">mut_func</span><span class="p">(</span><span class="n">pnode</span><span class="p">,</span> <span class="n">cnode</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">mut_func</span><span class="p">(</span><span class="n">pnode</span><span class="p">,</span> <span class="n">cnode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">pnode</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
                 <span class="n">parent_seq</span> <span class="o">=</span> <span class="n">empty_cg</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">parent_seq</span> <span class="o">=</span> <span class="n">pnode</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span>
-            <span class="k">return</span> <span class="n">cg_diff</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">cg_diff</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">,</span> <span class="n">cnode</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mut_func</span>
+
+<div class="viewcode-block" id="CGHistoryDag.to_protobuf">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_protobuf</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">leaf_data_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">randomize_leaf_muts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">transition_model</span><span class="o">=</span><span class="n">default_nt_transitions</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a DAG with compact genome data on each node, and unique leaf</span>
+<span class="sd">        IDs on leaf nodes, to a MAD protobuf with mutation information on</span>
+<span class="sd">        edges.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            leaf_data_func: a function taking a DAG node and returning a string to store</span>
+<span class="sd">                in the protobuf node_name field `condensed_leaves` of leaf nodes. On leaf</span>
+<span class="sd">                nodes, this data is appended after the unique leaf ID.</span>
+<span class="sd">            randomize_leaf_muts: When leaf node sequences contain ambiguities, if</span>
+<span class="sd">                True the mutations on pendant edges will be randomized, when</span>
+<span class="sd">                there are multiple choices.</span>
+<span class="sd">            transition_model: A :meth:`historydag.parsimony_utils.TransitionModel` object,</span>
+<span class="sd">                used to decide which bases to record on pendant edge mutations with</span>
+<span class="sd">                ambiguous bases as targets.</span>
+
+<span class="sd">        Note that internal node IDs will be reassigned, even if internal nodes have</span>
+<span class="sd">        node IDs in their label data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">mut_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mut_func</span><span class="p">()</span>
+
+        <span class="c1"># Create unique leaf IDs if the node_id field isn&#39;t available</span>
+        <span class="k">if</span> <span class="s2">&quot;node_id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_label_type</span><span class="p">()</span><span class="o">.</span><span class="n">_fields</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">get_leaf_id</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">node_id</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">leaf_id_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;s</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">())}</span>
+
+            <span class="k">def</span> <span class="nf">get_leaf_id</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">leaf_id_map</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
 
         <span class="k">def</span> <span class="nf">key_func</span><span class="p">(</span><span class="n">cladeitem</span><span class="p">):</span>
             <span class="n">clade</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cladeitem</span>
@@ -209,8 +288,9 @@
             <span class="n">node_dict</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">idx</span>
             <span class="n">node_name</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">node_names</span><span class="o">.</span><span class="n">add</span><span class="p">()</span>
             <span class="n">node_name</span><span class="o">.</span><span class="n">node_id</span> <span class="o">=</span> <span class="n">idx</span>
-            <span class="k">if</span> <span class="n">leaf_data_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                <span class="n">node_name</span><span class="o">.</span><span class="n">condensed_leaves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_leaf_id</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">leaf_data_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">node_name</span><span class="o">.</span><span class="n">condensed_leaves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">leaf_data_func</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">postorder</span><span class="p">():</span>
@@ -222,7 +302,12 @@
                     <span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span> <span class="o">=</span> <span class="n">node_dict</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
                     <span class="n">edge</span><span class="o">.</span><span class="n">parent_clade</span> <span class="o">=</span> <span class="n">cladeidx</span>
                     <span class="n">edge</span><span class="o">.</span><span class="n">child_node</span> <span class="o">=</span> <span class="n">node_dict</span><span class="p">[</span><span class="n">child</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">par_nuc</span><span class="p">,</span> <span class="n">child_nuc</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">mut_func</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">par_nuc</span><span class="p">,</span> <span class="n">child_nuc</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">mut_func</span><span class="p">(</span>
+                        <span class="n">node</span><span class="p">,</span>
+                        <span class="n">child</span><span class="p">,</span>
+                        <span class="n">randomize</span><span class="o">=</span><span class="n">randomize_leaf_muts</span><span class="p">,</span>
+                        <span class="n">transition_model</span><span class="o">=</span><span class="n">transition_model</span><span class="p">,</span>
+                    <span class="p">):</span>
                         <span class="n">mut</span> <span class="o">=</span> <span class="n">edge</span><span class="o">.</span><span class="n">edge_mutations</span><span class="o">.</span><span class="n">add</span><span class="p">()</span>
                         <span class="n">mut</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">idx</span>
                         <span class="n">mut</span><span class="o">.</span><span class="n">par_nuc</span> <span class="o">=</span> <span class="n">_pb_nuc_codes</span><span class="p">[</span><span class="n">par_nuc</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
@@ -233,14 +318,24 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.to_protobuf_file"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf_file">[docs]</a>    <span class="k">def</span> <span class="nf">to_protobuf_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">leaf_data_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CGHistoryDag.to_protobuf_file">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_protobuf_file">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_protobuf_file</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">leaf_data_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">randomize_leaf_muts</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write this CGHistoryDag to a Mutation Annotated DAG protobuf for use</span>
 <span class="sd">        with Larch.&quot;&quot;&quot;</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_protobuf</span><span class="p">(</span><span class="n">leaf_data_func</span><span class="o">=</span><span class="n">leaf_data_func</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_protobuf</span><span class="p">(</span>
+            <span class="n">leaf_data_func</span><span class="o">=</span><span class="n">leaf_data_func</span><span class="p">,</span> <span class="n">randomize_leaf_muts</span><span class="o">=</span><span class="n">randomize_leaf_muts</span>
+        <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
             <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.flatten"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.flatten">[docs]</a>    <span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sort_compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CGHistoryDag.flatten">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.flatten">[docs]</a>
+    <span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sort_compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a dictionary containing four keys:</span>
 
 <span class="sd">        * `refseq` is a list containing the reference sequence id, and the reference sequence</span>
@@ -315,10 +410,14 @@
             <span class="s2">&quot;edges&quot;</span><span class="p">:</span> <span class="n">edge_list</span><span class="p">,</span>
         <span class="p">}</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.test_equal"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.test_equal">[docs]</a>    <span class="k">def</span> <span class="nf">test_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test whether two history DAGs are equal.</span>
 
-<span class="sd">        Compares sorted JSON representation.</span>
+<div class="viewcode-block" id="CGHistoryDag.test_equal">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.test_equal">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated test for whether two history DAGs are equal.</span>
+
+<span class="sd">        Compares sorted JSON representation. Only works when</span>
+<span class="sd">        &quot;compact_genome&quot; is the only label field, on all nodes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">flatdag1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="n">flatdag2</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
@@ -343,7 +442,10 @@
 
         <span class="k">return</span> <span class="n">cg_list1</span> <span class="o">==</span> <span class="n">cg_list2</span> <span class="ow">and</span> <span class="n">get_edge_set</span><span class="p">(</span><span class="n">flatdag1</span><span class="p">)</span> <span class="o">==</span> <span class="n">get_edge_set</span><span class="p">(</span><span class="n">flatdag2</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.get_reference_sequence"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.get_reference_sequence">[docs]</a>    <span class="k">def</span> <span class="nf">get_reference_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CGHistoryDag.get_reference_sequence">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.get_reference_sequence">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_reference_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the reference sequence for this CGHistoryDag.</span>
 
 <span class="sd">        This is the sequence with respect to which all node label</span>
@@ -351,28 +453,138 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preorder</span><span class="p">(</span><span class="n">skip_ua_node</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="o">.</span><span class="n">reference</span></div>
 
+
     <span class="k">def</span> <span class="nf">_check_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_check_valid</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_check_valid</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference_sequence</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preorder</span><span class="p">(</span><span class="n">skip_ua_node</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="o">.</span><span class="n">reference</span> <span class="o">!=</span> <span class="n">reference</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;Multiple compact genome reference sequences found in node label CompactGenomes.&quot;</span>
                 <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="CGHistoryDag.to_json"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sort_compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="CGHistoryDag.to_json">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_json">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sort_compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write this history DAG to a JSON object.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">sort_compact_genomes</span><span class="o">=</span><span class="n">sort_compact_genomes</span><span class="p">),</span> <span class="bp">cls</span><span class="o">=</span><span class="n">HDagJSONEncoder</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="CGHistoryDag.to_json_file"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_json_file">[docs]</a>    <span class="k">def</span> <span class="nf">to_json_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">sort_compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CGHistoryDag.to_json_file">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.to_json_file">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_json_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">sort_compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write this history DAG to a JSON file.&quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">sort_compact_genomes</span><span class="o">=</span><span class="n">sort_compact_genomes</span><span class="p">))</span></div></div>
+            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">sort_compact_genomes</span><span class="o">=</span><span class="n">sort_compact_genomes</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="AmbiguousLeafCGHistoryDag"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag">[docs]</a><span class="k">class</span> <span class="nc">AmbiguousLeafCGHistoryDag</span><span class="p">(</span><span class="n">CGHistoryDag</span><span class="p">):</span>
+<div class="viewcode-block" id="CGHistoryDag.adjusted_node_probabilities">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.CGHistoryDag.adjusted_node_probabilities">[docs]</a>
+    <span class="k">def</span> <span class="nf">adjusted_node_probabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">log_probabilities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">ua_node_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">adjust_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">HistoryDagNode</span><span class="p">,</span> <span class="n">HistoryDagNode</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the probability of each node in the DAG, adjusted based on</span>
+<span class="sd">        the frequency of mutations that define each node.</span>
+
+<span class="sd">        See :meth:`HistoryDag.node_probabilities` for argument</span>
+<span class="sd">        descriptions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">adjust_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">uncollapsed</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">mut_freq</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># (parent_nuc, child_nuc, sequence_index) -&gt; frequency</span>
+            <span class="n">edge_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_edges</span><span class="p">()</span>
+            <span class="n">total_muts</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">postorder</span><span class="p">())):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">is_root</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">is_root</span><span class="p">()</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                            <span class="k">continue</span>
+                        <span class="n">muts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                            <span class="n">cg_diff</span><span class="p">(</span>
+                                <span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">muts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">uncollapsed</span> <span class="o">=</span> <span class="kc">True</span>
+
+                        <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">muts</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">mut</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mut_freq</span><span class="p">:</span>
+                                <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                            <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="o">+=</span> <span class="n">edge_counts</span><span class="p">[(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">)]</span>
+                            <span class="n">total_muts</span> <span class="o">+=</span> <span class="n">edge_counts</span><span class="p">[(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">)]</span>
+
+            <span class="k">if</span> <span class="n">uncollapsed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="s2">&quot;Support adjustment on uncollapsed DAG.&quot;</span><span class="p">)</span>
+
+            <span class="n">min_mut_freq</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">mut_freq</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="o">/=</span> <span class="n">total_muts</span>
+                <span class="k">assert</span> <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">total_muts</span>
+                <span class="k">if</span> <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_mut_freq</span><span class="p">:</span>
+                    <span class="n">min_mut_freq</span> <span class="o">=</span> <span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span>
+
+            <span class="c1"># TODO: Inspect this further to gather stats about what type of mutations are most common</span>
+            <span class="c1"># print(mut_freq)</span>
+
+            <span class="c1"># Returns a value in [0, 1] that indicates the correct adjustment</span>
+            <span class="k">if</span> <span class="n">log_probabilities</span><span class="p">:</span>
+
+                <span class="k">def</span> <span class="nf">adjust_func</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">min_mut_freq</span><span class="o">=</span><span class="n">min_mut_freq</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">is_root</span><span class="p">()</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                        <span class="k">return</span> <span class="mi">0</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">mut</span>
+                            <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">cg_diff</span><span class="p">(</span>
+                                <span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span>
+                            <span class="p">)</span>
+                        <span class="p">]</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="n">log</span><span class="p">(</span><span class="n">eps</span> <span class="o">*</span> <span class="n">min_mut_freq</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="n">log</span><span class="p">(</span>
+                                <span class="mi">1</span>
+                                <span class="o">-</span> <span class="n">historydag</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">prod</span><span class="p">([</span><span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">diff</span><span class="p">])</span>
+                            <span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+
+                <span class="k">def</span> <span class="nf">adjust_func</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">min_mut_freq</span><span class="o">=</span><span class="n">min_mut_freq</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">is_root</span><span class="p">()</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                        <span class="k">return</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">mut</span>
+                            <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">cg_diff</span><span class="p">(</span>
+                                <span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span>
+                            <span class="p">)</span>
+                        <span class="p">]</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">min_mut_freq</span>
+                        <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">historydag</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">mut_freq</span><span class="p">[</span><span class="n">mut</span><span class="p">]</span> <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">diff</span><span class="p">]</span>
+                        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_probabilities</span><span class="p">(</span>
+            <span class="n">log_probabilities</span><span class="o">=</span><span class="n">log_probabilities</span><span class="p">,</span>
+            <span class="n">adjust_func</span><span class="o">=</span><span class="n">adjust_func</span><span class="p">,</span>
+            <span class="n">ua_node_val</span><span class="o">=</span><span class="n">ua_node_val</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AmbiguousLeafCGHistoryDag">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag">[docs]</a>
+<span class="k">class</span> <span class="nc">AmbiguousLeafCGHistoryDag</span><span class="p">(</span><span class="n">CGHistoryDag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A HistoryDag subclass with node labels containing compact genomes.</span>
 
 <span class="sd">    The constructor for this class requires that each node label contain</span>
@@ -396,24 +608,59 @@
     <span class="p">}</span>
 
     <span class="c1"># #### Overridden Methods ####</span>
-<div class="viewcode-block" id="AmbiguousLeafCGHistoryDag.hamming_parsimony_count"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.hamming_parsimony_count">[docs]</a>    <span class="k">def</span> <span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_get_mut_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">refseq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reference_sequence</span><span class="p">()</span>
+        <span class="n">empty_cg</span> <span class="o">=</span> <span class="n">CompactGenome</span><span class="p">(</span><span class="nb">dict</span><span class="p">(),</span> <span class="n">refseq</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">mut_func</span><span class="p">(</span>
+            <span class="n">pnode</span><span class="p">,</span> <span class="n">cnode</span><span class="p">,</span> <span class="n">randomize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transition_model</span><span class="o">=</span><span class="n">default_nt_transitions</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">pnode</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
+                <span class="n">parent_seq</span> <span class="o">=</span> <span class="n">empty_cg</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parent_seq</span> <span class="o">=</span> <span class="n">pnode</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span>
+            <span class="k">if</span> <span class="n">cnode</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                <span class="c1"># have to choose non-ambiguous mutations that minimize</span>
+                <span class="c1"># edge weight.</span>
+                <span class="k">return</span> <span class="n">ambiguous_cg_diff</span><span class="p">(</span>
+                    <span class="n">parent_seq</span><span class="p">,</span>
+                    <span class="n">cnode</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">,</span>
+                    <span class="n">randomize</span><span class="o">=</span><span class="n">randomize</span><span class="p">,</span>
+                    <span class="n">transition_model</span><span class="o">=</span><span class="n">transition_model</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cg_diff</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">,</span> <span class="n">cnode</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">compact_genome</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mut_func</span>
+
+<div class="viewcode-block" id="AmbiguousLeafCGHistoryDag.hamming_parsimony_count">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.hamming_parsimony_count">[docs]</a>
+    <span class="k">def</span> <span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;See :meth:`historydag.sequence_dag.SequenceHistoryDag.hamming_parsim</span>
 <span class="sd">        ony_count`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_count</span><span class="p">(</span>
             <span class="o">**</span><span class="n">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="AmbiguousLeafCGHistoryDag.summary"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.summary">[docs]</a>    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AmbiguousLeafCGHistoryDag.summary">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.AmbiguousLeafCGHistoryDag.summary">[docs]</a>
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">HistoryDag</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">min_pars</span><span class="p">,</span> <span class="n">max_pars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_range_annotate</span><span class="p">(</span>
             <span class="o">**</span><span class="n">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parsimony score range </span><span class="si">{</span><span class="n">min_pars</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">max_pars</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parsimony score range </span><span class="si">{</span><span class="n">min_pars</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">max_pars</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
 
     <span class="c1"># #### End Overridden Methods ####</span>
 
 
-<div class="viewcode-block" id="load_json_file"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.load_json_file">[docs]</a><span class="k">def</span> <span class="nf">load_json_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="load_json_file">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.load_json_file">[docs]</a>
+<span class="k">def</span> <span class="nf">load_json_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a Mutation Annotated DAG stored in a JSON file and return a</span>
 <span class="sd">    CGHistoryDag.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
@@ -421,7 +668,10 @@
     <span class="k">return</span> <span class="n">unflatten</span><span class="p">(</span><span class="n">json_dict</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="unflatten"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.unflatten">[docs]</a><span class="k">def</span> <span class="nf">unflatten</span><span class="p">(</span><span class="n">flat_dag</span><span class="p">):</span>
+
+<div class="viewcode-block" id="unflatten">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.unflatten">[docs]</a>
+<span class="k">def</span> <span class="nf">unflatten</span><span class="p">(</span><span class="n">flat_dag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Takes a dictionary like that returned by flatten, and returns a</span>
 <span class="sd">    HistoryDag.&quot;&quot;&quot;</span>
     <span class="n">refseqid</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">flat_dag</span><span class="p">[</span><span class="s2">&quot;refseq&quot;</span><span class="p">]</span>
@@ -473,125 +723,228 @@
     <span class="k">return</span> <span class="n">dag</span></div>
 
 
-<div class="viewcode-block" id="load_MAD_protobuf"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.load_MAD_protobuf">[docs]</a><span class="k">def</span> <span class="nf">load_MAD_protobuf</span><span class="p">(</span><span class="n">pbdata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a MAD protobuf to a CGHistoryDag with compact genomes in the</span>
-<span class="sd">    `compact_genome` label attribute.&quot;&quot;&quot;</span>
-    <span class="c1"># use HistoryDag.__setstate__ to make this happen</span>
-    <span class="c1"># all of a node&#39;s parent edges</span>
-    <span class="n">reference</span> <span class="o">=</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">reference_seq</span>
-    <span class="n">parent_edges</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">}</span>
-    <span class="c1"># a list of list of a node&#39;s child edges</span>
-    <span class="n">child_edges</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">}</span>
-    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
-        <span class="n">parent_edges</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">child_node</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
-        <span class="n">child_edges</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
 
-    <span class="c1"># now each node id is in parent_edges and child_edges as a key,</span>
-    <span class="c1"># fix the UA node&#39;s compact genome (could be done in function but this</span>
-    <span class="c1"># asserts only one node has no parent edges)</span>
-    <span class="p">(</span><span class="n">ua_node_id</span><span class="p">,)</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">node_id</span> <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">eset</span> <span class="ow">in</span> <span class="n">parent_edges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="p">]</span>
+<div class="viewcode-block" id="load_MAD_protobuf">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.load_MAD_protobuf">[docs]</a>
+<span class="k">def</span> <span class="nf">load_MAD_protobuf</span><span class="p">(</span>
+    <span class="n">pbdata</span><span class="p">,</span>
+    <span class="n">compact_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">node_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">leaf_cgs</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">ambiguity_map</span><span class="o">=</span><span class="n">standard_nt_ambiguity_map</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a Larch MAD protobuf to a CGLeafIDHistoryDag with compact</span>
+<span class="sd">    genomes in the `compact_genome` label attribute.</span>
 
-    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_node_compact_genome</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">node_id</span> <span class="o">==</span> <span class="n">ua_node_id</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">CompactGenome</span><span class="p">(</span><span class="n">frozendict</span><span class="p">(),</span> <span class="n">reference</span><span class="p">)</span>
+<span class="sd">    Args:</span>
+<span class="sd">        pbdata: loaded protobuf data object</span>
+<span class="sd">        compact_genomes: If True, returns a CGHistoryDag or AmbiguousLeafCGHistoryDag</span>
+<span class="sd">            object, with labels containing `node_id` and `compact_genome` fields.</span>
+<span class="sd">            If no leaf sequence data is provided, leaf compact genomes will be</span>
+<span class="sd">            inferred from pendant edge mutations, and will include ambiguities when</span>
+<span class="sd">            mutations on two pendant edges pointing to the same leaf would otherwise</span>
+<span class="sd">            contradict. `node_id` field on internal nodes will be None, unless</span>
+<span class="sd">            `node_ids` argument is True. If False, this function will return a NodeIDHistoryDag.</span>
+<span class="sd">        node_ids: If True, node IDs will be included on all nodes&#39; labels. If False, internal</span>
+<span class="sd">            nodes&#39; `node_id` label fields will be `None`. Unique leaf sequence IDs are always</span>
+<span class="sd">            included in the `node_id` label field of leaf nodes, to ensure that leaf node</span>
+<span class="sd">            labels are unique.</span>
+<span class="sd">        leaf_cgs: (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes.</span>
+<span class="sd">            Use :meth:`compact_genome.read_alignment` to read an alignment from a file.</span>
+<span class="sd">        ambiguity_map: A :meth:`historydag.parsimony_utils.AmbiguityMap` object</span>
+<span class="sd">            to determine how conflicting pendant edge mutations are represented.</span>
+
+<span class="sd">    Note that if leaf sequences in the original alignment do not contain ambiguities, it is not</span>
+<span class="sd">    necessary to provide alignment data; leaf sequences can be completely inferred without it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">PBDAG</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This class doesn&#39;t do much, just provides an interface to the</span>
+<span class="sd">        protobuf data, as a DAG of integer node IDs, and provides methods to</span>
+<span class="sd">        get history DAG node data for a given node ID.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pbdata</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pbdata</span> <span class="o">=</span> <span class="n">pbdata</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">reference_seq</span>
+            <span class="n">parent_edges</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">}</span>
+            <span class="c1"># a list of list of a node&#39;s child edges</span>
+            <span class="n">child_edges</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="n">parent_edges</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">child_node</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+                <span class="n">child_edges</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">child_edges</span> <span class="o">=</span> <span class="n">child_edges</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_edges</span> <span class="o">=</span> <span class="n">parent_edges</span>
+
+            <span class="c1"># now each node id is in parent_edges and child_edges as a key,</span>
+            <span class="c1"># fix the UA node&#39;s compact genome (could be done in function but this</span>
+            <span class="c1"># asserts only one node has no parent edges)</span>
+            <span class="p">(</span><span class="n">ua_node_id</span><span class="p">,)</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">node_id</span> <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">eset</span> <span class="ow">in</span> <span class="n">parent_edges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ua_node_id</span> <span class="o">=</span> <span class="n">ua_node_id</span>
+
+            <span class="k">def</span> <span class="nf">traverse_postorder</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
+                <span class="c1"># order node_ids in postordering</span>
+                <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+                <span class="k">def</span> <span class="nf">traverse</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
+                    <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+                    <span class="n">child_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">child_node</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">child_id</span> <span class="ow">in</span> <span class="n">child_ids</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">child_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                                <span class="k">yield from</span> <span class="n">traverse</span><span class="p">(</span><span class="n">child_id</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">node_id</span>
+
+                <span class="k">yield from</span> <span class="n">traverse</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_postorder</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">traverse_postorder</span><span class="p">(</span><span class="n">ua_node_id</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_reverse_postorder</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id_postorder</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_id_to_cg</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">node_ids</span><span class="p">:</span>
+
+                <span class="k">def</span> <span class="nf">_id_func</span><span class="p">(</span><span class="n">nid</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">(</span><span class="n">nid</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">condensed_leaves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">nid</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+
+                <span class="k">def</span> <span class="nf">_id_func</span><span class="p">(</span><span class="n">nid</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">(</span><span class="n">nid</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">condensed_leaves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">compact_genomes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">CGHistoryDag</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">label_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;compact_genome&quot;</span><span class="p">,</span> <span class="s2">&quot;node_id&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_label_funcs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_compact_genome</span><span class="p">,</span> <span class="n">_id_func</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">label_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;node_id&quot;</span><span class="p">,)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_label_funcs</span> <span class="o">=</span> <span class="p">(</span><span class="n">_id_func</span><span class="p">,)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">NodeIDHistoryDag</span>
+
+        <span class="k">def</span> <span class="nf">_build_compact_genomes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="c1"># These are built from ua node down, so must be built in</span>
+            <span class="c1"># reverse postorder:</span>
+            <span class="c1"># Also returns flag indicating if any compact genomes are ambiguous</span>
+            <span class="n">node_id_to_cg</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ua_node_id</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">(</span><span class="n">frozendict</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_reverse_postorder</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ua_node_id</span>
+            <span class="n">ambiguous_flag</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">def</span> <span class="nf">get_leaf_cg</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
+                <span class="n">leaf_id</span> <span class="o">=</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">condensed_leaves</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">cg</span> <span class="o">=</span> <span class="n">leaf_cgs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">leaf_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># If we&#39;re provided a leaf sequence dictionary, just assume</span>
+                    <span class="c1"># leaf sequences are ambiguous (otherwise it would be</span>
+                    <span class="c1"># unnecessary, except for speedup). If this assumption is</span>
+                    <span class="c1"># untrue, it can be fixed with HistoryDag subtype conversion</span>
+                    <span class="k">return</span> <span class="n">cg</span><span class="p">,</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
+                    <span class="n">str_mutations</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="nb">tuple</span><span class="p">(</span><span class="n">_pb_mut_to_str</span><span class="p">(</span><span class="n">mut</span><span class="p">)</span> <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">edge</span><span class="o">.</span><span class="n">edge_mutations</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span>
+                    <span class="p">]</span>
+                    <span class="k">return</span> <span class="n">reconcile_cgs</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">node_id_to_cg</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span><span class="p">]</span><span class="o">.</span><span class="n">apply_muts</span><span class="p">(</span><span class="n">muts</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">edge</span><span class="p">,</span> <span class="n">muts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">str_mutations</span><span class="p">)</span>
+                        <span class="p">],</span>
+                        <span class="n">ambiguitymap</span><span class="o">=</span><span class="n">ambiguity_map</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_reverse_postorder</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">edge</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">parent_cg</span> <span class="o">=</span> <span class="n">node_id_to_cg</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span><span class="p">]</span>
+                    <span class="n">str_mutations</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                        <span class="n">_pb_mut_to_str</span><span class="p">(</span><span class="n">mut</span><span class="p">)</span> <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">edge</span><span class="o">.</span><span class="n">edge_mutations</span>
+                    <span class="p">)</span>
+                    <span class="n">node_id_to_cg</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_cg</span><span class="o">.</span><span class="n">apply_muts</span><span class="p">(</span><span class="n">str_mutations</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># node_id belongs to leaf, must look at all parent edges to</span>
+                    <span class="c1"># look for contradictions (implying ambiguities)</span>
+                    <span class="n">node_id_to_cg</span><span class="p">[</span><span class="n">node_id</span><span class="p">],</span> <span class="n">ambig_flag</span> <span class="o">=</span> <span class="n">get_leaf_cg</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+                    <span class="n">ambiguous_flag</span> <span class="o">=</span> <span class="n">ambiguous_flag</span> <span class="ow">or</span> <span class="n">ambig_flag</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">node_id_to_cg</span> <span class="o">=</span> <span class="n">node_id_to_cg</span>
+            <span class="k">if</span> <span class="n">ambiguous_flag</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">AmbiguousLeafCGHistoryDag</span>
+
+        <span class="k">def</span> <span class="nf">get_compact_genome</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_id_to_cg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_build_compact_genomes</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_id_to_cg</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">get_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">lfunc</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">lfunc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_label_funcs</span><span class="p">])</span>
+
+        <span class="k">def</span> <span class="nf">is_leaf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+
+        <span class="k">def</span> <span class="nf">get_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">child_node</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]]</span>
+
+        <span class="k">def</span> <span class="nf">get_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]]</span>
+
+    <span class="n">pbdag</span> <span class="o">=</span> <span class="n">PBDAG</span><span class="p">(</span><span class="n">pbdata</span><span class="p">)</span>
+
+    <span class="n">node_to_node_d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">node_id_to_node</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">Label</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span><span class="s2">&quot;Label&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="n">label</span><span class="p">,</span> <span class="nb">any</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">pbdag</span><span class="o">.</span><span class="n">label_fields</span><span class="p">])</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">pbdag</span><span class="o">.</span><span class="n">id_postorder</span><span class="p">:</span>
+        <span class="c1"># These have all been created already</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node_id_to_node</span><span class="p">[</span><span class="n">child_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">child_id</span> <span class="ow">in</span> <span class="n">pbdag</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">child_clades</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">child</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">node_id</span> <span class="o">==</span> <span class="n">pbdag</span><span class="o">.</span><span class="n">ua_node_id</span><span class="p">:</span>
+            <span class="n">this_node</span> <span class="o">=</span> <span class="n">UANode</span><span class="p">(</span><span class="n">EdgeSet</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">edge</span> <span class="o">=</span> <span class="n">parent_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">parent_seq</span> <span class="o">=</span> <span class="n">get_node_compact_genome</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span><span class="p">)</span>
-            <span class="n">str_mutations</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_pb_mut_to_str</span><span class="p">(</span><span class="n">mut</span><span class="p">)</span> <span class="k">for</span> <span class="n">mut</span> <span class="ow">in</span> <span class="n">edge</span><span class="o">.</span><span class="n">edge_mutations</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">parent_seq</span><span class="o">.</span><span class="n">apply_muts</span><span class="p">(</span><span class="n">str_mutations</span><span class="p">)</span>
-
-    <span class="n">label_list</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">label_dict</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">for</span> <span class="n">node_record</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">node_names</span><span class="p">:</span>
-        <span class="n">cg</span> <span class="o">=</span> <span class="n">get_node_compact_genome</span><span class="p">(</span><span class="n">node_record</span><span class="o">.</span><span class="n">node_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cg</span> <span class="ow">in</span> <span class="n">label_dict</span><span class="p">:</span>
-            <span class="n">cg_idx</span> <span class="o">=</span> <span class="n">label_dict</span><span class="p">[</span><span class="n">cg</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">cg_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">)</span>
-            <span class="n">label_dict</span><span class="p">[</span><span class="n">cg</span><span class="p">]</span> <span class="o">=</span> <span class="n">cg_idx</span>
-            <span class="n">label_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cg</span><span class="p">)</span>
-
-    <span class="c1"># now build clade unions by dynamic programming:</span>
-    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_clade_union</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># it&#39;s a leaf node</span>
-            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">label_dict</span><span class="p">[</span><span class="n">get_node_compact_genome</span><span class="p">(</span><span class="n">node_id</span><span class="p">)]})</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="n">label</span>
-                    <span class="k">for</span> <span class="n">child_edge</span> <span class="ow">in</span> <span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">get_clade_union</span><span class="p">(</span><span class="n">child_edge</span><span class="o">.</span><span class="n">child_node</span><span class="p">)</span>
-                <span class="p">}</span>
+            <span class="n">this_node</span> <span class="o">=</span> <span class="n">HistoryDagNode</span><span class="p">(</span>
+                <span class="n">Label</span><span class="p">(</span><span class="o">*</span><span class="n">pbdag</span><span class="o">.</span><span class="n">get_label</span><span class="p">(</span><span class="n">node_id</span><span class="p">)),</span>
+                <span class="p">{</span><span class="n">child_clade</span><span class="p">:</span> <span class="n">EdgeSet</span><span class="p">()</span> <span class="k">for</span> <span class="n">child_clade</span> <span class="ow">in</span> <span class="n">child_clades</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;node_id&quot;</span><span class="p">:</span> <span class="n">node_id</span><span class="p">},</span>
             <span class="p">)</span>
+        <span class="c1"># These lines are important when choice of label data</span>
+        <span class="c1"># results in multiple protobuf nodes being the same in the</span>
+        <span class="c1"># loaded DAG.</span>
+        <span class="n">this_node</span> <span class="o">=</span> <span class="n">node_to_node_d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">this_node</span><span class="p">,</span> <span class="n">this_node</span><span class="p">)</span>
+        <span class="n">node_to_node_d</span><span class="p">[</span><span class="n">this_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">this_node</span>
 
-    <span class="k">def</span> <span class="nf">get_child_clades</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
-            <span class="n">get_clade_union</span><span class="p">(</span><span class="n">child_edge</span><span class="o">.</span><span class="n">child_node</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">child_edge</span> <span class="ow">in</span> <span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="c1"># maybe we need this??</span>
-        <span class="c1"># return frozenset({get_clade_union(child_edge.child_node) for child_edge in child_edges[node_id]})</span>
+        <span class="c1"># Update node_id dictionary</span>
+        <span class="n">node_id_to_node</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">this_node</span>
 
-    <span class="c1"># order node_ids in postordering</span>
-    <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="c1"># Add child edges of this_node</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="n">this_node</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">prob_norm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">traverse</span><span class="p">(</span><span class="n">node_id</span><span class="p">):</span>
-        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
-        <span class="n">child_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">child_node</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">child_edges</span><span class="p">[</span><span class="n">node_id</span><span class="p">]]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">child_id</span> <span class="ow">in</span> <span class="n">child_ids</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">child_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
-                    <span class="k">yield from</span> <span class="n">traverse</span><span class="p">(</span><span class="n">child_id</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">node_id</span>
-
-    <span class="n">id_postorder</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">traverse</span><span class="p">(</span><span class="n">ua_node_id</span><span class="p">))</span>
-    <span class="c1"># Start building DAG data</span>
-    <span class="n">node_index_d</span> <span class="o">=</span> <span class="p">{</span><span class="n">node_id</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">id_postorder</span><span class="p">)}</span>
-    <span class="n">node_list</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span>
-            <span class="n">label_dict</span><span class="p">[</span><span class="n">get_node_compact_genome</span><span class="p">(</span><span class="n">node_id</span><span class="p">)],</span>
-            <span class="n">get_child_clades</span><span class="p">(</span><span class="n">node_id</span><span class="p">),</span>
-            <span class="p">{</span><span class="s2">&quot;node_id&quot;</span><span class="p">:</span> <span class="n">node_id</span><span class="p">},</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">id_postorder</span>
-    <span class="p">]</span>
-
-    <span class="n">edge_list</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="n">node_index_d</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">parent_node</span><span class="p">],</span> <span class="n">node_index_d</span><span class="p">[</span><span class="n">edge</span><span class="o">.</span><span class="n">child_node</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">edges</span>
-    <span class="p">]</span>
-    <span class="c1"># fix label list</span>
-    <span class="n">label_list</span> <span class="o">=</span> <span class="p">[(</span><span class="n">item</span><span class="p">,)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">label_list</span><span class="p">]</span>
-    <span class="n">label_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">ua_node</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">ua_node</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="n">node_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ua_node</span><span class="p">)</span>
-    <span class="n">dag</span> <span class="o">=</span> <span class="n">HistoryDag</span><span class="p">(</span><span class="n">UANode</span><span class="p">(</span><span class="n">EdgeSet</span><span class="p">()))</span>
-    <span class="n">dag</span><span class="o">.</span><span class="n">__setstate__</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;label_fields&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;compact_genome&quot;</span><span class="p">,),</span>
-            <span class="s2">&quot;label_list&quot;</span><span class="p">:</span> <span class="n">label_list</span><span class="p">,</span>
-            <span class="s2">&quot;node_list&quot;</span><span class="p">:</span> <span class="n">node_list</span><span class="p">,</span>
-            <span class="s2">&quot;edge_list&quot;</span><span class="p">:</span> <span class="n">edge_list</span><span class="p">,</span>
-            <span class="s2">&quot;attr&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;refseqid&quot;</span><span class="p">:</span> <span class="n">pbdata</span><span class="o">.</span><span class="n">reference_id</span><span class="p">},</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">CGHistoryDag</span><span class="o">.</span><span class="n">from_history_dag</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span></div>
+    <span class="c1"># Last node in postorder should be UA node</span>
+    <span class="k">assert</span> <span class="n">this_node</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">()</span>
+    <span class="n">dag</span> <span class="o">=</span> <span class="n">HistoryDag</span><span class="p">(</span><span class="n">this_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pbdag</span><span class="o">.</span><span class="n">return_type</span><span class="o">.</span><span class="n">from_history_dag</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="load_MAD_protobuf_file"><a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.load_MAD_protobuf_file">[docs]</a><span class="k">def</span> <span class="nf">load_MAD_protobuf_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+
+<div class="viewcode-block" id="load_MAD_protobuf_file">
+<a class="viewcode-back" href="../../stubs/historydag.mutation_annotated_dag.html#historydag.mutation_annotated_dag.load_MAD_protobuf_file">[docs]</a>
+<span class="k">def</span> <span class="nf">load_MAD_protobuf_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a mutation annotated DAG protobuf file and return a</span>
 <span class="sd">    CGHistoryDag.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
         <span class="n">pb_data</span> <span class="o">=</span> <span class="n">dpb</span><span class="o">.</span><span class="n">data</span><span class="p">()</span>
         <span class="n">pb_data</span><span class="o">.</span><span class="n">ParseFromString</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">load_MAD_protobuf</span><span class="p">(</span><span class="n">pb_data</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">load_MAD_protobuf</span><span class="p">(</span><span class="n">pb_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 </pre></div>
 
            </div>

@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.utils &mdash; historydag  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -108,7 +110,16 @@
 <span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 
-<div class="viewcode-block" id="UALabel"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.UALabel">[docs]</a><span class="k">class</span> <span class="nc">UALabel</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="TaxaError">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.TaxaError">[docs]</a>
+<span class="k">class</span> <span class="nc">TaxaError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="UALabel">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.UALabel">[docs]</a>
+<span class="k">class</span> <span class="nc">UALabel</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
     <span class="n">_fields</span><span class="p">:</span> <span class="n">Tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -127,8 +138,11 @@
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Attempted to iterate from dag root UALabel&quot;</span><span class="p">)</span></div>
 
 
+
 <span class="c1"># ######## Decorators ########</span>
-<div class="viewcode-block" id="access_nodefield_default"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.access_nodefield_default">[docs]</a><span class="k">def</span> <span class="nf">access_nodefield_default</span><span class="p">(</span><span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<div class="viewcode-block" id="access_nodefield_default">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.access_nodefield_default">[docs]</a>
+<span class="k">def</span> <span class="nf">access_nodefield_default</span><span class="p">(</span><span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator for accessing label fields on a HistoryDagNode. Converts a</span>
 <span class="sd">    function taking some label field&#39;s values as positional arguments, to a</span>
 <span class="sd">    function taking HistoryDagNodes as positional arguments.</span>
@@ -155,7 +169,10 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
-<div class="viewcode-block" id="access_field"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.access_field">[docs]</a><span class="k">def</span> <span class="nf">access_field</span><span class="p">(</span><span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="access_field">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.access_field">[docs]</a>
+<span class="k">def</span> <span class="nf">access_field</span><span class="p">(</span><span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator for conveniently accessing a field in a label.</span>
 
 <span class="sd">    To be used instead of something like `lambda l1, l2:</span>
@@ -176,7 +193,10 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
-<div class="viewcode-block" id="ignore_uanode"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.ignore_uanode">[docs]</a><span class="k">def</span> <span class="nf">ignore_uanode</span><span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="ignore_uanode">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.ignore_uanode">[docs]</a>
+<span class="k">def</span> <span class="nf">ignore_uanode</span><span class="p">(</span><span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator to return a default value if any argument is a UANode.</span>
 
 <span class="sd">    For instance, to allow distance between two nodes to be zero if one</span>
@@ -197,7 +217,10 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
-<div class="viewcode-block" id="explode_label"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.explode_label">[docs]</a><span class="k">def</span> <span class="nf">explode_label</span><span class="p">(</span><span class="n">labelfield</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+
+<div class="viewcode-block" id="explode_label">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.explode_label">[docs]</a>
+<span class="k">def</span> <span class="nf">explode_label</span><span class="p">(</span><span class="n">labelfield</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator to make it easier to expand a Label by a certain field.</span>
 
 <span class="sd">    Args:</span>
@@ -225,10 +248,13 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
+
 <span class="c1"># ######## Distances and comparisons... ########</span>
 
 
-<div class="viewcode-block" id="cartesian_product"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.cartesian_product">[docs]</a><span class="k">def</span> <span class="nf">cartesian_product</span><span class="p">(</span>
+<div class="viewcode-block" id="cartesian_product">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.cartesian_product">[docs]</a>
+<span class="k">def</span> <span class="nf">cartesian_product</span><span class="p">(</span>
     <span class="n">optionlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Iterable</span><span class="p">]],</span> <span class="n">accum</span><span class="o">=</span><span class="nb">tuple</span><span class="p">()</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The cartesian product of iterables in a list.</span>
@@ -245,7 +271,10 @@
         <span class="k">yield</span> <span class="n">accum</span></div>
 
 
-<div class="viewcode-block" id="hist"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.hist">[docs]</a><span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="hist">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.hist">[docs]</a>
+<span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pretty prints a counter Normalizing counts using the number of samples,</span>
 <span class="sd">    passed as the argument `samples`.&quot;&quot;&quot;</span>
     <span class="n">ls</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
@@ -255,7 +284,10 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">weight</span><span class="si">}</span><span class="s2">  </span><span class="se">\t</span><span class="s2">| </span><span class="si">{</span><span class="n">freq</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">samples</span><span class="o">==</span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">freq</span><span class="o">/</span><span class="n">samples</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="is_collapsed"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.is_collapsed">[docs]</a><span class="k">def</span> <span class="nf">is_collapsed</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="is_collapsed">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.is_collapsed">[docs]</a>
+<span class="k">def</span> <span class="nf">is_collapsed</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether the provided tree is collapsed.</span>
 
 <span class="sd">    Collapsed means that any edge whose target is not a leaf node</span>
@@ -267,7 +299,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="collapse_adjacent_sequences"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.collapse_adjacent_sequences">[docs]</a><span class="k">def</span> <span class="nf">collapse_adjacent_sequences</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">:</span>
+
+<div class="viewcode-block" id="collapse_adjacent_sequences">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.collapse_adjacent_sequences">[docs]</a>
+<span class="k">def</span> <span class="nf">collapse_adjacent_sequences</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse nonleaf nodes that have the same sequence.&quot;&quot;&quot;</span>
     <span class="c1"># Need to keep doing this until the tree fully collapsed. See gctree for this!</span>
     <span class="n">tree</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -281,7 +316,10 @@
     <span class="k">return</span> <span class="n">tree</span></div>
 
 
-<div class="viewcode-block" id="AddFuncDict"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict">[docs]</a><span class="k">class</span> <span class="nc">AddFuncDict</span><span class="p">(</span><span class="n">UserDict</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AddFuncDict">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict">[docs]</a>
+<span class="k">class</span> <span class="nc">AddFuncDict</span><span class="p">(</span><span class="n">UserDict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for function keyword arguments to</span>
 <span class="sd">    :meth:`historydag.HistoryDag.weight_count`. This is primarily useful</span>
 <span class="sd">    because it allows instances to be added. Passing the result to</span>
@@ -311,7 +349,9 @@
 
     <span class="n">requiredkeys</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;start_func&quot;</span><span class="p">,</span> <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">,</span> <span class="s2">&quot;accum_func&quot;</span><span class="p">}</span>
 
-<div class="viewcode-block" id="AddFuncDict.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initialdata</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="AddFuncDict.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initialdata</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -334,6 +374,7 @@
                 <span class="s2">&quot;Must provide functions named &quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">requiredkeys</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">initialdata</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AddFuncDict&quot;</span><span class="p">:</span>
         <span class="n">fdict1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_tupleargs</span><span class="p">()</span>
@@ -397,7 +438,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span>
 
-<div class="viewcode-block" id="AddFuncDict.linear_combination"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict.linear_combination">[docs]</a>    <span class="k">def</span> <span class="nf">linear_combination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">significant_digits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<div class="viewcode-block" id="AddFuncDict.linear_combination">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.AddFuncDict.linear_combination">[docs]</a>
+    <span class="k">def</span> <span class="nf">linear_combination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">significant_digits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert an AddFuncDict implementing a tuple of weights to a linear</span>
 <span class="sd">        combination of those weights.</span>
 
@@ -456,10 +499,14 @@
                 <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">,</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="HistoryDagFilter"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.HistoryDagFilter">[docs]</a><span class="k">class</span> <span class="nc">HistoryDagFilter</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagFilter">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.HistoryDagFilter">[docs]</a>
+<span class="k">class</span> <span class="nc">HistoryDagFilter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for :class:`historydag.utils.AddFuncDict` and an optimality</span>
 <span class="sd">    function `optimal_func`</span>
 
@@ -468,7 +515,9 @@
 <span class="sd">        optimal_func: A function that specifies how to choose the optimal result from `weight_func`. e.g. `min` or `max`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="HistoryDagFilter.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.HistoryDagFilter.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="HistoryDagFilter.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.HistoryDagFilter.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">weight_funcs</span><span class="p">:</span> <span class="n">AddFuncDict</span><span class="p">,</span>
         <span class="n">optimal_func</span><span class="p">,</span>
@@ -488,6 +537,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;optimal&quot;</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">),)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ordering_names</span> <span class="o">=</span> <span class="p">((</span><span class="n">ordering_name</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">),)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
@@ -554,6 +604,7 @@
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_funcs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="k">yield from</span> <span class="p">(</span><span class="s2">&quot;optimal_func&quot;</span><span class="p">,</span> <span class="s2">&quot;eq_func&quot;</span><span class="p">)</span></div>
 
+
     <span class="c1"># def with_linear_combination_ordering(self, ranking_coeffs, eq_func=operator.eq):</span>
     <span class="c1">#     ranking_coeffs = tuple(ranking_coeffs)</span>
     <span class="c1">#     n = len(self.weight_funcs.names)</span>
@@ -593,7 +644,9 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="natural_edge_probability"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.natural_edge_probability">[docs]</a><span class="k">def</span> <span class="nf">natural_edge_probability</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+<div class="viewcode-block" id="natural_edge_probability">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.natural_edge_probability">[docs]</a>
+<span class="k">def</span> <span class="nf">natural_edge_probability</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the downward-conditional edge probability of the edge from parent</span>
 <span class="sd">    to child.</span>
 
@@ -605,6 +658,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">eset</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">clades</span><span class="p">[</span><span class="n">child</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()]</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">eset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span></div>
+
 
 
 <span class="n">log_natural_probability_funcs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
@@ -619,63 +673,187 @@
 <span class="sd">according to the natural distribution induced by the DAG topology.&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="sum_rfdistance_funcs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.sum_rfdistance_funcs">[docs]</a><span class="k">def</span> <span class="nf">sum_rfdistance_funcs</span><span class="p">(</span><span class="n">reference_dag</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_process_rf_one_sided_coefficients</span><span class="p">(</span><span class="n">one_sided</span><span class="p">,</span> <span class="n">one_sided_coefficients</span><span class="p">):</span>
+    <span class="n">rf_type_suffix</span> <span class="o">=</span> <span class="s2">&quot;distance&quot;</span>
+    <span class="n">RFType</span> <span class="o">=</span> <span class="n">IntState</span>
+
+    <span class="k">if</span> <span class="n">one_sided</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Only then will one_sided_coefficients be considered</span>
+        <span class="k">if</span> <span class="n">one_sided_coefficients</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">rf_type_suffix</span> <span class="o">=</span> <span class="s2">&quot;nonstandard&quot;</span>
+            <span class="c1"># As long as both coefficients are integers, RF distances will</span>
+            <span class="c1"># be integers. Otherwise, we need to allow floats by using</span>
+            <span class="c1"># FloatState objects.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">one_sided_coefficients</span><span class="p">):</span>
+                <span class="n">RFType</span> <span class="o">=</span> <span class="n">FloatState</span>
+    <span class="k">elif</span> <span class="n">one_sided</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;left&quot;</span><span class="p">:</span>
+        <span class="n">one_sided_coefficients</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">rf_type_suffix</span> <span class="o">=</span> <span class="s2">&quot;left_difference&quot;</span>
+    <span class="k">elif</span> <span class="n">one_sided</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;right&quot;</span><span class="p">:</span>
+        <span class="n">one_sided_coefficients</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">rf_type_suffix</span> <span class="o">=</span> <span class="s2">&quot;right_difference&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Argument `one_sided` must have value &#39;left&#39;, &#39;right&#39;, or None, not </span><span class="si">{</span><span class="n">one_sided</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">one_sided_coefficients</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rf_type_suffix</span><span class="p">,</span> <span class="n">RFType</span>
+
+
+<div class="viewcode-block" id="sum_rfdistance_funcs">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.sum_rfdistance_funcs">[docs]</a>
+<span class="k">def</span> <span class="nf">sum_rfdistance_funcs</span><span class="p">(</span>
+    <span class="n">reference_dag</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span>
+    <span class="n">rooted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">one_sided</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">one_sided_coefficients</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to compute the sum over all histories in the provided</span>
 <span class="sd">    reference DAG, of rooted RF distances to those histories.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        reference_dag: The reference DAG. The sum will be computed over all RF</span>
 <span class="sd">            distances to histories in this DAG</span>
+<span class="sd">        rooted: If False, use edges&#39; splits for RF distance computation. Otherwise, use</span>
+<span class="sd">            the clade below each edge.</span>
+<span class="sd">        one_sided: May be &#39;left&#39;, &#39;right&#39;, or None. &#39;left&#39; means that we count</span>
+<span class="sd">            splits (or clades, in the rooted case) which are in the reference trees but not</span>
+<span class="sd">            in the DAG tree, especially useful if trees in the DAG might be resolutions of</span>
+<span class="sd">            multifurcating trees in the reference DAG. &#39;right&#39; means that we count splits or clades in</span>
+<span class="sd">            the DAG tree which are not in the reference trees, useful if the reference trees</span>
+<span class="sd">            are possibly resolutions of multifurcating trees in the DAG. If not None,</span>
+<span class="sd">            one_sided_coefficients are ignored.</span>
+<span class="sd">        one_sided_coefficients: coefficients for non-standard symmetric difference calculations</span>
+<span class="sd">            (explained in notes below)</span>
 
 <span class="sd">    The reference DAG must have the same taxa as all the trees in the DAG on which these count</span>
-<span class="sd">    functions are used.</span>
+<span class="sd">    functions are used. If this is not true, methods using the keyword arguments produced by this</span>
+<span class="sd">    function may fail silently, returning values which mean nothing.</span>
 
-<span class="sd">    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under</span>
-<span class="sd">    the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF</span>
-<span class="sd">    distances, meaning that the clade below each edge is used for RF distance computation.</span>
+<span class="sd">    This function allows computation of sums of a Robinson-Foulds distance generalized by the</span>
+<span class="sd">    coefficients ``(s, t)`` provided to the ``one_sided_coefficients`` argument (or implicitly</span>
+<span class="sd">    set by the ``one_sided`` argument). Given a tree in the DAG with set of clades (or splits) A, and</span>
+<span class="sd">    a tree in the reference DAG with set of clades B, this distance is given by:</span>
 
-<span class="sd">    The weights are represented by an IntState object and are shifted by a constant K,</span>
+<span class="sd">    ``d_{s,t}(A, B) = s|B - A| + t|A - B|``</span>
+
+<span class="sd">    Notice that when s and t are both 1, this is the symmetric difference of A and B, the standard RF</span>
+<span class="sd">    distance.</span>
+
+<span class="sd">    For each tree A in a DAG, the AddFuncDict returned by this function computes the sum of this distance</span>
+<span class="sd">    over all trees B in the reference DAG.</span>
+
+
+<span class="sd">    Note that when computing unrooted weights, the sums are over all rooted trees in the reference</span>
+<span class="sd">    DAG, so a single unrooted tree contained twice in the reference DAG with different rootings</span>
+<span class="sd">    will be counted twice.</span>
+
+<span class="sd">    Weights are represented by an IntState object and are shifted by a constant K,</span>
 <span class="sd">    which is the sum of number of clades in each tree in the DAG.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">N</span> <span class="o">=</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">count_nodes</span><span class="p">(</span><span class="n">collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rf_type_suffix</span><span class="p">,</span> <span class="n">RFType</span> <span class="o">=</span> <span class="n">_process_rf_one_sided_coefficients</span><span class="p">(</span>
+        <span class="n">one_sided</span><span class="p">,</span> <span class="n">one_sided_coefficients</span>
+    <span class="p">)</span>
 
-    <span class="c1"># Remove the UA node clade union from N</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">N</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">())</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="k">pass</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">count_nodes</span><span class="p">(</span><span class="n">collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rooted</span><span class="o">=</span><span class="n">rooted</span><span class="p">)</span>
 
     <span class="c1"># K is the constant that the weights are shifted by</span>
-    <span class="n">K</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">N</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
-    <span class="n">num_trees</span> <span class="o">=</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">count_histories</span><span class="p">()</span>
+    <span class="c1"># We also scale num_trees by s...</span>
+    <span class="n">num_trees</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">reference_dag</span><span class="o">.</span><span class="n">count_histories</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">IntState</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">K</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rooted</span><span class="p">:</span>
 
-    <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
-        <span class="n">clade</span> <span class="o">=</span> <span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">clade</span> <span class="ow">in</span> <span class="n">N</span><span class="p">:</span>
-            <span class="n">weight</span> <span class="o">=</span> <span class="n">num_trees</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">N</span><span class="p">[</span><span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># This clade&#39;s count should then just be 0:</span>
-            <span class="n">weight</span> <span class="o">=</span> <span class="n">num_trees</span>
-        <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">RFType</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">K</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 
-    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-            <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_func</span><span class="p">,</span>
-            <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">wlist</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span>
-                <span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wlist</span><span class="p">)</span>
-            <span class="p">),</span>  <span class="c1"># summation over edge weights</span>
-        <span class="p">},</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_rooted_sum&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+        <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
+            <span class="n">clade</span> <span class="o">=</span> <span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span>
+            <span class="n">clade_count</span> <span class="o">=</span> <span class="n">N</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clade</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">num_trees</span> <span class="o">-</span> <span class="p">((</span><span class="n">s</span> <span class="o">+</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">clade_count</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_func</span><span class="p">,</span>
+                <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">wlist</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wlist</span><span class="p">)</span>
+                <span class="p">),</span>  <span class="c1"># summation over edge weights</span>
+            <span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_rooted_sum_&quot;</span> <span class="o">+</span> <span class="n">rf_type_suffix</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">taxa</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">reference_dag</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">children</span><span class="p">())</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span>
+        <span class="n">n_taxa</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">taxa</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">is_history_root</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="c1"># TODO this is slow and dirty! Make more efficient</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()))</span> <span class="o">==</span> <span class="n">n_taxa</span>
+
+        <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">cu</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">cu</span><span class="p">,</span> <span class="n">taxa</span> <span class="o">-</span> <span class="n">cu</span><span class="p">})</span>
+
+        <span class="c1"># We accumulate tuples, where the first number contains the weight,</span>
+        <span class="c1"># except any contribution of a split below a bifurcating root node</span>
+        <span class="c1"># is contained in the second number. This way its contribution can be</span>
+        <span class="c1"># added exactly once</span>
+
+        <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">tup</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">RFType</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">K</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">tup</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">summer</span><span class="p">(</span><span class="n">tupseq</span><span class="p">):</span>
+            <span class="n">tupseq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tupseq</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">ia</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tupseq</span><span class="p">:</span>
+                <span class="n">a</span> <span class="o">+=</span> <span class="n">ia</span>
+            <span class="c1"># second value should only be counted once. Any nonzero</span>
+            <span class="c1"># values of the second value will always be identical</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tupseq</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tupseq</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tup</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
+            <span class="n">spl</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span>
+            <span class="n">spl_count</span> <span class="o">=</span> <span class="n">N</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spl</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n1</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">num_trees</span> <span class="o">-</span> <span class="p">((</span><span class="n">s</span> <span class="o">+</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">spl_count</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">n1</span><span class="o">.</span><span class="n">clades</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">is_history_root</span><span class="p">(</span><span class="n">n1</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_func</span><span class="p">,</span>
+                <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">wlist</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span>
+                    <span class="n">summer</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wlist</span><span class="p">)</span>
+                <span class="p">),</span>  <span class="c1"># summation over edge weights</span>
+            <span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_unrooted_sum_&quot;</span> <span class="o">+</span> <span class="n">rf_type_suffix</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">kwargs</span></div>
 
 
-<div class="viewcode-block" id="make_rfdistance_countfuncs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.make_rfdistance_countfuncs">[docs]</a><span class="k">def</span> <span class="nf">make_rfdistance_countfuncs</span><span class="p">(</span><span class="n">ref_tree</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span> <span class="n">rooted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="make_rfdistance_countfuncs">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.make_rfdistance_countfuncs">[docs]</a>
+<span class="k">def</span> <span class="nf">make_rfdistance_countfuncs</span><span class="p">(</span>
+    <span class="n">ref_tree</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span>
+    <span class="n">rooted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">one_sided</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">one_sided_coefficients</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to compute Robinson-Foulds (RF) distances of trees in</span>
 <span class="sd">    a DAG, relative to a fixed reference tree.</span>
 
@@ -691,13 +869,23 @@
 <span class="sd">        ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.</span>
 <span class="sd">        rooted: If False, use edges&#39; splits for RF distance computation. Otherwise, use</span>
 <span class="sd">            the clade below each edge.</span>
+<span class="sd">        one_sided: May be &#39;left&#39;, &#39;right&#39;, or None. &#39;left&#39; means that we count</span>
+<span class="sd">            splits (or clades, in the rooted case) which are in the reference tree but not</span>
+<span class="sd">            in the DAG tree, especially useful if trees in the DAG might be resolutions of</span>
+<span class="sd">            a multifurcating reference. &#39;right&#39; means that we count splits or clades in</span>
+<span class="sd">            the DAG tree which are not in the reference tree, useful if the reference tree</span>
+<span class="sd">            is possibly a resolution of multifurcating trees in the DAG. If not None,</span>
+<span class="sd">            one_sided_coefficients are ignored.</span>
+<span class="sd">        one_sided_coefficients: coefficients for non-standard symmetric difference calculations</span>
+<span class="sd">            (explained in notes below)</span>
 
 <span class="sd">    The reference tree must have the same taxa as all the trees in the DAG.</span>
 
 <span class="sd">    This calculation relies on the observation that the symmetric distance between</span>
-<span class="sd">    the splits A in a tree in the DAG, and the splits B in the reference tree, can</span>
-<span class="sd">    be computed as:</span>
-<span class="sd">    ``|A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|``</span>
+<span class="sd">    the splits (or clades, in the rooted case) A in a tree in the DAG, and the splits</span>
+<span class="sd">    (or clades) B in the reference tree, can be computed as:</span>
+
+<span class="sd">    ``|B ^ A| = |B - A| + |A - B| = |B| - |A n B| + |A - B|``</span>
 
 <span class="sd">    As long as tree edges are in bijection with splits, this can be computed without</span>
 <span class="sd">    constructing the set A by considering each edge&#39;s split independently.</span>
@@ -705,12 +893,33 @@
 <span class="sd">    In order to accommodate multiple edges with the same split in a tree with root</span>
 <span class="sd">    bifurcation, we keep track of the contribution of such edges separately.</span>
 
+<span class="sd">    One-sided RF distances are computed in this framework by introducing a pair of</span>
+<span class="sd">    ``one_sided_coefficients`` ``(s, t)``, which affect how much weight is given to</span>
+<span class="sd">    the right and left differences in the RF distance calculation:</span>
+
+<span class="sd">    ``d_{s,t}(A, B) = s|B - A| + t|A - B| = s(|B| - |A n B|) + t|A - B|``</span>
+
+<span class="sd">    When both ``s`` and ``t`` are 1, we get the standard RF distance.</span>
+<span class="sd">    When ``s=1`` and ``t=0``, then we have a one-sided &quot;left&quot; RF difference, counting</span>
+<span class="sd">    the number of splits in the reference tree which are not in each DAG tree. When</span>
+<span class="sd">    ``one_sided`` is set to `left`, then these coefficients will be used, regardless of</span>
+<span class="sd">    the values passed.</span>
+<span class="sd">    When ``s=0`` and ``t=1``, then we have a one-sided &quot;right&quot; RF difference, counting</span>
+<span class="sd">    the number of splits in each DAG tree which are not in the reference. When</span>
+<span class="sd">    ``one_sided`` is set to `right`, these coefficients will be used, regardless of</span>
+<span class="sd">    the values passed.</span>
+
 <span class="sd">    The weight type is a tuple wrapped in an IntState object. The first tuple value `a` is the</span>
 <span class="sd">    contribution of edges which are not part of a root bifurcation, where edges whose splits are in B</span>
-<span class="sd">    contribute `-1`, and edges whose splits are not in B contribute `-1`, and the second tuple</span>
+<span class="sd">    contribute `-1`, and edges whose splits are not in B contribute `1`, and the second tuple</span>
 <span class="sd">    value `b` is the contribution of the edges which are part of a root bifurcation. The value</span>
 <span class="sd">    of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rf_type_suffix</span><span class="p">,</span> <span class="n">RFType</span> <span class="o">=</span> <span class="n">_process_rf_one_sided_coefficients</span><span class="p">(</span>
+        <span class="n">one_sided</span><span class="p">,</span> <span class="n">one_sided_coefficients</span>
+    <span class="p">)</span>
+
     <span class="n">taxa</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">label</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ref_tree</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">())</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rooted</span><span class="p">:</span>
@@ -724,15 +933,18 @@
         <span class="n">ref_splits</span> <span class="o">=</span> <span class="n">ref_splits</span> <span class="o">-</span> <span class="p">{</span>
             <span class="nb">frozenset</span><span class="p">({</span><span class="n">taxa</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">()}),</span>
         <span class="p">}</span>
-        <span class="n">shift</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_splits</span><span class="p">)</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_splits</span><span class="p">)</span>
 
         <span class="n">n_taxa</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">taxa</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">is_history_root</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="c1"># TODO this is slow and dirty! Make more efficient</span>
             <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()))</span> <span class="o">==</span> <span class="n">n_taxa</span>
 
         <span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># Should return the value of a single term corresponding</span>
+            <span class="c1"># to the identical root splits below a bifurcating root</span>
+            <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">summer</span><span class="p">(</span><span class="n">tupseq</span><span class="p">):</span>
             <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
@@ -742,7 +954,7 @@
             <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">tup</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">IntState</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">shift</span> <span class="o">+</span> <span class="n">sign</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">state</span><span class="o">=</span><span class="n">tup</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">RFType</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">shift</span> <span class="o">+</span> <span class="n">sign</span><span class="p">(</span><span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">state</span><span class="o">=</span><span class="n">tup</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
             <span class="n">spl</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span>
@@ -755,9 +967,9 @@
                     <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">spl</span> <span class="ow">in</span> <span class="n">ref_splits</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="n">make_intstate</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
             <span class="p">{</span>
@@ -767,23 +979,24 @@
                     <span class="n">summer</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wlist</span><span class="p">)</span>
                 <span class="p">),</span>
             <span class="p">},</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_unrooted_distance&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_unrooted_distance_&quot;</span> <span class="o">+</span> <span class="n">rf_type_suffix</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ref_cus</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
             <span class="n">node</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ref_tree</span><span class="o">.</span><span class="n">preorder</span><span class="p">(</span><span class="n">skip_ua_node</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="n">shift</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_cus</span><span class="p">)</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_cus</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">make_intstate</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">IntState</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">shift</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">RFType</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">shift</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">edge_func</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">n2</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span> <span class="ow">in</span> <span class="n">ref_cus</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">inval</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">inval</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="n">make_intstate</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">inval</span><span class="p">)</span>
 
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">AddFuncDict</span><span class="p">(</span>
             <span class="p">{</span>
@@ -791,13 +1004,16 @@
                 <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_func</span><span class="p">,</span>
                 <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">wlist</span><span class="p">:</span> <span class="n">make_intstate</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wlist</span><span class="p">)),</span>
             <span class="p">},</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_rooted_distance&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RF_rooted_&quot;</span> <span class="o">+</span> <span class="n">rf_type_suffix</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kwargs</span></div>
 
 
-<div class="viewcode-block" id="make_newickcountfuncs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.make_newickcountfuncs">[docs]</a><span class="k">def</span> <span class="nf">make_newickcountfuncs</span><span class="p">(</span>
+
+<div class="viewcode-block" id="make_newickcountfuncs">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.make_newickcountfuncs">[docs]</a>
+<span class="k">def</span> <span class="nf">make_newickcountfuncs</span><span class="p">(</span>
     <span class="n">name_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;unnamed&quot;</span><span class="p">,</span>
     <span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">feature_funcs</span><span class="o">=</span><span class="p">{},</span>
@@ -850,7 +1066,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="edge_difference_funcs"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.edge_difference_funcs">[docs]</a><span class="k">def</span> <span class="nf">edge_difference_funcs</span><span class="p">(</span><span class="n">reference_dag</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="p">):</span>
+
+<div class="viewcode-block" id="edge_difference_funcs">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.edge_difference_funcs">[docs]</a>
+<span class="k">def</span> <span class="nf">edge_difference_funcs</span><span class="p">(</span><span class="n">reference_dag</span><span class="p">:</span> <span class="s2">&quot;HistoryDag&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides functions to compute the number of edges in a history which do</span>
 <span class="sd">    not appear in a reference HistoryDag.</span>
 
@@ -882,6 +1101,7 @@
     <span class="p">)</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_history_method</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;HistoryDagNode method decorator to ensure that the method is only run on</span>
 <span class="sd">    history DAGs which are histories.&quot;&quot;&quot;</span>
@@ -899,7 +1119,9 @@
     <span class="k">return</span> <span class="n">wrapper</span>
 
 
-<div class="viewcode-block" id="prod"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.prod">[docs]</a><span class="k">def</span> <span class="nf">prod</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+<div class="viewcode-block" id="prod">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.prod">[docs]</a>
+<span class="k">def</span> <span class="nf">prod</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return product of elements of the input list.</span>
 
 <span class="sd">    if passed list is empty, returns 1.</span>
@@ -915,7 +1137,10 @@
     <span class="k">return</span> <span class="n">accum</span></div>
 
 
-<div class="viewcode-block" id="logsumexp"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.logsumexp">[docs]</a><span class="k">def</span> <span class="nf">logsumexp</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+
+<div class="viewcode-block" id="logsumexp">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.logsumexp">[docs]</a>
+<span class="k">def</span> <span class="nf">logsumexp</span><span class="p">(</span><span class="n">ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A numerically stable implementation of logsumexp, similar to Scipy&#39;s.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -928,6 +1153,7 @@
     <span class="k">return</span> <span class="n">shifted_log_sum</span> <span class="o">+</span> <span class="n">max_log</span></div>
 
 
+
 <span class="c1"># Unfortunately these can&#39;t be made with a class factory (just a bit too meta for Python)</span>
 <span class="c1"># short of doing something awful like https://hg.python.org/cpython/file/b14308524cff/Lib/collections/__init__.py#l232</span>
 <span class="k">def</span> <span class="nf">_remstate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">):</span>
@@ -938,7 +1164,9 @@
     <span class="k">return</span> <span class="n">intkwargs</span>
 
 
-<div class="viewcode-block" id="IntState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.IntState">[docs]</a><span class="k">class</span> <span class="nc">IntState</span><span class="p">(</span><span class="nb">int</span><span class="p">):</span>
+<div class="viewcode-block" id="IntState">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.IntState">[docs]</a>
+<span class="k">class</span> <span class="nc">IntState</span><span class="p">(</span><span class="nb">int</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of int, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
@@ -951,8 +1179,11 @@
         <span class="n">intkwargs</span> <span class="o">=</span> <span class="n">_remstate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">IntState</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">intkwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="IntState.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.IntState.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="IntState.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.IntState.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
+
 
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">IntState</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
@@ -964,7 +1195,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">statedict</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="FloatState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.FloatState">[docs]</a><span class="k">class</span> <span class="nc">FloatState</span><span class="p">(</span><span class="nb">float</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FloatState">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.FloatState">[docs]</a>
+<span class="k">class</span> <span class="nc">FloatState</span><span class="p">(</span><span class="nb">float</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of float, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
@@ -977,8 +1211,11 @@
         <span class="n">intkwargs</span> <span class="o">=</span> <span class="n">_remstate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">FloatState</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">intkwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="FloatState.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.FloatState.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="FloatState.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.FloatState.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
+
 
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">FloatState</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
@@ -990,7 +1227,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">statedict</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="DecimalState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.DecimalState">[docs]</a><span class="k">class</span> <span class="nc">DecimalState</span><span class="p">(</span><span class="n">Decimal</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DecimalState">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.DecimalState">[docs]</a>
+<span class="k">class</span> <span class="nc">DecimalState</span><span class="p">(</span><span class="n">Decimal</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of ``decimal.Decimal``, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
@@ -1003,8 +1243,11 @@
         <span class="n">intkwargs</span> <span class="o">=</span> <span class="n">_remstate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">DecimalState</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">intkwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DecimalState.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.DecimalState.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DecimalState.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.DecimalState.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
+
 
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">DecimalState</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
@@ -1016,7 +1259,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">statedict</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="StrState"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.StrState">[docs]</a><span class="k">class</span> <span class="nc">StrState</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+
+<div class="viewcode-block" id="StrState">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.StrState">[docs]</a>
+<span class="k">class</span> <span class="nc">StrState</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of string, with arbitrary, mutable state.</span>
 
 <span class="sd">    State is provided to the constructor as the keyword argument</span>
@@ -1029,8 +1275,11 @@
         <span class="n">intkwargs</span> <span class="o">=</span> <span class="n">_remstate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">StrState</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">intkwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="StrState.__init__"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.StrState.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="StrState.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.StrState.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
+
 
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StrState</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
@@ -1042,7 +1291,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">statedict</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="count_labeled_binary_topologies"><a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.count_labeled_binary_topologies">[docs]</a><span class="k">def</span> <span class="nf">count_labeled_binary_topologies</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+
+<div class="viewcode-block" id="count_labeled_binary_topologies">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.count_labeled_binary_topologies">[docs]</a>
+<span class="k">def</span> <span class="nf">count_labeled_binary_topologies</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the number of binary topologies on n labeled leaves.</span>
 
 <span class="sd">    In these topologies, left and right branches are not distinguished,</span>
@@ -1051,15 +1303,55 @@
     <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span></div>
 
 
-<span class="k">def</span> <span class="nf">load_fasta</span><span class="p">(</span><span class="n">fastapath</span><span class="p">):</span>
-    <span class="n">fasta_records</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="read_fasta">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.read_fasta">[docs]</a>
+<span class="k">def</span> <span class="nf">read_fasta</span><span class="p">(</span><span class="n">fastapath</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a fasta file as a generator which yields (sequence ID, sequence)</span>
+<span class="sd">    pairs.</span>
+
+<span class="sd">    The function ``sequence_type`` will be called on each sequence as it</span>
+<span class="sd">    is read from the fasta file, and the resulting object will be yielded as the second</span>
+<span class="sd">    item in each sequence record pair.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">seqids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fastapath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">seqid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fh</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">:</span>
-                <span class="n">fasta_records</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">&quot;&quot;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">seqid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="p">(</span><span class="n">seqid</span><span class="p">,</span> <span class="n">sequence_type</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span>
+                    <span class="n">seqids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">seqid</span><span class="p">)</span>
+                <span class="n">seqid</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">sequence</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">if</span> <span class="n">seqid</span> <span class="ow">in</span> <span class="n">seqids</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Duplicate records with matching identifier in fasta file&quot;</span>
+                    <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">fasta_records</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fasta_records</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">seqid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;First non-blank line in fasta does not contain identifier&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sequence</span> <span class="o">+=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">seqid</span><span class="p">,</span> <span class="n">sequence_type</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="load_fasta">
+<a class="viewcode-back" href="../../stubs/historydag.utils.html#historydag.utils.load_fasta">[docs]</a>
+<span class="k">def</span> <span class="nf">load_fasta</span><span class="p">(</span><span class="n">fastapath</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a fasta file as a dictionary, with sequence ids as keys and</span>
+<span class="sd">    sequences as values.</span>
+
+<span class="sd">    The function ``sequence_type`` will be called on each sequence as it</span>
+<span class="sd">    is read from the fasta file, and the returned objects will be the values</span>
+<span class="sd">    in the resulting alignment dictionary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">read_fasta</span><span class="p">(</span><span class="n">fastapath</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="n">sequence_type</span><span class="p">))</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_deprecate_message</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>

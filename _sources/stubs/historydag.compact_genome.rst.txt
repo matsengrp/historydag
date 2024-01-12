@@ -13,8 +13,11 @@
 
    .. autosummary::
    
+      ambiguous_cg_diff
       cg_diff
       compact_genome_from_sequence
+      read_alignment
+      reconcile_cgs
       unpack_mut_string
    
    

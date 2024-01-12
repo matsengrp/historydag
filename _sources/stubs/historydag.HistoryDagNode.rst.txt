@@ -29,7 +29,8 @@
       ~HistoryDagNode.remove_node
       ~HistoryDagNode.sorted_child_clades
       ~HistoryDagNode.sorted_partitions
-      ~HistoryDagNode.to_ete_recursive
+      ~HistoryDagNode.to_ascii
+      ~HistoryDagNode.to_ete
       ~HistoryDagNode.under_clade
    
    

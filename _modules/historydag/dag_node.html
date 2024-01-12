@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.dag_node &mdash; historydag  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -97,14 +99,18 @@
 <span class="kn">from</span> <span class="nn">historydag.utils</span> <span class="kn">import</span> <span class="n">Weight</span><span class="p">,</span> <span class="n">Label</span><span class="p">,</span> <span class="n">UALabel</span>
 
 
-<div class="viewcode-block" id="HistoryDagNode"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode">[docs]</a><span class="k">class</span> <span class="nc">HistoryDagNode</span><span class="p">:</span>
+<div class="viewcode-block" id="HistoryDagNode">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode">[docs]</a>
+<span class="k">class</span> <span class="nc">HistoryDagNode</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A recursive representation of a history DAG object.</span>
 
 <span class="sd">    - a dictionary keyed by clades (frozensets) containing EdgeSet objects</span>
 <span class="sd">    - a label, which is a namedtuple.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="HistoryDagNode.__init__"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="n">Label</span><span class="p">,</span> <span class="n">clades</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<div class="viewcode-block" id="HistoryDagNode.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="n">Label</span><span class="p">,</span> <span class="n">clades</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clades</span> <span class="o">=</span> <span class="n">clades</span>
         <span class="c1"># If passed a nonempty dictionary, need to add self to children&#39;s parents</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
@@ -123,6 +129,7 @@
                 <span class="s2">&quot;may not have exactly one child clade; Unifurcations cannot be expressed &quot;</span>
                 <span class="s2">&quot;in the history DAG.&quot;</span>
             <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
@@ -163,18 +170,26 @@
     <span class="k">def</span> <span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__lt__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 
-<div class="viewcode-block" id="HistoryDagNode.empty_copy"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.empty_copy">[docs]</a>    <span class="k">def</span> <span class="nf">empty_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
+<div class="viewcode-block" id="HistoryDagNode.empty_copy">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.empty_copy">[docs]</a>
+    <span class="k">def</span> <span class="nf">empty_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a HistoryDagNode object with the same clades, label, and</span>
 <span class="sd">        attr dictionary, but no descendant edges.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">HistoryDagNode</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="p">{</span><span class="n">clade</span><span class="p">:</span> <span class="n">EdgeSet</span><span class="p">()</span> <span class="k">for</span> <span class="n">clade</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="p">},</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.node_self"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.node_self">[docs]</a>    <span class="k">def</span> <span class="nf">node_self</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.node_self">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.node_self">[docs]</a>
+    <span class="k">def</span> <span class="nf">node_self</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`empty_copy`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.clade_union"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.clade_union">[docs]</a>    <span class="k">def</span> <span class="nf">clade_union</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.clade_union">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.clade_union">[docs]</a>
+    <span class="k">def</span> <span class="nf">clade_union</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns the union of this node&#39;s child clades (or a set containing</span>
 <span class="sd">        only the node label, for leaf nodes.)&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
@@ -182,46 +197,76 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">frozenset</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.under_clade"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.under_clade">[docs]</a>    <span class="k">def</span> <span class="nf">under_clade</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.under_clade">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.under_clade">[docs]</a>
+    <span class="k">def</span> <span class="nf">under_clade</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`clade_union`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.is_leaf"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_leaf">[docs]</a>    <span class="k">def</span> <span class="nf">is_leaf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.is_leaf">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_leaf">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_leaf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns whether this is a leaf node.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.is_ua_node"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_ua_node">[docs]</a>    <span class="k">def</span> <span class="nf">is_ua_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.is_ua_node">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_ua_node">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_ua_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns whether this is the source node in the DAG, from which all</span>
 <span class="sd">        others are reachable.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.is_root"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_root">[docs]</a>    <span class="k">def</span> <span class="nf">is_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.is_root">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_root">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`is_ua_node`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.is_history_root"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_history_root">[docs]</a>    <span class="k">def</span> <span class="nf">is_history_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.is_history_root">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_history_root">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_history_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether node is a root of any histories in the DAG.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.child_clades"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.child_clades">[docs]</a>    <span class="k">def</span> <span class="nf">child_clades</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.child_clades">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.child_clades">[docs]</a>
+    <span class="k">def</span> <span class="nf">child_clades</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the node&#39;s child clades, or a frozenset containing a</span>
 <span class="sd">        frozenset if this node is a UANode.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.partitions"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.partitions">[docs]</a>    <span class="k">def</span> <span class="nf">partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.partitions">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.partitions">[docs]</a>
+    <span class="k">def</span> <span class="nf">partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`child_clades`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_clades</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.sorted_child_clades"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.sorted_child_clades">[docs]</a>    <span class="k">def</span> <span class="nf">sorted_child_clades</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.sorted_child_clades">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.sorted_child_clades">[docs]</a>
+    <span class="k">def</span> <span class="nf">sorted_child_clades</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the node&#39;s child clades as a sorted tuple containing leaf</span>
 <span class="sd">        labels in sorted tuples.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">clade</span><span class="p">))</span> <span class="k">for</span> <span class="n">clade</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">keys</span><span class="p">()]))</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.sorted_partitions"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.sorted_partitions">[docs]</a>    <span class="k">def</span> <span class="nf">sorted_partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HistoryDagNode.sorted_partitions">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.sorted_partitions">[docs]</a>
+    <span class="k">def</span> <span class="nf">sorted_partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`sorted_child_clades`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sorted_child_clades</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.children"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.children">[docs]</a>    <span class="k">def</span> <span class="nf">children</span><span class="p">(</span>
+
+<div class="viewcode-block" id="HistoryDagNode.children">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.children">[docs]</a>
+    <span class="k">def</span> <span class="nf">children</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">clade</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">Label</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns generator object containing child nodes.</span>
@@ -237,7 +282,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">child</span> <span class="k">for</span> <span class="n">child</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="p">[</span><span class="n">clade</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.add_edge"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.add_edge">[docs]</a>    <span class="k">def</span> <span class="nf">add_edge</span><span class="p">(</span>
+
+<div class="viewcode-block" id="HistoryDagNode.add_edge">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.add_edge">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_edge</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">target</span><span class="p">:</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span>
         <span class="n">weight</span><span class="p">:</span> <span class="n">Weight</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
@@ -260,6 +308,7 @@
                 <span class="n">prob</span><span class="o">=</span><span class="n">prob</span><span class="p">,</span>
                 <span class="n">prob_norm</span><span class="o">=</span><span class="n">prob_norm</span><span class="p">,</span>
             <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_get_subhistory_by_subid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns the subtree below the current HistoryDagNode corresponding</span>
@@ -299,7 +348,9 @@
             <span class="n">key</span> <span class="o">=</span> <span class="n">clade</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">remove_from_edgeset_byid</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
-<div class="viewcode-block" id="HistoryDagNode.remove_node"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.remove_node">[docs]</a>    <span class="k">def</span> <span class="nf">remove_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodedict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}):</span>
+<div class="viewcode-block" id="HistoryDagNode.remove_node">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.remove_node">[docs]</a>
+    <span class="k">def</span> <span class="nf">remove_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodedict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recursively removes node self and any orphaned children from dag.</span>
 
 <span class="sd">        May not work on root. Does not check to make sure that parent</span>
@@ -316,7 +367,67 @@
             <span class="n">parent</span><span class="o">.</span><span class="n">remove_edge_by_clade_and_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clade_union</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">removed</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="HistoryDagNode.to_ete_recursive"><a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.to_ete_recursive">[docs]</a>    <span class="k">def</span> <span class="nf">to_ete_recursive</span><span class="p">(</span>
+
+<div class="viewcode-block" id="HistoryDagNode.to_ascii">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.to_ascii">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_ascii</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name_func</span><span class="p">,</span>
+        <span class="n">show_internal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">sort_method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A convenience function that uses the :meth:`to_ete` method and</span>
+<span class="sd">        ete3&#39;s ASCII drawing tools to render a sub-history below self.</span>
+
+<span class="sd">        Expects that this node is part of a tree-shaped history DAG. If this is not</span>
+<span class="sd">        true, this method may fail silently.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name_func: A function taking a HistoryDagNode and returning a string</span>
+<span class="sd">                to identify that node in the ascii tree.</span>
+<span class="sd">            show_internal: Whether to show internal node names.</span>
+<span class="sd">            compact: Whether to show the tree in a more compact format</span>
+<span class="sd">            sort_method: Either None, `ladderize`, `leaf-name`, or `child-name`.</span>
+<span class="sd">                `leaf-name` sorts children by the alphabetically first leaf name</span>
+<span class="sd">                below each child node. `child-name` sorts directly by child name.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A string including whitespace and newlines (no tabs) which when printed</span>
+<span class="sd">            shows the structure of the history.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ete</span><span class="p">(</span><span class="n">name_func</span><span class="o">=</span><span class="n">name_func</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">child_name_sort</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;postorder&quot;</span><span class="p">):</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">leaf_name_sort</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;postorder&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">firstleaf</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">.</span><span class="n">firstleaf</span><span class="p">)</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">firstleaf</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">firstleaf</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sort_func</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="kc">None</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">tree</span><span class="p">:</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="s2">&quot;ladderize&quot;</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">ladderize</span><span class="p">,</span>
+                <span class="s2">&quot;leaf-name&quot;</span><span class="p">:</span> <span class="n">leaf_name_sort</span><span class="p">,</span>
+                <span class="s2">&quot;child-name&quot;</span><span class="p">:</span> <span class="n">child_name_sort</span><span class="p">,</span>
+            <span class="p">}[</span><span class="n">sort_method</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="s2">&quot;to_ascii method accepts sort_method None, `ladderize`, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;`child-name`, or `leaf-name`, not </span><span class="si">{</span><span class="n">sort_method</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">sort_func</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">get_ascii</span><span class="p">(</span><span class="n">show_internal</span><span class="o">=</span><span class="n">show_internal</span><span class="p">,</span> <span class="n">compact</span><span class="o">=</span><span class="n">compact</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HistoryDagNode.to_ete">
+<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.to_ete">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_ete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;unnamed&quot;</span><span class="p">,</span>
         <span class="n">feature_funcs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{},</span>
@@ -339,8 +450,9 @@
         <span class="k">for</span> <span class="n">feature</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">feature_funcs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">node</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">():</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">to_ete_recursive</span><span class="p">(</span><span class="n">name_func</span><span class="p">,</span> <span class="n">feature_funcs</span><span class="p">,</span> <span class="n">sort_func</span><span class="p">))</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">to_ete</span><span class="p">(</span><span class="n">name_func</span><span class="p">,</span> <span class="n">feature_funcs</span><span class="p">,</span> <span class="n">sort_func</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">node</span></div>
+
 
     <span class="k">def</span> <span class="nf">_sample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">edge_selector</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">log_probabilities</span><span class="o">=</span><span class="kc">False</span>
@@ -429,6 +541,7 @@
             <span class="n">nameval_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feature_funcs</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
             <span class="n">featurestr</span> <span class="o">=</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">nameval_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
             <span class="k">return</span> <span class="n">name_func</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[&amp;&amp;NHX:</span><span class="si">{</span><span class="n">featurestr</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">featurestr</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">UANode</span><span class="p">(</span><span class="n">HistoryDagNode</span><span class="p">):</span>
@@ -606,12 +719,15 @@
             <span class="k">return</span> <span class="kc">True</span>
 
 
-<div class="viewcode-block" id="empty_node"><a class="viewcode-back" href="../../stubs/historydag.empty_node.html#historydag.empty_node">[docs]</a><span class="k">def</span> <span class="nf">empty_node</span><span class="p">(</span>
+<div class="viewcode-block" id="empty_node">
+<a class="viewcode-back" href="../../stubs/historydag.empty_node.html#historydag.empty_node">[docs]</a>
+<span class="k">def</span> <span class="nf">empty_node</span><span class="p">(</span>
     <span class="n">label</span><span class="p">:</span> <span class="n">Label</span><span class="p">,</span> <span class="n">clades</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]],</span> <span class="n">attr</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HistoryDagNode</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a HistoryDagNode with the given label and clades, with no</span>
 <span class="sd">    children.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">HistoryDagNode</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">{</span><span class="n">clade</span><span class="p">:</span> <span class="n">EdgeSet</span><span class="p">()</span> <span class="k">for</span> <span class="n">clade</span> <span class="ow">in</span> <span class="n">clades</span><span class="p">},</span> <span class="n">attr</span><span class="p">)</span></div>
+
 </pre></div>
 
            </div>

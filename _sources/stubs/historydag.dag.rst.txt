@@ -13,6 +13,7 @@
 
    .. autosummary::
    
+      ascii_compare_histories
       convert
       from_newick
       from_tree

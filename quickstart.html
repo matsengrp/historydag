@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quickstart &mdash; historydag  documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -105,11 +107,11 @@
            <div itemprop="articleBody">
              
   <section id="quickstart">
-<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading"></a></h1>
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
 <p>This document provides a conceptual introduction to the history DAG data
 structure, and provides a walk-through of essential features of the package.</p>
 <section id="the-data-structure">
-<h2>The data structure<a class="headerlink" href="#the-data-structure" title="Permalink to this heading"></a></h2>
+<h2>The data structure<a class="headerlink" href="#the-data-structure" title="Link to this heading"></a></h2>
 <p>A history DAG is a way to represent a collection of trees whose nodes
 (including internal nodes) each carry label data, such as a nucleotide
 sequence.</p>
@@ -147,7 +149,7 @@ panel.</p>
 <a class="reference internal image-reference" href="_images/historyDAG_findsmore.png"><img alt="_images/historyDAG_findsmore.png" src="_images/historyDAG_findsmore.png" style="width: 100%;" /></a>
 </section>
 <section id="installing">
-<h2>Installing<a class="headerlink" href="#installing" title="Permalink to this heading"></a></h2>
+<h2>Installing<a class="headerlink" href="#installing" title="Link to this heading"></a></h2>
 <p>Although the package is not on PyPI, installation is straightforward:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install https://github.com/matsengrp/historydag/archive/refs/heads/main.zip</span>
 </pre></div>
@@ -159,12 +161,12 @@ panel.</p>
 </div>
 </section>
 <section id="loading-tree-data">
-<h2>Loading Tree Data<a class="headerlink" href="#loading-tree-data" title="Permalink to this heading"></a></h2>
+<h2>Loading Tree Data<a class="headerlink" href="#loading-tree-data" title="Link to this heading"></a></h2>
 <p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a> objects can be created from tree data using the functions
 <a class="reference internal" href="stubs/historydag.from_tree.html#historydag.from_tree" title="historydag.from_tree"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_tree()</span></code></a> to create a tree-shaped history DAG (a ‘history’), or <code class="xref py py-meth docutils literal notranslate"><span class="pre">history_dag_from_trees()</span></code>,
 to create a history DAG from many trees.</p>
 <p>Each <a class="reference internal" href="stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode" title="historydag.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a> stores node data in two ways: the <code class="docutils literal notranslate"><span class="pre">label</span></code>
-attribute stores a <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">typing.NamedTuple</span></code></a> whose data is used to distinguish
+attribute stores a <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">typing.NamedTuple</span></code></a> whose data is used to distinguish
 <code class="docutils literal notranslate"><span class="pre">HistoryDagNode</span></code> instances, and the <code class="docutils literal notranslate"><span class="pre">attr</span></code> attribute stores
 all other node annotations not to be used to distinguish node instances.</p>
 <p>The functions <a class="reference internal" href="stubs/historydag.from_tree.html#historydag.from_tree" title="historydag.from_tree"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_tree()</span></code></a> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">history_dag_from_trees()</span></code> provide an
@@ -214,7 +216,7 @@ nodes:</p>
 </pre></div>
 </div>
 <section id="loading-non-ete3-tree-data">
-<h3>Loading Non-ete3 Tree Data:<a class="headerlink" href="#loading-non-ete3-tree-data" title="Permalink to this heading"></a></h3>
+<h3>Loading Non-ete3 Tree Data:<a class="headerlink" href="#loading-non-ete3-tree-data" title="Link to this heading"></a></h3>
 <p>The functions <a class="reference internal" href="stubs/historydag.from_tree.html#historydag.from_tree" title="historydag.from_tree"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_tree()</span></code></a> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">history_dag_from_trees()</span></code> accept tree
 data in the form of <code class="xref py py-class docutils literal notranslate"><span class="pre">ete3.Tree</span></code> objects by default, but arbitrary tree
 data structures can be loaded by providing appropriate functions to the keyword
@@ -238,16 +240,16 @@ which contains these sequences stored in the node label attribute <code class="d
 </div>
 </section>
 <section id="loading-newick-tree-data">
-<h3>Loading newick tree data:<a class="headerlink" href="#loading-newick-tree-data" title="Permalink to this heading"></a></h3>
+<h3>Loading newick tree data:<a class="headerlink" href="#loading-newick-tree-data" title="Link to this heading"></a></h3>
 <p>The function <code class="xref py py-meth docutils literal notranslate"><span class="pre">history_dag_from_newick()</span></code> can be used to load a history DAG
 from a list of newick strings. However, this method uses ete3 internally for
 newick parsing.</p>
 </section>
 </section>
 <section id="basic-historydag-operations">
-<h2>Basic HistoryDag operations<a class="headerlink" href="#basic-historydag-operations" title="Permalink to this heading"></a></h2>
+<h2>Basic HistoryDag operations<a class="headerlink" href="#basic-historydag-operations" title="Link to this heading"></a></h2>
 <section id="sampling-indexing-and-iterating-over-histories">
-<h3>Sampling, Indexing, and Iterating Over Histories<a class="headerlink" href="#sampling-indexing-and-iterating-over-histories" title="Permalink to this heading"></a></h3>
+<h3>Sampling, Indexing, and Iterating Over Histories<a class="headerlink" href="#sampling-indexing-and-iterating-over-histories" title="Link to this heading"></a></h3>
 <p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a> objects are iterable containers of histories that support integer
 indexing via <code class="docutils literal notranslate"><span class="pre">[]</span></code>, and can be passed to <code class="docutils literal notranslate"><span class="pre">len</span></code>.</p>
 <p>Indexing a <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a> object will return a tree-shaped HistoryDag (a
@@ -287,7 +289,7 @@ a probability distribution on the histories stored in the DAG.</p>
 </div>
 </section>
 <section id="merging">
-<h3>Merging<a class="headerlink" href="#merging" title="Permalink to this heading"></a></h3>
+<h3>Merging<a class="headerlink" href="#merging" title="Link to this heading"></a></h3>
 <p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a> supports set-style union via <code class="docutils literal notranslate"><span class="pre">|</span></code> and <code class="docutils literal notranslate"><span class="pre">|=</span></code>:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">combined_dag</span> <span class="o">=</span> <span class="n">dag1</span> <span class="o">|</span> <span class="n">dag2</span>
 </pre></div>
@@ -308,7 +310,7 @@ argument:</p>
 </div>
 </section>
 <section id="intersecting">
-<h3>Intersecting<a class="headerlink" href="#intersecting" title="Permalink to this heading"></a></h3>
+<h3>Intersecting<a class="headerlink" href="#intersecting" title="Link to this heading"></a></h3>
 <p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a> also supports set-style intersection via <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> and <code class="docutils literal notranslate"><span class="pre">&amp;=</span></code>,
 so that the resulting history DAG contains the histories which were in both the
 intersected DAGs. In the following example, notice that both <code class="docutils literal notranslate"><span class="pre">dag1</span></code> and
@@ -336,7 +338,7 @@ intersections raise a <a class="reference internal" href="stubs/historydag.dag.h
 <p>The <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> operator is shorthand for <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.history_intersect" title="historydag.HistoryDag.history_intersect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.history_intersect()</span></code></a>.</p>
 </section>
 <section id="completion">
-<h3>Completion<a class="headerlink" href="#completion" title="Permalink to this heading"></a></h3>
+<h3>Completion<a class="headerlink" href="#completion" title="Link to this heading"></a></h3>
 <p>A history DAG can be “completed”, meaning that all possible edges are added
 between nodes. Since the rules for edges are fairly strict, the number of edges
 to be added is usually manageable. <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.make_complete" title="historydag.HistoryDag.make_complete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.make_complete()</span></code></a> returns the
@@ -347,14 +349,14 @@ number of edges added:</p>
 </div>
 </section>
 <section id="collapsing">
-<h3>Collapsing<a class="headerlink" href="#collapsing" title="Permalink to this heading"></a></h3>
+<h3>Collapsing<a class="headerlink" href="#collapsing" title="Link to this heading"></a></h3>
 <p>A history DAG can also be collapsed with the method
 <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.convert_to_collapsed" title="historydag.HistoryDag.convert_to_collapsed"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.convert_to_collapsed()</span></code></a>, so that no internal edges in the DAG
 connect nodes with the same label. Edges adjacent to leaf nodes are not
 affected.</p>
 </section>
 <section id="relabeling">
-<h3>Relabeling<a class="headerlink" href="#relabeling" title="Permalink to this heading"></a></h3>
+<h3>Relabeling<a class="headerlink" href="#relabeling" title="Link to this heading"></a></h3>
 <p>A history DAG’s node labels can be changed, in certain limited ways:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.unlabel" title="historydag.HistoryDag.unlabel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.unlabel()</span></code></a> can be used to set all internal node labels equal,
@@ -369,7 +371,7 @@ DAG, subject to certain constraints.</p></li>
 </section>
 </section>
 <section id="historydag-subtypes-and-conversions">
-<h2>HistoryDag Subtypes and Conversions<a class="headerlink" href="#historydag-subtypes-and-conversions" title="Permalink to this heading"></a></h2>
+<h2>HistoryDag Subtypes and Conversions<a class="headerlink" href="#historydag-subtypes-and-conversions" title="Link to this heading"></a></h2>
 <p>There are a variety of subtypes of <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a>, implementing methods
 which expect certain node label data:</p>
 <ul class="simple">
@@ -402,7 +404,7 @@ process, see the documentation for <a class="reference internal" href="stubs/his
 class description for <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a>.</p>
 </section>
 <section id="defining-and-computing-history-weights">
-<h2>Defining and Computing History Weights<a class="headerlink" href="#defining-and-computing-history-weights" title="Permalink to this heading"></a></h2>
+<h2>Defining and Computing History Weights<a class="headerlink" href="#defining-and-computing-history-weights" title="Link to this heading"></a></h2>
 <p>History weights which can be computed as a sum over edges are efficiently
 computable in the history DAG.</p>
 <p>Such a history weight can be defined by:</p>
@@ -415,7 +417,7 @@ accumulated weight (for example, their sum).</p></li>
 <p>These functions can be provided to the following methods, as the keyword
 arguments <code class="docutils literal notranslate"><span class="pre">edge_weight_func</span></code> and <code class="docutils literal notranslate"><span class="pre">accum_func</span></code>, respectively:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.weight_count" title="historydag.HistoryDag.weight_count"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.weight_count()</span></code></a>, which returns a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a>
+<li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.weight_count" title="historydag.HistoryDag.weight_count"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.weight_count()</span></code></a>, which returns a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a>
 object containing the weights of all histories in the DAG,</p></li>
 <li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.optimal_weight_annotate" title="historydag.HistoryDag.optimal_weight_annotate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.optimal_weight_annotate()</span></code></a>, which annotates each history DAG
 node with the optimal weight of all sub-histories beneath that node, and
@@ -445,7 +447,7 @@ a unique child node).</p>
 <span class="go">Counter({35: 17, 36: 325, 37: 173})</span>
 </pre></div>
 </div>
-<p>Here, the keys in the <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a> are weights, and the values
+<p>Here, the keys in the <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a> are weights, and the values
 are the number of histories with each weight. Notice the values will always add
 to <code class="docutils literal notranslate"><span class="pre">len(dag)</span></code>.</p>
 <p>Finally, we can trim <code class="docutils literal notranslate"><span class="pre">dag</span></code> to only express the histories with the maximum
@@ -464,7 +466,7 @@ number of nodes:</p>
 </pre></div>
 </div>
 <section id="the-addfuncdict-class">
-<h3>The AddFuncDict Class<a class="headerlink" href="#the-addfuncdict-class" title="Permalink to this heading"></a></h3>
+<h3>The AddFuncDict Class<a class="headerlink" href="#the-addfuncdict-class" title="Link to this heading"></a></h3>
 <p>Since the interfaces of these three methods are similar, we provide
 a special subclassed dictionary <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> for storing
 their keyword arguments.</p>
@@ -512,7 +514,7 @@ although this functionality is conveniently wrapped in
 </ul>
 </section>
 <section id="the-historydagfilter-class">
-<h3>The HistoryDagFilter Class<a class="headerlink" href="#the-historydagfilter-class" title="Permalink to this heading"></a></h3>
+<h3>The HistoryDagFilter Class<a class="headerlink" href="#the-historydagfilter-class" title="Link to this heading"></a></h3>
 <p>In addition to an edge weight function, history DAG methods like
 <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.trim_optimal_weight" title="historydag.HistoryDag.trim_optimal_weight"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.trim_optimal_weight()</span></code></a> require a choice of <code class="docutils literal notranslate"><span class="pre">optimal_func</span></code>,
 usually specifying whether to minimize or maximize the weight of histories.</p>
@@ -538,7 +540,7 @@ filtering syntax, which is equivalent to calling
 </div>
 </section>
 <section id="combining-weights">
-<h3>Combining Weights<a class="headerlink" href="#combining-weights" title="Permalink to this heading"></a></h3>
+<h3>Combining Weights<a class="headerlink" href="#combining-weights" title="Link to this heading"></a></h3>
 <p>The primary advantage of a <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.AddFuncDict</span></code></a> and
 <a class="reference internal" href="stubs/historydag.utils.html#historydag.utils.HistoryDagFilter" title="historydag.utils.HistoryDagFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">utils.HistoryDagFilter</span></code></a> objects over a plain
 dictionary are their composability via the <code class="docutils literal notranslate"><span class="pre">+</span></code> operator.</p>
@@ -606,7 +608,7 @@ in-place:</p>
 </section>
 </section>
 <section id="exporting-tree-data">
-<h2>Exporting Tree Data<a class="headerlink" href="#exporting-tree-data" title="Permalink to this heading"></a></h2>
+<h2>Exporting Tree Data<a class="headerlink" href="#exporting-tree-data" title="Link to this heading"></a></h2>
 <p>A similar interface is provided for exporting to ete trees as for
 importing from them via <code class="xref py py-func docutils literal notranslate"><span class="pre">history_dag_from_trees()</span></code>.</p>
 <p>The relevant method is <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.to_ete" title="historydag.HistoryDag.to_ete"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.to_ete()</span></code></a>, which takes keyword arguments</p>
@@ -625,7 +627,7 @@ appropriate data to be stored in each attribute.</p></li>
 <a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.to_graphviz" title="historydag.HistoryDag.to_graphviz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.to_graphviz()</span></code></a> method.</p>
 </section>
 <section id="a-quick-tour">
-<h2>A Quick Tour<a class="headerlink" href="#a-quick-tour" title="Permalink to this heading"></a></h2>
+<h2>A Quick Tour<a class="headerlink" href="#a-quick-tour" title="Link to this heading"></a></h2>
 <p>In this package, the history DAG is a recursive data structure consisting of
 <a class="reference internal" href="stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode" title="historydag.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.HistoryDagNode</span></code></a> objects storing label, clade, and adjacency
 data. Each history DAG is wrapped in a user-facing <cite>historydag.HistoryDag</cite>
