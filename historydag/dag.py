@@ -198,11 +198,13 @@ class HistoryDag:
                     f", which requires label field '{fieldname}'."
                 )
             if fieldname in required_fields_set:
-                message += (
-                    " Automatic conversion from label fields"
-                    f" {' or '.join([str(converttuple[0]) for converttuple in cls._required_label_fields[fieldname]])}"
-                    " is supported."
-                )
+                fromtuples = cls._required_label_fields[fieldname]
+                if len(fromtuples) > 0:
+                    message += (
+                        " Automatic conversion from label fields"
+                        f" {' or '.join([str(converttuple[0]) for converttuple in fromtuples])}"
+                        " is supported."
+                    )
             raise TypeError(message)
 
         precursor_fields = set()
@@ -551,6 +553,14 @@ class HistoryDag:
 
         for node in po:
             if not node.is_ua_node():
+                # *** Clades are pairwise disjoint:
+                if not node.is_leaf():
+                    if len(node.clade_union()) != sum(
+                        len(clade) for clade in node.clades
+                    ):
+                        raise ValueError(
+                            "Found a node whose child clades are not pairwise disjoint"
+                        )
                 for clade, eset in node.clades.items():
                     for child in eset.targets:
                         # ***Parent clade equals child clade union for all edges:
@@ -584,7 +594,6 @@ class HistoryDag:
             # ... and there are no duplicate parents:
             if len(parents[node]) != len(set(parents[node])):
                 raise ValueError("Found duplicate parents")
-
         return True
 
     def serialize(self) -> bytes:
@@ -811,45 +820,51 @@ class HistoryDag:
                 appropriate for that node. The relabel_func should return a consistent
                 NamedTuple type with name Label. That is, all returned labels
                 should have matching `_fields` attribute.
-                No two leaf nodes may be mapped to the same new label.
+                Method is only guaranteed to work when no two leaf nodes are
+                mapped to the same new label. If this is not the case, this method may
+                raise a warning or error, or may fail silently, returning an invalid
+                HistoryDag.
             relax_type: Whether to require the returned HistoryDag to be of the same subclass as self.
                 If True, the returned HistoryDag will be of the abstract type `HistoryDag`
         """
+        old_node_to_node_d = dict()
+        node_to_node_d = dict()
 
-        leaf_label_dict = {leaf.label: relabel_func(leaf) for leaf in self.get_leaves()}
-        if len(leaf_label_dict) != len(set(leaf_label_dict.values())):
-            raise RuntimeError(
-                "relabeling function maps multiple leaf nodes to the same new label"
-            )
-
-        def relabel_clade(old_clade):
-            return frozenset(leaf_label_dict[old_label] for old_label in old_clade)
-
-        def relabel_node(old_node):
-            if old_node.is_ua_node():
-                return UANode(
-                    EdgeSet(
-                        [relabel_node(old_child) for old_child in old_node.children()]
-                    )
+        for old_node in self.postorder():
+            new_children = [
+                old_node_to_node_d[old_child] for old_child in old_node.children()
+            ]
+            child_clades = frozenset({child.clade_union() for child in new_children})
+            if len(child_clades) != len(old_node.clades):
+                warnings.warn(
+                    f"relabel_func {relabel_func.__name__} maps multiple"
+                    " leaf nodes to the same label. This is not supported"
+                    " and may fail with an error or silently. If you ignore"
+                    " this warning, at least run _check_valid() on the result"
                 )
+            if old_node.is_ua_node():
+                new_node = UANode(EdgeSet())
             else:
-                clades = {
-                    relabel_clade(old_clade): EdgeSet(
-                        [relabel_node(old_child) for old_child in old_eset.targets],
-                        weights=old_eset.weights,
-                        probs=old_eset.probs,
-                    )
-                    for old_clade, old_eset in old_node.clades.items()
-                }
-                return HistoryDagNode(relabel_func(old_node), clades, old_node.attr)
+                new_node = HistoryDagNode(
+                    relabel_func(old_node),
+                    {clade: EdgeSet() for clade in child_clades},
+                    old_node.attr,
+                )
+            new_node = node_to_node_d.get(new_node, new_node)
+            node_to_node_d[new_node] = new_node
 
+            old_node_to_node_d[old_node] = new_node
+
+            for child in new_children:
+                new_node.add_edge(child, weight=1, prob=1, prob_norm=False)
+
+        # Last node in postorder should be UA node
+        assert new_node.is_ua_node()
+        dag = HistoryDag(new_node)
         if relax_type:
-            newdag = HistoryDag(relabel_node(self.dagroot))
+            return dag
         else:
-            newdag = self.__class__(relabel_node(self.dagroot))
-        # do any necessary collapsing
-        newdag = newdag.sample() | newdag
-        return newdag
+            return type(self).from_history_dag(dag)
 
     def add_label_fields(self, new_field_names=[], new_field_values=lambda n: []):
         """Returns a copy of the DAG in which each node's label is extended to
@@ -872,7 +887,7 @@ class HistoryDag:
         return self.relabel(add_fields)
 
     def remove_label_fields(self, fields_to_remove=[]):
-        """Returns a oopy of the DAG with the list of `fields_to_remove`
+        """Returns a copy of the DAG with the list of `fields_to_remove`
         dropped from each node's label.
 
         Args:
@@ -1116,6 +1131,22 @@ class HistoryDag:
                 )
 
         return newick(next(self.dagroot.children())) + ";"
+
+    @utils._history_method
+    def to_ascii(
+        self,
+        name_func,
+        **kwargs,
+    ):
+        """A convenience function that uses the :meth:`to_ete` method and
+        ete3's ASCII drawing tools to render a history.
+
+        See :meth:`HistoryDagNode.to_ascii` for details.
+        """
+        return next(self.dagroot.children()).to_ascii(
+            name_func,
+            **kwargs,
+        )
 
     @utils._history_method
     def to_ete(
@@ -1460,6 +1491,7 @@ class HistoryDag:
     def summary(self):
         """Print summary info about the history DAG."""
         print(type(self))
+        print(f"Label fields:\t{self.get_label_type()._fields}")
         print(f"Nodes:\t{self.num_nodes()}")
         print(f"Edges:\t{self.num_edges()}")
         print(f"Histories:\t{self.count_histories()}")
@@ -3507,6 +3539,50 @@ def from_tree(
     dag = _unrooted_from_tree(treeroot)
     dagroot = UANode(EdgeSet([dag], weights=[edge_weight_func(treeroot)]))
     return HistoryDag(dagroot)
+
+    # name_func,
+    # show_internal=False,
+    # compact=False,
+    # sort_method=None,
+
+
+def ascii_compare_histories(
+    history1,
+    history2,
+    name_func,
+    name_func2=None,
+    **kwargs,
+):
+    """A convenience function to print two histories as ascii art trees side-
+    by-side.
+
+    Provided histories can be HistoryDag or HistoryDagNode objects, so all or part
+    of two histories may be compared.
+
+    Args:
+        history1: The first history to compare. Will appear on the left
+        history2: The second history to compare. Will appear on the right
+        name_func: A function mapping each HistoryDagNode to a node name string.
+        name_func2: A different name_func to be used for history2. If not provided,
+            ``name_func`` will be used.
+        kwargs: This function also accepts all keyword arguments allowed by
+            :meth:`HistoryDag.to_ascii`
+    """
+    if name_func2 is None:
+        name_func2 = name_func
+    a1 = history1.to_ascii(name_func=name_func, **kwargs).split("\n")
+    a2 = history2.to_ascii(name_func=name_func2, **kwargs).split("\n")
+
+    # There are no tabs in the ascii lines, only constant-width characters.
+    offset = max(len(it) for it in a1) + 2
+    # expand all lines in a1 so they have len offset
+    a1padded = []
+    for line in a1:
+        add = offset - len(line)
+        a1padded.append(line + (" " * add))
+
+    for l1, l2 in zip(a1padded, a2):
+        print(l1 + l2)
 
 
 def history_dag_from_trees(

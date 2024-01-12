@@ -15,6 +15,7 @@ and :class:`SitewiseTransitionModel`, which allows transition costs to depend on
 location in a sequence in which a transition occurs.
 """
 import numpy as np
+import random
 import historydag.utils as utils
 from historydag.utils import AddFuncDict, Label
 import Bio.Data.IUPACData
@@ -48,12 +49,16 @@ class AmbiguityMap:
     Args:
         ambiguity_character_map: A mapping from ambiguity codes to collections of bases represented by that code.
         bases: A collection of bases. If not provided, this will be inferred from the ambiguity_character_map.
+        reversed_defaults: When `ambiguity_character_map` is not injective (i.e. multiple ambiguous characters
+            map to the same set of bases) one might want to specify which character that set of bases maps to in
+            the reversed map. If not provided, the choice will be made arbitrarily.
     """
 
     def __init__(
         self,
         ambiguity_character_map: Mapping[Character, Iterable[Character]],
         bases: Iterable[Character] = None,
+        reversed_defaults: Mapping[Iterable[Character], Character] = {},
     ):
         ambiguous_values = {
             char: frozenset(bases) for char, bases in ambiguity_character_map.items()
@@ -67,9 +72,15 @@ class AmbiguityMap:
 
         ambiguous_values.update({base: frozenset({base}) for base in self.bases})
         self.ambiguous_values = frozendict(ambiguous_values)
-        self.reversed = ReversedAmbiguityMap(
-            {bases: char for char, bases in self.ambiguous_values.items()}
+        reversed_map = {bases: char for char, bases in self.ambiguous_values.items()}
+        reversed_map.update(
+            {
+                frozenset(key): char
+                for key, char in reversed_defaults.items()
+                if frozenset(key) in reversed_map
+            }
         )
+        self.reversed = ReversedAmbiguityMap(reversed_map)
         self.uninformative_chars = frozenset(
             char
             for char, base_set in self.ambiguous_values.items()
@@ -175,7 +186,9 @@ _ambiguous_dna_values_gap_as_char.update({"?": "GATC-", "-": "-"})
 _ambiguous_dna_values = Bio.Data.IUPACData.ambiguous_dna_values.copy()
 _ambiguous_dna_values.update({"?": "GATC", "-": "GATC"})
 
-standard_nt_ambiguity_map = AmbiguityMap(_ambiguous_dna_values, "AGCT")
+standard_nt_ambiguity_map = AmbiguityMap(
+    _ambiguous_dna_values, "AGCT", reversed_defaults={"AGCT": "N"}
+)
 """The standard IUPAC nucleotide ambiguity map, in which 'N', '?', and '-' are
 all considered fully ambiguous."""
 
@@ -328,6 +341,29 @@ class TransitionModel:
             for site in s1 | s2
         )
 
+    def min_character_mutation(
+        self,
+        parent_char: Character,
+        child_char: Character,
+        site=None,
+        **kwargs,
+    ) -> float:
+        """Allowing child_char to be ambiguous, returns the minimum possible
+        transition weight between parent_char and child_char, preceded in a
+        tuple by the unambiguous child character that achieves that weight.
+
+        Keyword argument ``site`` is ignored in this base class.
+        """
+        child_set = sorted(list(self.ambiguity_map[child_char]))
+        p_idx = self.base_indices[parent_char]
+        return min(
+            (
+                (cbase, self.transition_weights[p_idx][self.base_indices[cbase]])
+                for cbase in child_set
+            ),
+            key=lambda it: it[-1],
+        )
+
     def min_character_distance(
         self, parent_char: Character, child_char: Character, site=None
     ) -> float:
@@ -336,12 +372,11 @@ class TransitionModel:
 
         Keyword argument ``site`` is ignored in this base class.
         """
-        child_set = self.ambiguity_map[child_char]
-        p_idx = self.base_indices[parent_char]
-        return min(
-            self.transition_weights[p_idx][self.base_indices[cbase]]
-            for cbase in child_set
-        )
+        return self.min_character_mutation(
+            parent_char,
+            child_char,
+            site=site,
+        )[1]
 
     def min_weighted_hamming_distance(
         self, parent_seq: CharacterSequence, child_seq: CharacterSequence
@@ -403,27 +438,40 @@ class TransitionModel:
         return edge_weight
 
     def weighted_cg_hamming_edge_weight(
-        self, field_name: str
+        self,
+        field_name: str,
+        count_root_muts: bool = True,
     ) -> Callable[["HistoryDagNode", "HistoryDagNode"], float]:
         """Returns a function for computing weighted hamming distance between
         two nodes' compact genomes.
 
         Args:
             field_name: The name of the node label field which contains compact genomes.
+            count_root_muts: If True, the reference sequence of root nodes' compact
+                genomes is considered to be the ancestral sequence of each history,
+                and mutations from the reference to the history root CG are counted.
 
         Returns:
             A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning
-            a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or 0 if
-            n1 is the UA node.
+            a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or
+            the number of mutations between the reference and the CG of n2 if n1 is the UA node.
 
         Sites where parent_cg and child_cg
         both match their reference sequence are ignored, so this method is not suitable for weighted parsimony
         for transition matrices that contain nonzero entries along the diagonal.
         """
 
-        @utils.access_nodefield_default(field_name, 0)
         def edge_weight(parent, child):
-            return self.weighted_cg_hamming_distance(parent, child)
+            # Get the number of mutations on a branch pointing to the UA node
+            if parent.is_ua_node():
+                if count_root_muts:
+                    return len(getattr(child.label, field_name).mutations)
+                else:
+                    return 0
+            else:
+                return self.weighted_cg_hamming_distance(
+                    getattr(parent.label, field_name), getattr(child.label, field_name)
+                )
 
         return edge_weight
 
@@ -460,7 +508,9 @@ class TransitionModel:
         return edge_weight
 
     def min_weighted_cg_hamming_edge_weight(
-        self, field_name: str
+        self,
+        field_name: str,
+        count_root_muts: bool = True,
     ) -> Callable[["HistoryDagNode", "HistoryDagNode"], float]:
         """Returns a function for computing weighted hamming distance between
         two nodes' compact genomes.
@@ -470,24 +520,27 @@ class TransitionModel:
 
         Args:
             field_name: The name of the node label field which contains compact genomes.
+            count_root_muts: If True, the reference sequence of root nodes' compact
+                genomes is considered to be the ancestral sequence of each history,
+                and mutations from the reference to the history root CG are counted.
 
         Returns:
             A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning
             a float: the transition cost from ``n1.label.<field_name>`` to ``n2.label.<field_name>``, or 0 if
             n1 is the UA node.
         """
+        unambiguous_edge_weight = self.weighted_cg_hamming_edge_weight(
+            field_name,
+            count_root_muts=count_root_muts,
+        )
 
         def edge_weight(parent, child):
-            if parent.is_ua_node():
-                return 0
-            elif child.is_leaf():
+            if child.is_leaf():
                 return self.min_weighted_cg_hamming_distance(
                     getattr(parent.label, field_name), getattr(child.label, field_name)
                 )
             else:
-                return self.weighted_cg_hamming_distance(
-                    getattr(parent.label, field_name), getattr(child.label, field_name)
-                )
+                return unambiguous_edge_weight(parent, child)
 
         return edge_weight
 
@@ -495,6 +548,7 @@ class TransitionModel:
         self,
         field_name: str,
         leaf_ambiguities: bool = False,
+        count_root_muts: bool = True,
         name: str = "WeightedParsimony",
     ) -> AddFuncDict:
         """Create a :class:`historydag.utils.AddFuncDict` object for counting
@@ -504,12 +558,19 @@ class TransitionModel:
         Args:
             field_name: the label field name in which compact genomes can be found
             leaf_ambiguities: if True, leaf compact genomes are permitted to contain ambiguity codes
+            count_root_muts: If True, the reference sequence of root nodes' compact
+                genomes is considered to be the ancestral sequence of each history,
+                and mutations from the reference to the history root CG are counted.
             name: the name for the returned AddFuncDict object
         """
         if leaf_ambiguities:
-            edge_weight = self.min_weighted_cg_hamming_edge_weight(field_name)
+            edge_weight = self.min_weighted_cg_hamming_edge_weight(
+                field_name, count_root_muts=count_root_muts
+            )
         else:
-            edge_weight = self.weighted_cg_hamming_edge_weight(field_name)
+            edge_weight = self.weighted_cg_hamming_edge_weight(
+                field_name, count_root_muts=count_root_muts
+            )
         return AddFuncDict(
             {
                 "start_func": lambda n: 0,
@@ -573,18 +634,33 @@ class UnitTransitionModel(TransitionModel):
         """
         return int(parent_char != child_char)
 
-    def min_character_distance(
-        self, parent_char: Character, child_char: Character, site: int = None
-    ) -> int:
+    def min_character_mutation(
+        self,
+        parent_char: Character,
+        child_char: Character,
+        site=None,
+        randomize=False,
+        **kwargs,
+    ) -> float:
         """Allowing child_char to be ambiguous, returns the minimum possible
-        transition weight between parent_char and child_char.
+        transition weight between parent_char and child_char, preceded in a
+        tuple by the unambiguous child character that achieves that weight.
 
-        Keyword argument ``site`` is ignored in this subclass.
+        Keyword argument ``site`` is ignored in this base class.
         """
         if parent_char == child_char:
-            return 0  # TODO do we really want this?
+            return (child_char, 0)
         else:
-            return int(parent_char not in self.ambiguity_map[child_char])
+            options = self.ambiguity_map[child_char]
+            if parent_char in options:
+                return (parent_char, 0)
+            else:
+                if randomize:
+                    base = random.choice(list(sorted(options)))
+                else:
+                    # arbitrary, but deterministic
+                    base = min(options)
+                return (base, 1)
 
     def get_weighted_cg_parsimony_countfuncs(
         self,
@@ -658,18 +734,30 @@ class SitewiseTransitionModel(TransitionModel):
         """
         return self.sitewise_transition_matrix[site - 1][parent_char][child_char]
 
-    def min_character_distance(
-        self, parent_char: Character, child_char: Character, site: int
+    def min_character_mutation(
+        self,
+        parent_char: Character,
+        child_char: Character,
+        site=None,
+        **kwargs,
     ) -> float:
         """Allowing child_char to be ambiguous, returns the minimum possible
-        transition weight between parent_char and child_char, given that these
-        characters are found at the (one-based) site in their respective
-        sequences."""
-        child_set = self.ambiguity_map[child_char]
+        transition weight between parent_char and child_char, preceded in a
+        tuple by the unambiguous child character that achieves that weight.
+
+        Keyword argument ``site`` is ignored in this base class.
+        """
+        child_set = sorted(list(self.ambiguity_map[child_char]))
         p_idx = self.base_indices[parent_char]
         return min(
-            self.transition_weights[site - 1][p_idx][self.base_indices[cbase]]
-            for cbase in child_set
+            (
+                (
+                    cbase,
+                    self.transition_weights[site - 1][p_idx][self.base_indices[cbase]],
+                )
+                for cbase in child_set
+            ),
+            key=lambda it: it[-1],
         )
 
     def get_adjacency_array(self, seq_len):
