@@ -1,0 +1,37 @@
+﻿historydag.dag\_node
+====================
+
+.. automodule:: historydag.dag_node
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      empty_node
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      EdgeSet
+      HistoryDagNode
+      UANode
+   
+   
+
+   
+   
+   
+
+
+

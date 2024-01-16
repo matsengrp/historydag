@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>historydag.parsimony_utils &mdash; historydag  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html#classes">Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html#functions">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html#modules">Modules</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">historydag</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">historydag.parsimony_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for historydag.parsimony_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;This module provides tools for describing and computing parsimony and</span>
+<span class="sd">weighted parsimony, and for describing allowed characters and ambiguity codes.</span>
+
+<span class="sd">:class:`AmbiguityMap` stores a collection of ``Characters`` (for example the strings</span>
+<span class="sd">``&#39;A&#39;``, ``&#39;G&#39;``, ``&#39;C&#39;``, and ``&#39;T&#39;``) that are considered valid states, as well as</span>
+<span class="sd">a mapping between other ``Characters`` (&#39;ambiguity codes&#39;) and subsets of these allowed</span>
+<span class="sd">characters. This type allows forward- and backward-lookup of ambiguity codes.</span>
+
+<span class="sd">:class:`TransitionModel` describes transition weights between an ordered collection of</span>
+<span class="sd">``Characters``, and provides methods for computing weighted parsimony. Functions in</span>
+<span class="sd">``historydag.parsimony`` accept ``TransitionModel`` objects to customize the implementation</span>
+<span class="sd">of Sankoff, for example. This class has two subclasses: :class:`UnitTransitionModel`,</span>
+<span class="sd">which describes unit transition costs between non-identical ``Characters``,</span>
+<span class="sd">and :class:`SitewiseTransitionModel`, which allows transition costs to depend on the</span>
+<span class="sd">location in a sequence in which a transition occurs.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">historydag.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+<span class="kn">from</span> <span class="nn">historydag.utils</span> <span class="kn">import</span> <span class="n">AddFuncDict</span><span class="p">,</span> <span class="n">Label</span>
+<span class="kn">import</span> <span class="nn">Bio.Data.IUPACData</span>
+<span class="kn">from</span> <span class="nn">frozendict</span> <span class="kn">import</span> <span class="n">frozendict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Generator</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Iterable</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">Character</span> <span class="o">=</span> <span class="n">Any</span>
+<span class="n">CharacterSequence</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Character</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">historydag.dag</span> <span class="kn">import</span> <span class="n">HistoryDagNode</span>
+    <span class="kn">from</span> <span class="nn">historydag.compact_genome</span> <span class="kn">import</span> <span class="n">CompactGenome</span>
+
+
+<div class="viewcode-block" id="AmbiguityMap">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap">[docs]</a>
+<span class="k">class</span> <span class="nc">AmbiguityMap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements a bijection between a subset of the power set of an alphabet</span>
+<span class="sd">    of bases, and an expanded alphabet of ambiguity codes.</span>
+
+<span class="sd">    To look up the set of bases represented by an ambiguity code, use the object like a dictionary.</span>
+<span class="sd">    To look up an ambiguity code representing a set of bases, use the ``reversed`` attribute.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ambiguity_character_map: A mapping from ambiguity codes to collections of bases represented by that code.</span>
+<span class="sd">        bases: A collection of bases. If not provided, this will be inferred from the ambiguity_character_map.</span>
+<span class="sd">        reversed_defaults: When `ambiguity_character_map` is not injective (i.e. multiple ambiguous characters</span>
+<span class="sd">            map to the same set of bases) one might want to specify which character that set of bases maps to in</span>
+<span class="sd">            the reversed map. If not provided, the choice will be made arbitrarily.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AmbiguityMap.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ambiguity_character_map</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Character</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Character</span><span class="p">]],</span>
+        <span class="n">bases</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Character</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">reversed_defaults</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Character</span><span class="p">],</span> <span class="n">Character</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">):</span>
+        <span class="n">ambiguous_values</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">char</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span> <span class="k">for</span> <span class="n">char</span><span class="p">,</span> <span class="n">bases</span> <span class="ow">in</span> <span class="n">ambiguity_character_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+                <span class="n">base</span> <span class="k">for</span> <span class="n">bset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span> <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bset</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+
+        <span class="n">ambiguous_values</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">base</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">base</span><span class="p">})</span> <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span> <span class="o">=</span> <span class="n">frozendict</span><span class="p">(</span><span class="n">ambiguous_values</span><span class="p">)</span>
+        <span class="n">reversed_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">bases</span><span class="p">:</span> <span class="n">char</span> <span class="k">for</span> <span class="n">char</span><span class="p">,</span> <span class="n">bases</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">reversed_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="nb">frozenset</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="n">char</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">reversed_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="n">reversed_map</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reversed</span> <span class="o">=</span> <span class="n">ReversedAmbiguityMap</span><span class="p">(</span><span class="n">reversed_map</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uninformative_chars</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+            <span class="n">char</span>
+            <span class="k">for</span> <span class="n">char</span><span class="p">,</span> <span class="n">base_set</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">base_set</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is not a valid ambiguity code for this map.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+
+<div class="viewcode-block" id="AmbiguityMap.is_ambiguous">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap.is_ambiguous">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_ambiguous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="n">CharacterSequence</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns whether the provided sequence contains any non-base</span>
+<span class="sd">        characters (such as ambiguity codes).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">code</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AmbiguityMap.sequence_resolutions">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap.sequence_resolutions">[docs]</a>
+    <span class="k">def</span> <span class="nf">sequence_resolutions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="n">CharacterSequence</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">CharacterSequence</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterates through possible disambiguations of sequence, recursively.</span>
+
+<span class="sd">        Recursion-depth-limited by number of ambiguity codes in</span>
+<span class="sd">        sequence, not sequence length.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_sequence_resolutions</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">_accum</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">sequence</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sequence</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">:</span>
+                        <span class="n">_accum</span> <span class="o">+=</span> <span class="n">base</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">newbase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="p">[</span><span class="n">base</span><span class="p">]:</span>
+                            <span class="k">yield from</span> <span class="n">_sequence_resolutions</span><span class="p">(</span>
+                                <span class="n">sequence</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:],</span> <span class="n">_accum</span><span class="o">=</span><span class="p">(</span><span class="n">_accum</span> <span class="o">+</span> <span class="n">newbase</span><span class="p">)</span>
+                            <span class="p">)</span>
+                        <span class="k">return</span>
+            <span class="k">yield</span> <span class="n">_accum</span>
+
+        <span class="k">return</span> <span class="n">_sequence_resolutions</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AmbiguityMap.get_sequence_resolution_func">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_func">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_sequence_resolution_func</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Label</span><span class="p">],</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Label</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a function which takes a Label, and returns a generator on</span>
+<span class="sd">        labels containing all possible resolutions of the sequence in that</span>
+<span class="sd">        node&#39;s label&#39;s ``field_name`` attribute.&quot;&quot;&quot;</span>
+
+        <span class="nd">@utils</span><span class="o">.</span><span class="n">explode_label</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">sequence_resolutions</span><span class="p">(</span>
+            <span class="n">sequence</span><span class="p">:</span> <span class="n">CharacterSequence</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">CharacterSequence</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_resolutions</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sequence_resolutions</span></div>
+
+
+<div class="viewcode-block" id="AmbiguityMap.sequence_resolution_count">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap.sequence_resolution_count">[docs]</a>
+    <span class="k">def</span> <span class="nf">sequence_resolution_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">:</span> <span class="n">CharacterSequence</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count the number of possible sequence resolutions.</span>
+
+<span class="sd">        Equivalent to the number of items yielded by</span>
+<span class="sd">        :meth:`sequence_resolutions`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">base_options</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span><span class="p">[</span><span class="n">base</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">sequence</span>
+            <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguous_values</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">base_options</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AmbiguityMap.get_sequence_resolution_count_func">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_count_func">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_sequence_resolution_count_func</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Label</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a function taking a Label and returning the number of</span>
+<span class="sd">        resolutions for the sequence held in the label&#39;s ``field_name``</span>
+<span class="sd">        attribute.&quot;&quot;&quot;</span>
+
+        <span class="nd">@utils</span><span class="o">.</span><span class="n">access_field</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">sequence_resolution_count</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_resolution_count</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sequence_resolution_count</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ReversedAmbiguityMap">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.ReversedAmbiguityMap">[docs]</a>
+<span class="k">class</span> <span class="nc">ReversedAmbiguityMap</span><span class="p">(</span><span class="n">frozendict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of frozendict for holding the reversed map in a</span>
+<span class="sd">    :class:`AmbiguityMap` instance.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No ambiguity code is defined for the set of bases </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="n">_ambiguous_dna_values_gap_as_char</span> <span class="o">=</span> <span class="n">Bio</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">IUPACData</span><span class="o">.</span><span class="n">ambiguous_dna_values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">_ambiguous_dna_values_gap_as_char</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="s2">&quot;GATC-&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">})</span>
+<span class="n">_ambiguous_dna_values</span> <span class="o">=</span> <span class="n">Bio</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">IUPACData</span><span class="o">.</span><span class="n">ambiguous_dna_values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">_ambiguous_dna_values</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="s2">&quot;GATC&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span> <span class="s2">&quot;GATC&quot;</span><span class="p">})</span>
+
+<span class="n">standard_nt_ambiguity_map</span> <span class="o">=</span> <span class="n">AmbiguityMap</span><span class="p">(</span>
+    <span class="n">_ambiguous_dna_values</span><span class="p">,</span> <span class="s2">&quot;AGCT&quot;</span><span class="p">,</span> <span class="n">reversed_defaults</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;AGCT&quot;</span><span class="p">:</span> <span class="s2">&quot;N&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The standard IUPAC nucleotide ambiguity map, in which &#39;N&#39;, &#39;?&#39;, and &#39;-&#39; are</span>
+<span class="sd">all considered fully ambiguous.&quot;&quot;&quot;</span>
+
+<span class="n">standard_nt_ambiguity_map_gap_as_char</span> <span class="o">=</span> <span class="n">AmbiguityMap</span><span class="p">(</span>
+    <span class="n">_ambiguous_dna_values_gap_as_char</span><span class="p">,</span> <span class="s2">&quot;AGCT-&quot;</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The standard IUPAC nucleotide ambiguity map, in which &#39;-&#39; is treated as a</span>
+<span class="sd">fifth base, &#39;?&#39; is fully ambiguous, and the ambiguity &#39;N&#39; excludes &#39;-&#39;.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="TransitionModel">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel">[docs]</a>
+<span class="k">class</span> <span class="nc">TransitionModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class describing a collection of states, and the transition costs</span>
+<span class="sd">    between them, for weighted parsimony.</span>
+
+<span class="sd">    In addition to them methods defined below, there are also attributes which are created by</span>
+<span class="sd">    the constructor, which should be ensured to be correct in any subclass of TransitionModel:</span>
+
+<span class="sd">    * ``base_indices`` is a dictionary mapping bases in ``self.bases`` to their indices</span>
+<span class="sd">    * ``mask_vectors`` is a dictionary mapping ambiguity codes (including non-ambiguous bases)</span>
+<span class="sd">        to vectors of floats which are 0 at indices compatible with the ambiguity code, and infinity</span>
+<span class="sd">        otherwise.</span>
+<span class="sd">    * ``bases`` is a tuple recording the correct order of unambiguous bases</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        bases: An ordered collection of valid character states</span>
+<span class="sd">        transition_weights: A matrix describing transition costs between bases, with index order (from_base, to_base)</span>
+<span class="sd">        ambiguity_map: An :class:`AmbiguityMap` object describing ambiguity codes. If not provided, the default</span>
+<span class="sd">            mapping depends on the provided bases. If provided bases are ``AGCT``, then</span>
+<span class="sd">            :class:`standard_nt_ambiguity_map` is used. If bases are ``AGCT-``, then</span>
+<span class="sd">            :class:`standard_nt_ambiguity_map_gap_as_char` is used. Otherwise, it is assumed that no ambiguity</span>
+<span class="sd">            codes are allowed. To override these defaults, provide an :class:`AmbiguityMap` explicitly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TransitionModel.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bases</span><span class="p">:</span> <span class="n">CharacterSequence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="s2">&quot;AGCT&quot;</span><span class="p">),</span>
+        <span class="n">transition_weights</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ambiguity_map</span><span class="p">:</span> <span class="n">AmbiguityMap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span> <span class="o">=</span> <span class="n">frozendict</span><span class="p">({</span><span class="n">base</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bases</span><span class="p">)})</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">transition_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">yey</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span> <span class="o">=</span> <span class="n">yey</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">transition_weights</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">transition_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;transition_weights must be a nxn matrix, with n=len(bases)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span> <span class="o">=</span> <span class="n">transition_weights</span>
+        <span class="k">if</span> <span class="n">ambiguity_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;AGCT&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span> <span class="o">=</span> <span class="n">standard_nt_ambiguity_map</span>
+            <span class="k">elif</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;AGCT-&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span> <span class="o">=</span> <span class="n">standard_nt_ambiguity_map_gap_as_char</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span> <span class="o">=</span> <span class="n">AmbiguityMap</span><span class="p">({},</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ambiguity_map</span><span class="p">,</span> <span class="n">AmbiguityMap</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;ambiguity_map, if provided, must be a &quot;</span>
+                    <span class="s2">&quot;historydag.parsimony.AmbiguityMap object&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">ambiguity_map</span><span class="o">.</span><span class="n">bases</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;ambiguity_map.bases does not match bases provided to &quot;</span>
+                    <span class="s2">&quot;TransitionModel constructor&quot;</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span> <span class="o">=</span> <span class="n">ambiguity_map</span>
+
+        <span class="c1"># This is applicable even when diagonal entries in transition rate matrix are</span>
+        <span class="c1"># nonzero, since it is only a mask on allowable sites based on each base.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask_vectors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">code</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="mi">0</span> <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span><span class="p">[</span><span class="n">code</span><span class="p">]</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bases</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.get_adjacency_array">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.get_adjacency_array">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_adjacency_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an adjacency array for a sequence of length ``seq_len``.</span>
+
+<span class="sd">        This is a matrix containing transition costs, with index order</span>
+<span class="sd">        (site, from_base, to_base)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span><span class="p">]</span> <span class="o">*</span> <span class="n">seq_len</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.get_ambiguity_from_tuple">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.get_ambiguity_from_tuple">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_ambiguity_from_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tup</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Character</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve an ambiguity code encoded by tup, which encodes a set of</span>
+<span class="sd">        bases with a tuple of 0&#39;s and 1&#39;s.</span>
+
+<span class="sd">        For example, if ``self.bases`` is &#39;AGCT&#39;``, then ``(0, 1, 1,</span>
+<span class="sd">        1)`` would return `A`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span><span class="o">.</span><span class="n">reversed</span><span class="p">[</span>
+            <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span> <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.character_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.character_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">character_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">site</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the transition cost from parent_char to child_char, two</span>
+<span class="sd">        unambiguous characters.</span>
+
+<span class="sd">        keyword argument ``site`` is ignored in this base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">parent_char</span><span class="p">]][</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">child_char</span><span class="p">]</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.weighted_hamming_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.weighted_hamming_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">weighted_hamming_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_seq</span><span class="p">:</span> <span class="n">CharacterSequence</span><span class="p">,</span> <span class="n">child_seq</span><span class="p">:</span> <span class="n">CharacterSequence</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sum of sitewise transition costs, from parent_seq to</span>
+<span class="sd">        child_seq.</span>
+
+<span class="sd">        Both parent_seq and child_seq are expected to be unambiguous.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_seq</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sequence lengths do not match!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">character_distance</span><span class="p">(</span><span class="n">pchar</span><span class="p">,</span> <span class="n">cchar</span><span class="p">,</span> <span class="n">site</span><span class="o">=</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">pchar</span><span class="p">,</span> <span class="n">cchar</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">,</span> <span class="n">child_seq</span><span class="p">))</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.weighted_cg_hamming_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">weighted_cg_hamming_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_cg</span><span class="p">:</span> <span class="s2">&quot;CompactGenome&quot;</span><span class="p">,</span> <span class="n">child_cg</span><span class="p">:</span> <span class="s2">&quot;CompactGenome&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sum of sitewise transition costs, from parent_cg to</span>
+<span class="sd">        child_cg.</span>
+
+<span class="sd">        Both parent_seq and child_seq are expected to be unambiguous,</span>
+<span class="sd">        but sites where parent_cg and child_cg both match their</span>
+<span class="sd">        reference sequence are ignored, so this method is not suitable</span>
+<span class="sd">        for weighted parsimony for transition matrices that contain</span>
+<span class="sd">        nonzero entries along the diagonal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parent_cg</span><span class="o">.</span><span class="n">reference</span> <span class="o">!=</span> <span class="n">child_cg</span><span class="o">.</span><span class="n">reference</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Reference sequences do not match!&quot;</span><span class="p">)</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">parent_cg</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">child_cg</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">character_distance</span><span class="p">(</span>
+                <span class="n">parent_cg</span><span class="o">.</span><span class="n">get_site</span><span class="p">(</span><span class="n">site</span><span class="p">),</span> <span class="n">child_cg</span><span class="o">.</span><span class="n">get_site</span><span class="p">(</span><span class="n">site</span><span class="p">),</span> <span class="n">site</span><span class="o">=</span><span class="n">site</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">s1</span> <span class="o">|</span> <span class="n">s2</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.min_character_mutation">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.min_character_mutation">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_character_mutation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span>
+        <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span>
+        <span class="n">site</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allowing child_char to be ambiguous, returns the minimum possible</span>
+<span class="sd">        transition weight between parent_char and child_char, preceded in a</span>
+<span class="sd">        tuple by the unambiguous child character that achieves that weight.</span>
+
+<span class="sd">        Keyword argument ``site`` is ignored in this base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">child_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span><span class="p">[</span><span class="n">child_char</span><span class="p">]))</span>
+        <span class="n">p_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">parent_char</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">(</span><span class="n">cbase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span><span class="p">[</span><span class="n">p_idx</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">cbase</span><span class="p">]])</span>
+                <span class="k">for</span> <span class="n">cbase</span> <span class="ow">in</span> <span class="n">child_set</span>
+            <span class="p">),</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">it</span><span class="p">:</span> <span class="n">it</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.min_character_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.min_character_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_character_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">site</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allowing child_char to be ambiguous, returns the minimum possible</span>
+<span class="sd">        transition weight between parent_char and child_char.</span>
+
+<span class="sd">        Keyword argument ``site`` is ignored in this base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_character_mutation</span><span class="p">(</span>
+            <span class="n">parent_char</span><span class="p">,</span>
+            <span class="n">child_char</span><span class="p">,</span>
+            <span class="n">site</span><span class="o">=</span><span class="n">site</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.min_weighted_hamming_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.min_weighted_hamming_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_weighted_hamming_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_seq</span><span class="p">:</span> <span class="n">CharacterSequence</span><span class="p">,</span> <span class="n">child_seq</span><span class="p">:</span> <span class="n">CharacterSequence</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assuming the child_seq may contain ambiguous characters, returns the</span>
+<span class="sd">        minimum possible transition weight between parent_seq and child_seq.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">child_seq</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sequence lengths do not match!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">min_character_distance</span><span class="p">(</span><span class="n">pchar</span><span class="p">,</span> <span class="n">cchar</span><span class="p">,</span> <span class="n">site</span><span class="o">=</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">pchar</span><span class="p">,</span> <span class="n">cchar</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">parent_seq</span><span class="p">,</span> <span class="n">child_seq</span><span class="p">))</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.min_weighted_cg_hamming_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_weighted_cg_hamming_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_cg</span><span class="p">:</span> <span class="s2">&quot;CompactGenome&quot;</span><span class="p">,</span> <span class="n">child_cg</span><span class="p">:</span> <span class="s2">&quot;CompactGenome&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sum of sitewise transition costs, from parent_cg to</span>
+<span class="sd">        child_cg.</span>
+
+<span class="sd">        child_cg may contain ambiguous characters, and in this case</span>
+<span class="sd">        those sites will contribute the minimum possible transition cost</span>
+<span class="sd">        to the returned value.</span>
+
+<span class="sd">        Sites where parent_cg and child_cg both match their reference</span>
+<span class="sd">        sequence are ignored, so this method is not suitable for</span>
+<span class="sd">        weighted parsimony for transition matrices that contain nonzero</span>
+<span class="sd">        entries along the diagonal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parent_cg</span><span class="o">.</span><span class="n">reference</span> <span class="o">!=</span> <span class="n">child_cg</span><span class="o">.</span><span class="n">reference</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Reference sequences do not match!&quot;</span><span class="p">)</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">parent_cg</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">child_cg</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">min_character_distance</span><span class="p">(</span>
+                <span class="n">parent_cg</span><span class="o">.</span><span class="n">get_site</span><span class="p">(</span><span class="n">site</span><span class="p">),</span> <span class="n">child_cg</span><span class="o">.</span><span class="n">get_site</span><span class="p">(</span><span class="n">site</span><span class="p">),</span> <span class="n">site</span><span class="o">=</span><span class="n">site</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">s1</span> <span class="o">|</span> <span class="n">s2</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.weighted_hamming_edge_weight">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.weighted_hamming_edge_weight">[docs]</a>
+    <span class="k">def</span> <span class="nf">weighted_hamming_edge_weight</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a function for computing weighted hamming distance between</span>
+<span class="sd">        two nodes&#39; sequences.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: The name of the node label field which contains sequences.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning</span>
+<span class="sd">            a float: the transition cost from ``n1.label.&lt;field_name&gt;`` to ``n2.label.&lt;field_name&gt;``, or 0 if</span>
+<span class="sd">            n1 is the UA node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nd">@utils</span><span class="o">.</span><span class="n">access_nodefield_default</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">edge_weight</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_hamming_distance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">edge_weight</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.weighted_cg_hamming_edge_weight">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_edge_weight">[docs]</a>
+    <span class="k">def</span> <span class="nf">weighted_cg_hamming_edge_weight</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">count_root_muts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a function for computing weighted hamming distance between</span>
+<span class="sd">        two nodes&#39; compact genomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: The name of the node label field which contains compact genomes.</span>
+<span class="sd">            count_root_muts: If True, the reference sequence of root nodes&#39; compact</span>
+<span class="sd">                genomes is considered to be the ancestral sequence of each history,</span>
+<span class="sd">                and mutations from the reference to the history root CG are counted.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning</span>
+<span class="sd">            a float: the transition cost from ``n1.label.&lt;field_name&gt;`` to ``n2.label.&lt;field_name&gt;``, or</span>
+<span class="sd">            the number of mutations between the reference and the CG of n2 if n1 is the UA node.</span>
+
+<span class="sd">        Sites where parent_cg and child_cg</span>
+<span class="sd">        both match their reference sequence are ignored, so this method is not suitable for weighted parsimony</span>
+<span class="sd">        for transition matrices that contain nonzero entries along the diagonal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">edge_weight</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+            <span class="c1"># Get the number of mutations on a branch pointing to the UA node</span>
+            <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">count_root_muts</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span><span class="o">.</span><span class="n">mutations</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_cg_hamming_distance</span><span class="p">(</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">edge_weight</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.min_weighted_hamming_edge_weight">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.min_weighted_hamming_edge_weight">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_weighted_hamming_edge_weight</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a function for computing weighted hamming distance between</span>
+<span class="sd">        two nodes&#39; sequences.</span>
+
+<span class="sd">        If the child node is a leaf node, and its sequence contains ambiguities, the minimum possible</span>
+<span class="sd">        transition cost from parent to child will be returned.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: The name of the node label field which contains sequences.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning</span>
+<span class="sd">            a float: the transition cost from ``n1.label.&lt;field_name&gt;`` to ``n2.label.&lt;field_name&gt;``, or 0 if</span>
+<span class="sd">            n1 is the UA node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">edge_weight</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">():</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="k">elif</span> <span class="n">child</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_weighted_hamming_distance</span><span class="p">(</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_hamming_distance</span><span class="p">(</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">edge_weight</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.min_weighted_cg_hamming_edge_weight">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_edge_weight">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_weighted_cg_hamming_edge_weight</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">count_root_muts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a function for computing weighted hamming distance between</span>
+<span class="sd">        two nodes&#39; compact genomes.</span>
+
+<span class="sd">        If the child node is a leaf node, and its compact genome contains ambiguities, the minimum possible</span>
+<span class="sd">        transition cost from parent to child will be returned by this function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: The name of the node label field which contains compact genomes.</span>
+<span class="sd">            count_root_muts: If True, the reference sequence of root nodes&#39; compact</span>
+<span class="sd">                genomes is considered to be the ancestral sequence of each history,</span>
+<span class="sd">                and mutations from the reference to the history root CG are counted.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A function accepting two :class:`HistoryDagNode` objects ``n1`` and ``n2`` and returning</span>
+<span class="sd">            a float: the transition cost from ``n1.label.&lt;field_name&gt;`` to ``n2.label.&lt;field_name&gt;``, or 0 if</span>
+<span class="sd">            n1 is the UA node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">unambiguous_edge_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_cg_hamming_edge_weight</span><span class="p">(</span>
+            <span class="n">field_name</span><span class="p">,</span>
+            <span class="n">count_root_muts</span><span class="o">=</span><span class="n">count_root_muts</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">edge_weight</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_weighted_cg_hamming_distance</span><span class="p">(</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">unambiguous_edge_weight</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">edge_weight</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.get_weighted_cg_parsimony_countfuncs">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.get_weighted_cg_parsimony_countfuncs">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_weighted_cg_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">leaf_ambiguities</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">count_root_muts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;WeightedParsimony&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AddFuncDict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a :class:`historydag.utils.AddFuncDict` object for counting</span>
+<span class="sd">        weighted parsimony in a HistoryDag with labels containing compact</span>
+<span class="sd">        genomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: the label field name in which compact genomes can be found</span>
+<span class="sd">            leaf_ambiguities: if True, leaf compact genomes are permitted to contain ambiguity codes</span>
+<span class="sd">            count_root_muts: If True, the reference sequence of root nodes&#39; compact</span>
+<span class="sd">                genomes is considered to be the ancestral sequence of each history,</span>
+<span class="sd">                and mutations from the reference to the history root CG are counted.</span>
+<span class="sd">            name: the name for the returned AddFuncDict object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">leaf_ambiguities</span><span class="p">:</span>
+            <span class="n">edge_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_weighted_cg_hamming_edge_weight</span><span class="p">(</span>
+                <span class="n">field_name</span><span class="p">,</span> <span class="n">count_root_muts</span><span class="o">=</span><span class="n">count_root_muts</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">edge_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_cg_hamming_edge_weight</span><span class="p">(</span>
+                <span class="n">field_name</span><span class="p">,</span> <span class="n">count_root_muts</span><span class="o">=</span><span class="n">count_root_muts</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_weight</span><span class="p">,</span>
+                <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransitionModel.get_weighted_parsimony_countfuncs">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel.get_weighted_parsimony_countfuncs">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_weighted_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">leaf_ambiguities</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;WeightedParsimony&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a :class:`historydag.utils.AddFuncDict` object for counting</span>
+<span class="sd">        weighted parsimony in a HistoryDag with labels containing sequences.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: the label field name in which sequences can be found</span>
+<span class="sd">            leaf_ambiguities: if True, leaf sequences are permitted to contain ambiguity codes</span>
+<span class="sd">            name: the name for the returned AddFuncDict object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">leaf_ambiguities</span><span class="p">:</span>
+            <span class="n">edge_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_weighted_hamming_edge_weight</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">edge_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_hamming_edge_weight</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AddFuncDict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;start_func&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;edge_weight_func&quot;</span><span class="p">:</span> <span class="n">edge_weight</span><span class="p">,</span>
+                <span class="s2">&quot;accum_func&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="UnitTransitionModel">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.UnitTransitionModel">[docs]</a>
+<span class="k">class</span> <span class="nc">UnitTransitionModel</span><span class="p">(</span><span class="n">TransitionModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of :class:`TransitionModel` to be used when all non-identical</span>
+<span class="sd">    transitions have unit cost.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        bases: An ordered container of allowed character states</span>
+<span class="sd">        ambiguity_map: A :class:`AmbiguityMap` object describing allowed ambiguity codes.</span>
+<span class="sd">            If not provided, a default will be chosen by the same method as the constructor for</span>
+<span class="sd">            :class:`TransitionModel`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="UnitTransitionModel.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.UnitTransitionModel.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">CharacterSequence</span> <span class="o">=</span> <span class="s2">&quot;AGCT&quot;</span><span class="p">,</span> <span class="n">ambiguity_map</span><span class="p">:</span> <span class="n">AmbiguityMap</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">,</span> <span class="n">ambiguity_map</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnitTransitionModel.character_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.UnitTransitionModel.character_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">character_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">site</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the transition cost from parent_char to child_char, two</span>
+<span class="sd">        unambiguous characters.</span>
+
+<span class="sd">        keyword argument ``site`` is ignored in this subclass.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">parent_char</span> <span class="o">!=</span> <span class="n">child_char</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnitTransitionModel.min_character_mutation">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.UnitTransitionModel.min_character_mutation">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_character_mutation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span>
+        <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span>
+        <span class="n">site</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">randomize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allowing child_char to be ambiguous, returns the minimum possible</span>
+<span class="sd">        transition weight between parent_char and child_char, preceded in a</span>
+<span class="sd">        tuple by the unambiguous child character that achieves that weight.</span>
+
+<span class="sd">        Keyword argument ``site`` is ignored in this base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parent_char</span> <span class="o">==</span> <span class="n">child_char</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">child_char</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span><span class="p">[</span><span class="n">child_char</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">parent_char</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">parent_char</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">randomize</span><span class="p">:</span>
+                    <span class="n">base</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">options</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># arbitrary, but deterministic</span>
+                    <span class="n">base</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnitTransitionModel.get_weighted_cg_parsimony_countfuncs">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.UnitTransitionModel.get_weighted_cg_parsimony_countfuncs">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_weighted_cg_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">leaf_ambiguities</span><span class="p">:</span> <span class="n">AmbiguityMap</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;HammingParsimony&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AddFuncDict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a :class:`historydag.utils.AddFuncDict` object for counting</span>
+<span class="sd">        parsimony in a HistoryDag with labels containing compact genomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: the label field name in which compact genomes can be found</span>
+<span class="sd">            leaf_ambiguities: if True, leaf compact genomes are permitted to contain ambiguity codes</span>
+<span class="sd">            name: the name for the returned AddFuncDict object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_weighted_cg_parsimony_countfuncs</span><span class="p">(</span>
+            <span class="n">field_name</span><span class="p">,</span> <span class="n">leaf_ambiguities</span><span class="o">=</span><span class="n">leaf_ambiguities</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnitTransitionModel.get_weighted_parsimony_countfuncs">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.UnitTransitionModel.get_weighted_parsimony_countfuncs">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_weighted_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">leaf_ambiguities</span><span class="p">:</span> <span class="n">AmbiguityMap</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;HammingParsimony&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AddFuncDict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a :class:`historydag.utils.AddFuncDict` object for counting</span>
+<span class="sd">        weighted parsimony in a HistoryDag with labels containing sequences.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            field_name: the label field name in which sequences can be found</span>
+<span class="sd">            leaf_ambiguities: if True, leaf sequences are permitted to contain ambiguity codes</span>
+<span class="sd">            name: the name for the returned AddFuncDict object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_weighted_parsimony_countfuncs</span><span class="p">(</span>
+            <span class="n">field_name</span><span class="p">,</span> <span class="n">leaf_ambiguities</span><span class="o">=</span><span class="n">leaf_ambiguities</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SitewiseTransitionModel">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.SitewiseTransitionModel">[docs]</a>
+<span class="k">class</span> <span class="nc">SitewiseTransitionModel</span><span class="p">(</span><span class="n">TransitionModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A subclass of :class:`TransitionModel` to be used when transition costs</span>
+<span class="sd">    depend on site.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        bases: An ordered container of allowed character states</span>
+<span class="sd">        transition_matrix: A matrix of transition costs between provided bases, in which</span>
+<span class="sd">            index order is (site, from_base, to_base)</span>
+<span class="sd">        ambiguity_map: An :class:`AmbiguityMap` object describing ambiguous characters. If not provided</span>
+<span class="sd">            a default will be chosen as in the constructor for :class:`TransitionModel`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SitewiseTransitionModel.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.SitewiseTransitionModel.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bases</span><span class="p">:</span> <span class="n">CharacterSequence</span> <span class="o">=</span> <span class="s2">&quot;AGCT&quot;</span><span class="p">,</span>
+        <span class="n">transition_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ambiguity_map</span><span class="p">:</span> <span class="n">AmbiguityMap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">assert</span> <span class="n">transition_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">,</span> <span class="n">ambiguity_map</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sitewise_transition_matrix</span> <span class="o">=</span> <span class="n">transition_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seq_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sitewise_transition_matrix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SitewiseTransitionModel.character_distance">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.SitewiseTransitionModel.character_distance">[docs]</a>
+    <span class="k">def</span> <span class="nf">character_distance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span> <span class="n">site</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the transition cost from ``parent_char`` to ``child_char``,</span>
+<span class="sd">        assuming each character is at the one-based ``site`` in their</span>
+<span class="sd">        respective sequences.</span>
+
+<span class="sd">        Both parent_char and child_char are expected to be unambiguous.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sitewise_transition_matrix</span><span class="p">[</span><span class="n">site</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">parent_char</span><span class="p">][</span><span class="n">child_char</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="SitewiseTransitionModel.min_character_mutation">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.SitewiseTransitionModel.min_character_mutation">[docs]</a>
+    <span class="k">def</span> <span class="nf">min_character_mutation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span>
+        <span class="n">child_char</span><span class="p">:</span> <span class="n">Character</span><span class="p">,</span>
+        <span class="n">site</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allowing child_char to be ambiguous, returns the minimum possible</span>
+<span class="sd">        transition weight between parent_char and child_char, preceded in a</span>
+<span class="sd">        tuple by the unambiguous child character that achieves that weight.</span>
+
+<span class="sd">        Keyword argument ``site`` is ignored in this base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">child_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ambiguity_map</span><span class="p">[</span><span class="n">child_char</span><span class="p">]))</span>
+        <span class="n">p_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">parent_char</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">cbase</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">transition_weights</span><span class="p">[</span><span class="n">site</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">p_idx</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">cbase</span><span class="p">]],</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">cbase</span> <span class="ow">in</span> <span class="n">child_set</span>
+            <span class="p">),</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">it</span><span class="p">:</span> <span class="n">it</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SitewiseTransitionModel.get_adjacency_array">
+<a class="viewcode-back" href="../../stubs/historydag.parsimony_utils.html#historydag.parsimony_utils.SitewiseTransitionModel.get_adjacency_array">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_adjacency_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an adjacency array for a sequence of length ``seq_len``.</span>
+
+<span class="sd">        This is a matrix containing transition costs, with index order</span>
+<span class="sd">        (site, from_base, to_base)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">seq_len</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seq_len</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SitewiseTransitionModel instance supports sequence length of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_seq_len</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sitewise_transition_matrix</span></div>
+</div>
+
+
+
+<span class="n">default_nt_transitions</span> <span class="o">=</span> <span class="n">UnitTransitionModel</span><span class="p">(</span><span class="n">bases</span><span class="o">=</span><span class="s2">&quot;AGCT&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;A transition model for nucleotides using unit transition weights, and the</span>
+<span class="sd">standard IUPAC ambiguity codes, with base order ``AGCT`` and ``N``, ``?`` and</span>
+<span class="sd">``-`` treated as fully ambiguous characters.&quot;&quot;&quot;</span>
+
+<span class="n">default_nt_gaps_transitions</span> <span class="o">=</span> <span class="n">UnitTransitionModel</span><span class="p">(</span><span class="n">bases</span><span class="o">=</span><span class="s2">&quot;AGCT-&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;A transition model for nucleotides using unit transition weights, and the</span>
+<span class="sd">standard IUPAC nucleotide ambiguity map, with &#39;-&#39; is treated as a fifth base,</span>
+<span class="sd">&#39;?&#39; fully ambiguous, and the ambiguity &#39;N&#39; excluding only &#39;-&#39;.&quot;&quot;&quot;</span>
+
+<span class="n">hamming_edge_weight</span> <span class="o">=</span> <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">weighted_hamming_edge_weight</span><span class="p">(</span><span class="s2">&quot;sequence&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;An edge weight function accepting (parent, child) pairs of HistoryDagNodes,</span>
+<span class="sd">and returning the hamming distance between the sequences stored in the</span>
+<span class="sd">``sequence`` attributes of their labels.&quot;&quot;&quot;</span>
+<span class="n">hamming_edge_weight_ambiguous_leaves</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">min_weighted_hamming_edge_weight</span><span class="p">(</span><span class="s2">&quot;sequence&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;An edge weight function accepting (parent, child) pairs of HistoryDagNodes,</span>
+<span class="sd">and returning the hamming distance between the sequences stored in the</span>
+<span class="sd">``sequence`` attributes of their labels.</span>
+
+<span class="sd">This edge weight function allows leaf nodes to have ambiguous sequences.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">hamming_cg_edge_weight</span> <span class="o">=</span> <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">weighted_cg_hamming_edge_weight</span><span class="p">(</span>
+    <span class="s2">&quot;compact_genome&quot;</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;An edge weight function accepting (parent, child) pairs of HistoryDagNodes,</span>
+<span class="sd">and returning the hamming distance between the compact genomes stored in the</span>
+<span class="sd">``compact_genome`` attributes of their labels.&quot;&quot;&quot;</span>
+
+<span class="n">hamming_cg_edge_weight_ambiguous_leaves</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">min_weighted_cg_hamming_edge_weight</span><span class="p">(</span><span class="s2">&quot;compact_genome&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;An edge weight function accepting (parent, child) pairs of HistoryDagNodes,</span>
+<span class="sd">and returning the hamming distance between the compact genomes stored in the</span>
+<span class="sd">``compact_genome`` attributes of their labels.</span>
+
+<span class="sd">This edge weight function allows leaf nodes to have ambiguous compact</span>
+<span class="sd">genomes.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">hamming_distance_countfuncs</span> <span class="o">=</span> <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">get_weighted_parsimony_countfuncs</span><span class="p">(</span>
+    <span class="s2">&quot;sequence&quot;</span><span class="p">,</span> <span class="n">leaf_ambiguities</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Provides functions to count hamming distance parsimony when leaf sequences</span>
+<span class="sd">may be ambiguous.</span>
+
+<span class="sd">For use with :meth:`historydag.AmbiguousLeafSequenceHistoryDag.weight_count`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">leaf_ambiguous_hamming_distance_countfuncs</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">get_weighted_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="s2">&quot;sequence&quot;</span><span class="p">,</span> <span class="n">leaf_ambiguities</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Provides functions to count hamming distance parsimony when leaf sequences</span>
+<span class="sd">may be ambiguous.</span>
+
+<span class="sd">For use with :meth:`historydag.AmbiguousLeafSequenceHistoryDag.weight_count`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">compact_genome_hamming_distance_countfuncs</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">get_weighted_cg_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="s2">&quot;compact_genome&quot;</span><span class="p">,</span> <span class="n">leaf_ambiguities</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Provides functions to count hamming distance parsimony when sequences are</span>
+<span class="sd">stored as CompactGenomes.</span>
+
+<span class="sd">For use with :meth:`historydag.CGHistoryDag.weight_count`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">default_nt_transitions</span><span class="o">.</span><span class="n">get_weighted_cg_parsimony_countfuncs</span><span class="p">(</span>
+        <span class="s2">&quot;compact_genome&quot;</span><span class="p">,</span> <span class="n">leaf_ambiguities</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Provides functions to count hamming distance parsimony when leaf compact</span>
+<span class="sd">genomes may be ambiguous.</span>
+
+<span class="sd">For use with :meth:`historydag.AmbiguousLeafCGHistoryDag.weight_count`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Will Dumm.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

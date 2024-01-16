@@ -32,6 +32,7 @@
           
           <a href="../../index.html">
             
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -78,7 +79,14 @@
            <div itemprop="articleBody">
              
   <h1>Source code for historydag.compact_genome</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">frozendict</span> <span class="kn">import</span> <span class="n">frozendict</span>
+<span></span><span class="sd">&quot;&quot;&quot;This module provides a CompactGenome class, intended as a convenient and compact representation of</span>
+<span class="sd">a nucleotide sequence as a collection of mutations relative to a reference sequence. This object also</span>
+<span class="sd">provides methods to conveniently mutate CompactGenome objects according to a list of mutations, produce</span>
+<span class="sd">mutations defining the difference between two CompactGenome objects, and efficiently access the base</span>
+<span class="sd">at a site (or the entire sequence, as a string) implied by a CompactGenome.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">frozendict</span> <span class="kn">import</span> <span class="n">frozendict</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">from</span> <span class="nn">historydag.parsimony_utils</span> <span class="kn">import</span> <span class="p">(</span>

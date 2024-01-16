@@ -35,6 +35,7 @@
           
           <a href="../index.html">
             
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -89,7 +90,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="historydag.utils.html">historydag.utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="historydag.parsimony.html">historydag.parsimony</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.parsimony_utils.html">historydag.parsimony_utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="historydag.compact_genome.html">historydag.compact_genome</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.dag_node.html">historydag.dag_node</a></li>
 <li class="toctree-l2"><a class="reference internal" href="historydag.counterops.html">historydag.counterops</a></li>
 </ul>
 </li>
@@ -297,7 +300,7 @@ nodes, this data is appended after the unique leaf ID.</p></li>
 <li><p><strong>randomize_leaf_muts</strong> – When leaf node sequences contain ambiguities, if
 True the mutations on pendant edges will be randomized, when
 there are multiple choices.</p></li>
-<li><p><strong>transition_model</strong> – A <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.parsimony_utils.TransitionModel()</span></code> object,
+<li><p><strong>transition_model</strong> – A <a class="reference internal" href="historydag.parsimony_utils.html#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.parsimony_utils.TransitionModel()</span></code></a> object,
 used to decide which bases to record on pendant edge mutations with
 ambiguous bases as targets.</p></li>
 </ul>
@@ -448,7 +451,7 @@ included in the <cite>node_id</cite> label field of leaf nodes, to ensure that l
 labels are unique.</p></li>
 <li><p><strong>leaf_cgs</strong> – (not implemented) A dictionary keyed by unique string leaf IDs containing CompactGenomes.
 Use <code class="xref py py-meth docutils literal notranslate"><span class="pre">compact_genome.read_alignment()</span></code> to read an alignment from a file.</p></li>
-<li><p><strong>ambiguity_map</strong> – A <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.parsimony_utils.AmbiguityMap()</span></code> object
+<li><p><strong>ambiguity_map</strong> – A <a class="reference internal" href="historydag.parsimony_utils.html#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.parsimony_utils.AmbiguityMap()</span></code></a> object
 to determine how conflicting pendant edge mutations are represented.</p></li>
 </ul>
 </dd>

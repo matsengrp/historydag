@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>historydag.parsimony_utils &mdash; historydag  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="historydag.compact_genome" href="historydag.compact_genome.html" />
+    <link rel="prev" title="historydag.parsimony" href="historydag.parsimony.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#classes">Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#functions">Functions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html#modules">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="historydag.dag.html">historydag.dag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.sequence_dag.html">historydag.sequence_dag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.mutation_annotated_dag.html">historydag.mutation_annotated_dag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.utils.html">historydag.utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.parsimony.html">historydag.parsimony</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">historydag.parsimony_utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.__init__"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.is_ambiguous"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap.is_ambiguous()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.sequence_resolutions"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap.sequence_resolutions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_func"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap.get_sequence_resolution_func()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.sequence_resolution_count"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap.sequence_resolution_count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_count_func"><code class="docutils literal notranslate"><span class="pre">AmbiguityMap.get_sequence_resolution_count_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.ReversedAmbiguityMap"><code class="docutils literal notranslate"><span class="pre">ReversedAmbiguityMap</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.standard_nt_ambiguity_map"><code class="docutils literal notranslate"><span class="pre">standard_nt_ambiguity_map</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char"><code class="docutils literal notranslate"><span class="pre">standard_nt_ambiguity_map_gap_as_char</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel"><code class="docutils literal notranslate"><span class="pre">TransitionModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.__init__"><code class="docutils literal notranslate"><span class="pre">TransitionModel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.get_adjacency_array"><code class="docutils literal notranslate"><span class="pre">TransitionModel.get_adjacency_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.get_ambiguity_from_tuple"><code class="docutils literal notranslate"><span class="pre">TransitionModel.get_ambiguity_from_tuple()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.character_distance"><code class="docutils literal notranslate"><span class="pre">TransitionModel.character_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.weighted_hamming_distance"><code class="docutils literal notranslate"><span class="pre">TransitionModel.weighted_hamming_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_distance"><code class="docutils literal notranslate"><span class="pre">TransitionModel.weighted_cg_hamming_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.min_character_mutation"><code class="docutils literal notranslate"><span class="pre">TransitionModel.min_character_mutation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.min_character_distance"><code class="docutils literal notranslate"><span class="pre">TransitionModel.min_character_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.min_weighted_hamming_distance"><code class="docutils literal notranslate"><span class="pre">TransitionModel.min_weighted_hamming_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_distance"><code class="docutils literal notranslate"><span class="pre">TransitionModel.min_weighted_cg_hamming_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.weighted_hamming_edge_weight"><code class="docutils literal notranslate"><span class="pre">TransitionModel.weighted_hamming_edge_weight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_edge_weight"><code class="docutils literal notranslate"><span class="pre">TransitionModel.weighted_cg_hamming_edge_weight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.min_weighted_hamming_edge_weight"><code class="docutils literal notranslate"><span class="pre">TransitionModel.min_weighted_hamming_edge_weight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_edge_weight"><code class="docutils literal notranslate"><span class="pre">TransitionModel.min_weighted_cg_hamming_edge_weight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.get_weighted_cg_parsimony_countfuncs"><code class="docutils literal notranslate"><span class="pre">TransitionModel.get_weighted_cg_parsimony_countfuncs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel.get_weighted_parsimony_countfuncs"><code class="docutils literal notranslate"><span class="pre">TransitionModel.get_weighted_parsimony_countfuncs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel"><code class="docutils literal notranslate"><span class="pre">UnitTransitionModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel.__init__"><code class="docutils literal notranslate"><span class="pre">UnitTransitionModel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel.character_distance"><code class="docutils literal notranslate"><span class="pre">UnitTransitionModel.character_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel.min_character_mutation"><code class="docutils literal notranslate"><span class="pre">UnitTransitionModel.min_character_mutation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel.get_weighted_cg_parsimony_countfuncs"><code class="docutils literal notranslate"><span class="pre">UnitTransitionModel.get_weighted_cg_parsimony_countfuncs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel.get_weighted_parsimony_countfuncs"><code class="docutils literal notranslate"><span class="pre">UnitTransitionModel.get_weighted_parsimony_countfuncs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel"><code class="docutils literal notranslate"><span class="pre">SitewiseTransitionModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel.__init__"><code class="docutils literal notranslate"><span class="pre">SitewiseTransitionModel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel.character_distance"><code class="docutils literal notranslate"><span class="pre">SitewiseTransitionModel.character_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel.min_character_mutation"><code class="docutils literal notranslate"><span class="pre">SitewiseTransitionModel.min_character_mutation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel.get_adjacency_array"><code class="docutils literal notranslate"><span class="pre">SitewiseTransitionModel.get_adjacency_array()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.default_nt_transitions"><code class="docutils literal notranslate"><span class="pre">default_nt_transitions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.default_nt_gaps_transitions"><code class="docutils literal notranslate"><span class="pre">default_nt_gaps_transitions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.hamming_edge_weight"><code class="docutils literal notranslate"><span class="pre">hamming_edge_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves"><code class="docutils literal notranslate"><span class="pre">hamming_edge_weight_ambiguous_leaves()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.hamming_cg_edge_weight"><code class="docutils literal notranslate"><span class="pre">hamming_cg_edge_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves"><code class="docutils literal notranslate"><span class="pre">hamming_cg_edge_weight_ambiguous_leaves()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.hamming_distance_countfuncs"><code class="docutils literal notranslate"><span class="pre">hamming_distance_countfuncs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.leaf_ambiguous_hamming_distance_countfuncs"><code class="docutils literal notranslate"><span class="pre">leaf_ambiguous_hamming_distance_countfuncs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.compact_genome_hamming_distance_countfuncs"><code class="docutils literal notranslate"><span class="pre">compact_genome_hamming_distance_countfuncs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.parsimony_utils.leaf_ambiguous_compact_genome_hamming_distance_countfuncs"><code class="docutils literal notranslate"><span class="pre">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.compact_genome.html">historydag.compact_genome</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.dag_node.html">historydag.dag_node</a></li>
+<li class="toctree-l2"><a class="reference internal" href="historydag.counterops.html">historydag.counterops</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">historydag</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">Description</a></li>
+      <li class="breadcrumb-item active">historydag.parsimony_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-historydag.parsimony_utils">
+<span id="historydag-parsimony-utils"></span><h1>historydag.parsimony_utils<a class="headerlink" href="#module-historydag.parsimony_utils" title="Link to this heading"></a></h1>
+<p>This module provides tools for describing and computing parsimony and
+weighted parsimony, and for describing allowed characters and ambiguity codes.</p>
+<p><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> stores a collection of <code class="docutils literal notranslate"><span class="pre">Characters</span></code> (for example the strings
+<code class="docutils literal notranslate"><span class="pre">'A'</span></code>, <code class="docutils literal notranslate"><span class="pre">'G'</span></code>, <code class="docutils literal notranslate"><span class="pre">'C'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'T'</span></code>) that are considered valid states, as well as
+a mapping between other <code class="docutils literal notranslate"><span class="pre">Characters</span></code> (‘ambiguity codes’) and subsets of these allowed
+characters. This type allows forward- and backward-lookup of ambiguity codes.</p>
+<p><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a> describes transition weights between an ordered collection of
+<code class="docutils literal notranslate"><span class="pre">Characters</span></code>, and provides methods for computing weighted parsimony. Functions in
+<code class="docutils literal notranslate"><span class="pre">historydag.parsimony</span></code> accept <code class="docutils literal notranslate"><span class="pre">TransitionModel</span></code> objects to customize the implementation
+of Sankoff, for example. This class has two subclasses: <a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel" title="historydag.parsimony_utils.UnitTransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnitTransitionModel</span></code></a>,
+which describes unit transition costs between non-identical <code class="docutils literal notranslate"><span class="pre">Characters</span></code>,
+and <a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel" title="historydag.parsimony_utils.SitewiseTransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SitewiseTransitionModel</span></code></a>, which allows transition costs to depend on the
+location in a sequence in which a transition occurs.</p>
+<p class="rubric">Module Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.standard_nt_ambiguity_map" title="historydag.parsimony_utils.standard_nt_ambiguity_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">standard_nt_ambiguity_map</span></code></a></p></td>
+<td><p>The standard IUPAC nucleotide ambiguity map, in which 'N', '?', and '-' are all considered fully ambiguous.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char" title="historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char"><code class="xref py py-obj docutils literal notranslate"><span class="pre">standard_nt_ambiguity_map_gap_as_char</span></code></a></p></td>
+<td><p>The standard IUPAC nucleotide ambiguity map, in which '-' is treated as a fifth base, '?' is fully ambiguous, and the ambiguity 'N' excludes '-'.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.default_nt_transitions" title="historydag.parsimony_utils.default_nt_transitions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_nt_transitions</span></code></a></p></td>
+<td><p>A transition model for nucleotides using unit transition weights, and the standard IUPAC ambiguity codes, with base order <code class="docutils literal notranslate"><span class="pre">AGCT</span></code> and <code class="docutils literal notranslate"><span class="pre">N</span></code>, <code class="docutils literal notranslate"><span class="pre">?</span></code> and <code class="docutils literal notranslate"><span class="pre">-</span></code> treated as fully ambiguous characters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.default_nt_gaps_transitions" title="historydag.parsimony_utils.default_nt_gaps_transitions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_nt_gaps_transitions</span></code></a></p></td>
+<td><p>A transition model for nucleotides using unit transition weights, and the standard IUPAC nucleotide ambiguity map, with '-' is treated as a fifth base, '?' fully ambiguous, and the ambiguity 'N' excluding only '-'.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_edge_weight" title="historydag.parsimony_utils.hamming_edge_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_edge_weight</span></code></a>(parent, child)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the sequences stored in the <code class="docutils literal notranslate"><span class="pre">sequence</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves" title="historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_edge_weight_ambiguous_leaves</span></code></a>(parent, ...)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the sequences stored in the <code class="docutils literal notranslate"><span class="pre">sequence</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_cg_edge_weight" title="historydag.parsimony_utils.hamming_cg_edge_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_cg_edge_weight</span></code></a>(parent, child)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the compact genomes stored in the <code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves" title="historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_cg_edge_weight_ambiguous_leaves</span></code></a>(...)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the compact genomes stored in the <code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_distance_countfuncs" title="historydag.parsimony_utils.hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_distance_countfuncs</span></code></a></p></td>
+<td><p>Provides functions to count hamming distance parsimony when leaf sequences may be ambiguous.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.leaf_ambiguous_hamming_distance_countfuncs" title="historydag.parsimony_utils.leaf_ambiguous_hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">leaf_ambiguous_hamming_distance_countfuncs</span></code></a></p></td>
+<td><p>Provides functions to count hamming distance parsimony when leaf sequences may be ambiguous.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.compact_genome_hamming_distance_countfuncs" title="historydag.parsimony_utils.compact_genome_hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compact_genome_hamming_distance_countfuncs</span></code></a></p></td>
+<td><p>Provides functions to count hamming distance parsimony when sequences are stored as CompactGenomes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.leaf_ambiguous_compact_genome_hamming_distance_countfuncs" title="historydag.parsimony_utils.leaf_ambiguous_compact_genome_hamming_distance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span></code></a></p></td>
+<td><p>Provides functions to count hamming distance parsimony when leaf compact genomes may be ambiguous.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_cg_edge_weight" title="historydag.parsimony_utils.hamming_cg_edge_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_cg_edge_weight</span></code></a>(parent, child)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the compact genomes stored in the <code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves" title="historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_cg_edge_weight_ambiguous_leaves</span></code></a>(...)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the compact genomes stored in the <code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_edge_weight" title="historydag.parsimony_utils.hamming_edge_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_edge_weight</span></code></a>(parent, child)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the sequences stored in the <code class="docutils literal notranslate"><span class="pre">sequence</span></code> attributes of their labels.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves" title="historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hamming_edge_weight_ambiguous_leaves</span></code></a>(parent, ...)</p></td>
+<td><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes, and returning the hamming distance between the sequences stored in the <code class="docutils literal notranslate"><span class="pre">sequence</span></code> attributes of their labels.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a>(ambiguity_character_map[, ...])</p></td>
+<td><p>Implements a bijection between a subset of the power set of an alphabet of bases, and an expanded alphabet of ambiguity codes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.ReversedAmbiguityMap" title="historydag.parsimony_utils.ReversedAmbiguityMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReversedAmbiguityMap</span></code></a></p></td>
+<td><p>A subclass of frozendict for holding the reversed map in a <a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> instance.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.SitewiseTransitionModel" title="historydag.parsimony_utils.SitewiseTransitionModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SitewiseTransitionModel</span></code></a>([bases, ...])</p></td>
+<td><p>A subclass of <a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a> to be used when transition costs depend on site.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransitionModel</span></code></a>([bases, transition_weights, ...])</p></td>
+<td><p>A class describing a collection of states, and the transition costs between them, for weighted parsimony.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.parsimony_utils.UnitTransitionModel" title="historydag.parsimony_utils.UnitTransitionModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnitTransitionModel</span></code></a>([bases, ambiguity_map])</p></td>
+<td><p>A subclass of <a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a> to be used when all non-identical transitions have unit cost.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">AmbiguityMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ambiguity_character_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reversed_defaults</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap" title="Link to this definition"></a></dt>
+<dd><p>Implements a bijection between a subset of the power set of an alphabet
+of bases, and an expanded alphabet of ambiguity codes.</p>
+<p>To look up the set of bases represented by an ambiguity code, use the object like a dictionary.
+To look up an ambiguity code representing a set of bases, use the <code class="docutils literal notranslate"><span class="pre">reversed</span></code> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ambiguity_character_map</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]</span>) – A mapping from ambiguity codes to collections of bases represented by that code.</p></li>
+<li><p><strong>bases</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]</span>) – A collection of bases. If not provided, this will be inferred from the ambiguity_character_map.</p></li>
+<li><p><strong>reversed_defaults</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span>) – When <cite>ambiguity_character_map</cite> is not injective (i.e. multiple ambiguous characters
+map to the same set of bases) one might want to specify which character that set of bases maps to in
+the reversed map. If not provided, the choice will be made arbitrarily.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ambiguity_character_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reversed_defaults</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap.is_ambiguous">
+<span class="sig-name descname"><span class="pre">is_ambiguous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap.is_ambiguous"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap.is_ambiguous" title="Link to this definition"></a></dt>
+<dd><p>Returns whether the provided sequence contains any non-base
+characters (such as ambiguity codes).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap.sequence_resolutions">
+<span class="sig-name descname"><span class="pre">sequence_resolutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap.sequence_resolutions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap.sequence_resolutions" title="Link to this definition"></a></dt>
+<dd><p>Iterates through possible disambiguations of sequence, recursively.</p>
+<p>Recursion-depth-limited by number of ambiguity codes in
+sequence, not sequence length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generator" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_func">
+<span class="sig-name descname"><span class="pre">get_sequence_resolution_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap.get_sequence_resolution_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_func" title="Link to this definition"></a></dt>
+<dd><p>Returns a function which takes a Label, and returns a generator on
+labels containing all possible resolutions of the sequence in that
+node’s label’s <code class="docutils literal notranslate"><span class="pre">field_name</span></code> attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></a>, <a class="reference internal" href="historydag.utils.html#historydag.utils.UALabel" title="historydag.utils.UALabel"><code class="xref py py-class docutils literal notranslate"><span class="pre">UALabel</span></code></a>]], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generator" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></a>, <a class="reference internal" href="historydag.utils.html#historydag.utils.UALabel" title="historydag.utils.UALabel"><code class="xref py py-class docutils literal notranslate"><span class="pre">UALabel</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap.sequence_resolution_count">
+<span class="sig-name descname"><span class="pre">sequence_resolution_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap.sequence_resolution_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap.sequence_resolution_count" title="Link to this definition"></a></dt>
+<dd><p>Count the number of possible sequence resolutions.</p>
+<p>Equivalent to the number of items yielded by
+<a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap.sequence_resolutions" title="historydag.parsimony_utils.AmbiguityMap.sequence_resolutions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sequence_resolutions()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_count_func">
+<span class="sig-name descname"><span class="pre">get_sequence_resolution_count_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#AmbiguityMap.get_sequence_resolution_count_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.AmbiguityMap.get_sequence_resolution_count_func" title="Link to this definition"></a></dt>
+<dd><p>Returns a function taking a Label and returning the number of
+resolutions for the sequence held in the label’s <code class="docutils literal notranslate"><span class="pre">field_name</span></code>
+attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></a>, <a class="reference internal" href="historydag.utils.html#historydag.utils.UALabel" title="historydag.utils.UALabel"><code class="xref py py-class docutils literal notranslate"><span class="pre">UALabel</span></code></a>]], <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.ReversedAmbiguityMap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">ReversedAmbiguityMap</span></span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#ReversedAmbiguityMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.ReversedAmbiguityMap" title="Link to this definition"></a></dt>
+<dd><p>A subclass of frozendict for holding the reversed map in a
+<a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.standard_nt_ambiguity_map">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">standard_nt_ambiguity_map</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;historydag.parsimony_utils.AmbiguityMap</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#historydag.parsimony_utils.standard_nt_ambiguity_map" title="Link to this definition"></a></dt>
+<dd><p>The standard IUPAC nucleotide ambiguity map, in which ‘N’, ‘?’, and ‘-’ are
+all considered fully ambiguous.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">standard_nt_ambiguity_map_gap_as_char</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;historydag.parsimony_utils.AmbiguityMap</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char" title="Link to this definition"></a></dt>
+<dd><p>The standard IUPAC nucleotide ambiguity map, in which ‘-’ is treated as a
+fifth base, ‘?’ is fully ambiguous, and the ambiguity ‘N’ excludes ‘-‘.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">TransitionModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuple('AGCT')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel" title="Link to this definition"></a></dt>
+<dd><p>A class describing a collection of states, and the transition costs
+between them, for weighted parsimony.</p>
+<p>In addition to them methods defined below, there are also attributes which are created by
+the constructor, which should be ensured to be correct in any subclass of TransitionModel:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base_indices</span></code> is a dictionary mapping bases in <code class="docutils literal notranslate"><span class="pre">self.bases</span></code> to their indices</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">mask_vectors</span></code> is a dictionary mapping ambiguity codes (including non-ambiguous bases)</dt><dd><p>to vectors of floats which are 0 at indices compatible with the ambiguity code, and infinity
+otherwise.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bases</span></code> is a tuple recording the correct order of unambiguous bases</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bases</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span>) – An ordered collection of valid character states</p></li>
+<li><p><strong>transition_weights</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]]</span>) – A matrix describing transition costs between bases, with index order (from_base, to_base)</p></li>
+<li><p><strong>ambiguity_map</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a>]</span>) – An <a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> object describing ambiguity codes. If not provided, the default
+mapping depends on the provided bases. If provided bases are <code class="docutils literal notranslate"><span class="pre">AGCT</span></code>, then
+<a class="reference internal" href="#historydag.parsimony_utils.standard_nt_ambiguity_map" title="historydag.parsimony_utils.standard_nt_ambiguity_map"><code class="xref py py-class docutils literal notranslate"><span class="pre">standard_nt_ambiguity_map</span></code></a> is used. If bases are <code class="docutils literal notranslate"><span class="pre">AGCT-</span></code>, then
+<a class="reference internal" href="#historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char" title="historydag.parsimony_utils.standard_nt_ambiguity_map_gap_as_char"><code class="xref py py-class docutils literal notranslate"><span class="pre">standard_nt_ambiguity_map_gap_as_char</span></code></a> is used. Otherwise, it is assumed that no ambiguity
+codes are allowed. To override these defaults, provide an <a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> explicitly.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuple('AGCT')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.get_adjacency_array">
+<span class="sig-name descname"><span class="pre">get_adjacency_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_len</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.get_adjacency_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.get_adjacency_array" title="Link to this definition"></a></dt>
+<dd><p>Return an adjacency array for a sequence of length <code class="docutils literal notranslate"><span class="pre">seq_len</span></code>.</p>
+<p>This is a matrix containing transition costs, with index order
+(site, from_base, to_base)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">array</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.get_ambiguity_from_tuple">
+<span class="sig-name descname"><span class="pre">get_ambiguity_from_tuple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tup</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.get_ambiguity_from_tuple"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.get_ambiguity_from_tuple" title="Link to this definition"></a></dt>
+<dd><p>Retrieve an ambiguity code encoded by tup, which encodes a set of
+bases with a tuple of 0’s and 1’s.</p>
+<p>For example, if <code class="docutils literal notranslate"><span class="pre">self.bases</span></code> is ‘AGCT’<code class="docutils literal notranslate"><span class="pre">,</span> <span class="pre">then</span> <span class="pre">``(0,</span> <span class="pre">1,</span> <span class="pre">1,</span>
+<span class="pre">1)</span></code> would return <cite>A</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.character_distance">
+<span class="sig-name descname"><span class="pre">character_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.character_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.character_distance" title="Link to this definition"></a></dt>
+<dd><p>Return the transition cost from parent_char to child_char, two
+unambiguous characters.</p>
+<p>keyword argument <code class="docutils literal notranslate"><span class="pre">site</span></code> is ignored in this base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.weighted_hamming_distance">
+<span class="sig-name descname"><span class="pre">weighted_hamming_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_seq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.weighted_hamming_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.weighted_hamming_distance" title="Link to this definition"></a></dt>
+<dd><p>Return the sum of sitewise transition costs, from parent_seq to
+child_seq.</p>
+<p>Both parent_seq and child_seq are expected to be unambiguous.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_distance">
+<span class="sig-name descname"><span class="pre">weighted_cg_hamming_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_cg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_cg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.weighted_cg_hamming_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_distance" title="Link to this definition"></a></dt>
+<dd><p>Return the sum of sitewise transition costs, from parent_cg to
+child_cg.</p>
+<p>Both parent_seq and child_seq are expected to be unambiguous,
+but sites where parent_cg and child_cg both match their
+reference sequence are ignored, so this method is not suitable
+for weighted parsimony for transition matrices that contain
+nonzero entries along the diagonal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.min_character_mutation">
+<span class="sig-name descname"><span class="pre">min_character_mutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.min_character_mutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.min_character_mutation" title="Link to this definition"></a></dt>
+<dd><p>Allowing child_char to be ambiguous, returns the minimum possible
+transition weight between parent_char and child_char, preceded in a
+tuple by the unambiguous child character that achieves that weight.</p>
+<p>Keyword argument <code class="docutils literal notranslate"><span class="pre">site</span></code> is ignored in this base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.min_character_distance">
+<span class="sig-name descname"><span class="pre">min_character_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.min_character_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.min_character_distance" title="Link to this definition"></a></dt>
+<dd><p>Allowing child_char to be ambiguous, returns the minimum possible
+transition weight between parent_char and child_char.</p>
+<p>Keyword argument <code class="docutils literal notranslate"><span class="pre">site</span></code> is ignored in this base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.min_weighted_hamming_distance">
+<span class="sig-name descname"><span class="pre">min_weighted_hamming_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_seq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.min_weighted_hamming_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.min_weighted_hamming_distance" title="Link to this definition"></a></dt>
+<dd><p>Assuming the child_seq may contain ambiguous characters, returns the
+minimum possible transition weight between parent_seq and child_seq.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_distance">
+<span class="sig-name descname"><span class="pre">min_weighted_cg_hamming_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_cg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_cg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.min_weighted_cg_hamming_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_distance" title="Link to this definition"></a></dt>
+<dd><p>Return the sum of sitewise transition costs, from parent_cg to
+child_cg.</p>
+<p>child_cg may contain ambiguous characters, and in this case
+those sites will contribute the minimum possible transition cost
+to the returned value.</p>
+<p>Sites where parent_cg and child_cg both match their reference
+sequence are ignored, so this method is not suitable for
+weighted parsimony for transition matrices that contain nonzero
+entries along the diagonal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.weighted_hamming_edge_weight">
+<span class="sig-name descname"><span class="pre">weighted_hamming_edge_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.weighted_hamming_edge_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.weighted_hamming_edge_weight" title="Link to this definition"></a></dt>
+<dd><p>Returns a function for computing weighted hamming distance between
+two nodes’ sequences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – The name of the node label field which contains sequences.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>, <a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function accepting two <code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code> objects <code class="docutils literal notranslate"><span class="pre">n1</span></code> and <code class="docutils literal notranslate"><span class="pre">n2</span></code> and returning
+a float: the transition cost from <code class="docutils literal notranslate"><span class="pre">n1.label.&lt;field_name&gt;</span></code> to <code class="docutils literal notranslate"><span class="pre">n2.label.&lt;field_name&gt;</span></code>, or 0 if
+n1 is the UA node.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_edge_weight">
+<span class="sig-name descname"><span class="pre">weighted_cg_hamming_edge_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_root_muts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.weighted_cg_hamming_edge_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.weighted_cg_hamming_edge_weight" title="Link to this definition"></a></dt>
+<dd><p>Returns a function for computing weighted hamming distance between
+two nodes’ compact genomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – The name of the node label field which contains compact genomes.</p></li>
+<li><p><strong>count_root_muts</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If True, the reference sequence of root nodes’ compact
+genomes is considered to be the ancestral sequence of each history,
+and mutations from the reference to the history root CG are counted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>, <a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function accepting two <code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code> objects <code class="docutils literal notranslate"><span class="pre">n1</span></code> and <code class="docutils literal notranslate"><span class="pre">n2</span></code> and returning
+a float: the transition cost from <code class="docutils literal notranslate"><span class="pre">n1.label.&lt;field_name&gt;</span></code> to <code class="docutils literal notranslate"><span class="pre">n2.label.&lt;field_name&gt;</span></code>, or
+the number of mutations between the reference and the CG of n2 if n1 is the UA node.</p>
+</dd>
+</dl>
+<p>Sites where parent_cg and child_cg
+both match their reference sequence are ignored, so this method is not suitable for weighted parsimony
+for transition matrices that contain nonzero entries along the diagonal.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.min_weighted_hamming_edge_weight">
+<span class="sig-name descname"><span class="pre">min_weighted_hamming_edge_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.min_weighted_hamming_edge_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.min_weighted_hamming_edge_weight" title="Link to this definition"></a></dt>
+<dd><p>Returns a function for computing weighted hamming distance between
+two nodes’ sequences.</p>
+<p>If the child node is a leaf node, and its sequence contains ambiguities, the minimum possible
+transition cost from parent to child will be returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – The name of the node label field which contains sequences.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>, <a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function accepting two <code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code> objects <code class="docutils literal notranslate"><span class="pre">n1</span></code> and <code class="docutils literal notranslate"><span class="pre">n2</span></code> and returning
+a float: the transition cost from <code class="docutils literal notranslate"><span class="pre">n1.label.&lt;field_name&gt;</span></code> to <code class="docutils literal notranslate"><span class="pre">n2.label.&lt;field_name&gt;</span></code>, or 0 if
+n1 is the UA node.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_edge_weight">
+<span class="sig-name descname"><span class="pre">min_weighted_cg_hamming_edge_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_root_muts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.min_weighted_cg_hamming_edge_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.min_weighted_cg_hamming_edge_weight" title="Link to this definition"></a></dt>
+<dd><p>Returns a function for computing weighted hamming distance between
+two nodes’ compact genomes.</p>
+<p>If the child node is a leaf node, and its compact genome contains ambiguities, the minimum possible
+transition cost from parent to child will be returned by this function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – The name of the node label field which contains compact genomes.</p></li>
+<li><p><strong>count_root_muts</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If True, the reference sequence of root nodes’ compact
+genomes is considered to be the ancestral sequence of each history,
+and mutations from the reference to the history root CG are counted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>, <a class="reference internal" href="historydag.dag_node.html#historydag.dag_node.HistoryDagNode" title="historydag.dag_node.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A function accepting two <code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code> objects <code class="docutils literal notranslate"><span class="pre">n1</span></code> and <code class="docutils literal notranslate"><span class="pre">n2</span></code> and returning
+a float: the transition cost from <code class="docutils literal notranslate"><span class="pre">n1.label.&lt;field_name&gt;</span></code> to <code class="docutils literal notranslate"><span class="pre">n2.label.&lt;field_name&gt;</span></code>, or 0 if
+n1 is the UA node.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.get_weighted_cg_parsimony_countfuncs">
+<span class="sig-name descname"><span class="pre">get_weighted_cg_parsimony_countfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_ambiguities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_root_muts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WeightedParsimony'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.get_weighted_cg_parsimony_countfuncs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.get_weighted_cg_parsimony_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Create a <a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.utils.AddFuncDict</span></code></a> object for counting
+weighted parsimony in a HistoryDag with labels containing compact
+genomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the label field name in which compact genomes can be found</p></li>
+<li><p><strong>leaf_ambiguities</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – if True, leaf compact genomes are permitted to contain ambiguity codes</p></li>
+<li><p><strong>count_root_muts</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If True, the reference sequence of root nodes’ compact
+genomes is considered to be the ancestral sequence of each history,
+and mutations from the reference to the history root CG are counted.</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the name for the returned AddFuncDict object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">AddFuncDict</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.TransitionModel.get_weighted_parsimony_countfuncs">
+<span class="sig-name descname"><span class="pre">get_weighted_parsimony_countfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_ambiguities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WeightedParsimony'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#TransitionModel.get_weighted_parsimony_countfuncs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.TransitionModel.get_weighted_parsimony_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Create a <a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.utils.AddFuncDict</span></code></a> object for counting
+weighted parsimony in a HistoryDag with labels containing sequences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the label field name in which sequences can be found</p></li>
+<li><p><strong>leaf_ambiguities</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – if True, leaf sequences are permitted to contain ambiguity codes</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the name for the returned AddFuncDict object</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.UnitTransitionModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">UnitTransitionModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AGCT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#UnitTransitionModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.UnitTransitionModel" title="Link to this definition"></a></dt>
+<dd><p>A subclass of <a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a> to be used when all non-identical
+transitions have unit cost.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bases</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span>) – An ordered container of allowed character states</p></li>
+<li><p><strong>ambiguity_map</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a>]</span>) – A <a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> object describing allowed ambiguity codes.
+If not provided, a default will be chosen by the same method as the constructor for
+<a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.UnitTransitionModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AGCT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#UnitTransitionModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.UnitTransitionModel.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.UnitTransitionModel.character_distance">
+<span class="sig-name descname"><span class="pre">character_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#UnitTransitionModel.character_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.UnitTransitionModel.character_distance" title="Link to this definition"></a></dt>
+<dd><p>Return the transition cost from parent_char to child_char, two
+unambiguous characters.</p>
+<p>keyword argument <code class="docutils literal notranslate"><span class="pre">site</span></code> is ignored in this subclass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.UnitTransitionModel.min_character_mutation">
+<span class="sig-name descname"><span class="pre">min_character_mutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">randomize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#UnitTransitionModel.min_character_mutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.UnitTransitionModel.min_character_mutation" title="Link to this definition"></a></dt>
+<dd><p>Allowing child_char to be ambiguous, returns the minimum possible
+transition weight between parent_char and child_char, preceded in a
+tuple by the unambiguous child character that achieves that weight.</p>
+<p>Keyword argument <code class="docutils literal notranslate"><span class="pre">site</span></code> is ignored in this base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.UnitTransitionModel.get_weighted_cg_parsimony_countfuncs">
+<span class="sig-name descname"><span class="pre">get_weighted_cg_parsimony_countfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_ambiguities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HammingParsimony'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#UnitTransitionModel.get_weighted_cg_parsimony_countfuncs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.UnitTransitionModel.get_weighted_cg_parsimony_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Create a <a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.utils.AddFuncDict</span></code></a> object for counting
+parsimony in a HistoryDag with labels containing compact genomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the label field name in which compact genomes can be found</p></li>
+<li><p><strong>leaf_ambiguities</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a></span>) – if True, leaf compact genomes are permitted to contain ambiguity codes</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the name for the returned AddFuncDict object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">AddFuncDict</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.UnitTransitionModel.get_weighted_parsimony_countfuncs">
+<span class="sig-name descname"><span class="pre">get_weighted_parsimony_countfuncs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaf_ambiguities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HammingParsimony'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#UnitTransitionModel.get_weighted_parsimony_countfuncs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.UnitTransitionModel.get_weighted_parsimony_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Create a <a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.utils.AddFuncDict</span></code></a> object for counting
+weighted parsimony in a HistoryDag with labels containing sequences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field_name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the label field name in which sequences can be found</p></li>
+<li><p><strong>leaf_ambiguities</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a></span>) – if True, leaf sequences are permitted to contain ambiguity codes</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – the name for the returned AddFuncDict object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="historydag.utils.html#historydag.utils.AddFuncDict" title="historydag.utils.AddFuncDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">AddFuncDict</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.SitewiseTransitionModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">SitewiseTransitionModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AGCT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#SitewiseTransitionModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.SitewiseTransitionModel" title="Link to this definition"></a></dt>
+<dd><p>A subclass of <a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a> to be used when transition costs
+depend on site.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bases</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span>) – An ordered container of allowed character states</p></li>
+<li><p><strong>transition_matrix</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]]]</span>) – A matrix of transition costs between provided bases, in which
+index order is (site, from_base, to_base)</p></li>
+<li><p><strong>ambiguity_map</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a>]</span>) – An <a class="reference internal" href="#historydag.parsimony_utils.AmbiguityMap" title="historydag.parsimony_utils.AmbiguityMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmbiguityMap</span></code></a> object describing ambiguous characters. If not provided
+a default will be chosen as in the constructor for <a class="reference internal" href="#historydag.parsimony_utils.TransitionModel" title="historydag.parsimony_utils.TransitionModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionModel</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.SitewiseTransitionModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AGCT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguity_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#SitewiseTransitionModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.SitewiseTransitionModel.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.SitewiseTransitionModel.character_distance">
+<span class="sig-name descname"><span class="pre">character_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#SitewiseTransitionModel.character_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.SitewiseTransitionModel.character_distance" title="Link to this definition"></a></dt>
+<dd><p>Returns the transition cost from <code class="docutils literal notranslate"><span class="pre">parent_char</span></code> to <code class="docutils literal notranslate"><span class="pre">child_char</span></code>,
+assuming each character is at the one-based <code class="docutils literal notranslate"><span class="pre">site</span></code> in their
+respective sequences.</p>
+<p>Both parent_char and child_char are expected to be unambiguous.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.SitewiseTransitionModel.min_character_mutation">
+<span class="sig-name descname"><span class="pre">min_character_mutation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_char</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#SitewiseTransitionModel.min_character_mutation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.SitewiseTransitionModel.min_character_mutation" title="Link to this definition"></a></dt>
+<dd><p>Allowing child_char to be ambiguous, returns the minimum possible
+transition weight between parent_char and child_char, preceded in a
+tuple by the unambiguous child character that achieves that weight.</p>
+<p>Keyword argument <code class="docutils literal notranslate"><span class="pre">site</span></code> is ignored in this base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.SitewiseTransitionModel.get_adjacency_array">
+<span class="sig-name descname"><span class="pre">get_adjacency_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_len</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/parsimony_utils.html#SitewiseTransitionModel.get_adjacency_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.parsimony_utils.SitewiseTransitionModel.get_adjacency_array" title="Link to this definition"></a></dt>
+<dd><p>Return an adjacency array for a sequence of length <code class="docutils literal notranslate"><span class="pre">seq_len</span></code>.</p>
+<p>This is a matrix containing transition costs, with index order
+(site, from_base, to_base)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.default_nt_transitions">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">default_nt_transitions</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;historydag.parsimony_utils.UnitTransitionModel</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#historydag.parsimony_utils.default_nt_transitions" title="Link to this definition"></a></dt>
+<dd><p>A transition model for nucleotides using unit transition weights, and the
+standard IUPAC ambiguity codes, with base order <code class="docutils literal notranslate"><span class="pre">AGCT</span></code> and <code class="docutils literal notranslate"><span class="pre">N</span></code>, <code class="docutils literal notranslate"><span class="pre">?</span></code> and
+<code class="docutils literal notranslate"><span class="pre">-</span></code> treated as fully ambiguous characters.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.default_nt_gaps_transitions">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">default_nt_gaps_transitions</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;historydag.parsimony_utils.UnitTransitionModel</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#historydag.parsimony_utils.default_nt_gaps_transitions" title="Link to this definition"></a></dt>
+<dd><p>A transition model for nucleotides using unit transition weights, and the
+standard IUPAC nucleotide ambiguity map, with ‘-’ is treated as a fifth base,
+‘?’ fully ambiguous, and the ambiguity ‘N’ excluding only ‘-‘.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.hamming_edge_weight">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">hamming_edge_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#historydag.parsimony_utils.hamming_edge_weight" title="Link to this definition"></a></dt>
+<dd><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes,
+and returning the hamming distance between the sequences stored in the
+<code class="docutils literal notranslate"><span class="pre">sequence</span></code> attributes of their labels.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">hamming_edge_weight_ambiguous_leaves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#historydag.parsimony_utils.hamming_edge_weight_ambiguous_leaves" title="Link to this definition"></a></dt>
+<dd><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes,
+and returning the hamming distance between the sequences stored in the
+<code class="docutils literal notranslate"><span class="pre">sequence</span></code> attributes of their labels.</p>
+<p>This edge weight function allows leaf nodes to have ambiguous sequences.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.hamming_cg_edge_weight">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">hamming_cg_edge_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#historydag.parsimony_utils.hamming_cg_edge_weight" title="Link to this definition"></a></dt>
+<dd><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes,
+and returning the hamming distance between the compact genomes stored in the
+<code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> attributes of their labels.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">hamming_cg_edge_weight_ambiguous_leaves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#historydag.parsimony_utils.hamming_cg_edge_weight_ambiguous_leaves" title="Link to this definition"></a></dt>
+<dd><p>An edge weight function accepting (parent, child) pairs of HistoryDagNodes,
+and returning the hamming distance between the compact genomes stored in the
+<code class="docutils literal notranslate"><span class="pre">compact_genome</span></code> attributes of their labels.</p>
+<p>This edge weight function allows leaf nodes to have ambiguous compact
+genomes.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.hamming_distance_countfuncs">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">hamming_distance_countfuncs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'start_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.get_weighted_parsimony_countfuncs.&lt;locals&gt;.&lt;lambda&gt;&gt;,</span> <span class="pre">'edge_weight_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.weighted_hamming_edge_weight.&lt;locals&gt;.edge_weight&gt;,</span> <span class="pre">'accum_func':</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">sum&gt;}</span></em><a class="headerlink" href="#historydag.parsimony_utils.hamming_distance_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Provides functions to count hamming distance parsimony when leaf sequences
+may be ambiguous.</p>
+<p>For use with <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.AmbiguousLeafSequenceHistoryDag.weight_count()</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.leaf_ambiguous_hamming_distance_countfuncs">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">leaf_ambiguous_hamming_distance_countfuncs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'start_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.get_weighted_parsimony_countfuncs.&lt;locals&gt;.&lt;lambda&gt;&gt;,</span> <span class="pre">'edge_weight_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.min_weighted_hamming_edge_weight.&lt;locals&gt;.edge_weight&gt;,</span> <span class="pre">'accum_func':</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">sum&gt;}</span></em><a class="headerlink" href="#historydag.parsimony_utils.leaf_ambiguous_hamming_distance_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Provides functions to count hamming distance parsimony when leaf sequences
+may be ambiguous.</p>
+<p>For use with <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.AmbiguousLeafSequenceHistoryDag.weight_count()</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.compact_genome_hamming_distance_countfuncs">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">compact_genome_hamming_distance_countfuncs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'start_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.get_weighted_cg_parsimony_countfuncs.&lt;locals&gt;.&lt;lambda&gt;&gt;,</span> <span class="pre">'edge_weight_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.weighted_cg_hamming_edge_weight.&lt;locals&gt;.edge_weight&gt;,</span> <span class="pre">'accum_func':</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">sum&gt;}</span></em><a class="headerlink" href="#historydag.parsimony_utils.compact_genome_hamming_distance_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Provides functions to count hamming distance parsimony when sequences are
+stored as CompactGenomes.</p>
+<p>For use with <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.CGHistoryDag.weight_count()</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="historydag.parsimony_utils.leaf_ambiguous_compact_genome_hamming_distance_countfuncs">
+<span class="sig-prename descclassname"><span class="pre">historydag.parsimony_utils.</span></span><span class="sig-name descname"><span class="pre">leaf_ambiguous_compact_genome_hamming_distance_countfuncs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'start_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.get_weighted_cg_parsimony_countfuncs.&lt;locals&gt;.&lt;lambda&gt;&gt;,</span> <span class="pre">'edge_weight_func':</span> <span class="pre">&lt;function</span> <span class="pre">TransitionModel.min_weighted_cg_hamming_edge_weight.&lt;locals&gt;.edge_weight&gt;,</span> <span class="pre">'accum_func':</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">sum&gt;}</span></em><a class="headerlink" href="#historydag.parsimony_utils.leaf_ambiguous_compact_genome_hamming_distance_countfuncs" title="Link to this definition"></a></dt>
+<dd><p>Provides functions to count hamming distance parsimony when leaf compact
+genomes may be ambiguous.</p>
+<p>For use with <code class="xref py py-meth docutils literal notranslate"><span class="pre">historydag.AmbiguousLeafCGHistoryDag.weight_count()</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="historydag.parsimony.html" class="btn btn-neutral float-left" title="historydag.parsimony" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="historydag.compact_genome.html" class="btn btn-neutral float-right" title="historydag.compact_genome" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Will Dumm.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

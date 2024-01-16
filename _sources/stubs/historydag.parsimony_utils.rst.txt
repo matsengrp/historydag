@@ -1,0 +1,59 @@
+﻿historydag.parsimony\_utils
+===========================
+
+.. automodule:: historydag.parsimony_utils
+
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      standard_nt_ambiguity_map
+      standard_nt_ambiguity_map_gap_as_char
+      default_nt_transitions
+      default_nt_gaps_transitions
+      hamming_edge_weight
+      hamming_edge_weight_ambiguous_leaves
+      hamming_cg_edge_weight
+      hamming_cg_edge_weight_ambiguous_leaves
+      hamming_distance_countfuncs
+      leaf_ambiguous_hamming_distance_countfuncs
+      compact_genome_hamming_distance_countfuncs
+      leaf_ambiguous_compact_genome_hamming_distance_countfuncs
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      hamming_cg_edge_weight
+      hamming_cg_edge_weight_ambiguous_leaves
+      hamming_edge_weight
+      hamming_edge_weight_ambiguous_leaves
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AmbiguityMap
+      ReversedAmbiguityMap
+      SitewiseTransitionModel
+      TransitionModel
+      UnitTransitionModel
+   
+   
+
+   
+   
+   
+
+
+

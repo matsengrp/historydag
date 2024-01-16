@@ -32,6 +32,7 @@
           
           <a href="../../index.html">
             
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -100,7 +101,7 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode">[docs]</a>
 <span class="k">class</span> <span class="nc">HistoryDagNode</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A recursive representation of a history DAG object.</span>
 
@@ -109,7 +110,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="HistoryDagNode.__init__">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.__init__">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="n">Label</span><span class="p">,</span> <span class="n">clades</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clades</span> <span class="o">=</span> <span class="n">clades</span>
         <span class="c1"># If passed a nonempty dictionary, need to add self to children&#39;s parents</span>
@@ -171,7 +172,7 @@
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__lt__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HistoryDagNode.empty_copy">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.empty_copy">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.empty_copy">[docs]</a>
     <span class="k">def</span> <span class="nf">empty_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a HistoryDagNode object with the same clades, label, and</span>
 <span class="sd">        attr dictionary, but no descendant edges.&quot;&quot;&quot;</span>
@@ -181,14 +182,14 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.node_self">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.node_self">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.node_self">[docs]</a>
     <span class="k">def</span> <span class="nf">node_self</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`empty_copy`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.clade_union">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.clade_union">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.clade_union">[docs]</a>
     <span class="k">def</span> <span class="nf">clade_union</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns the union of this node&#39;s child clades (or a set containing</span>
 <span class="sd">        only the node label, for leaf nodes.)&quot;&quot;&quot;</span>
@@ -199,21 +200,21 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.under_clade">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.under_clade">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.under_clade">[docs]</a>
     <span class="k">def</span> <span class="nf">under_clade</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrozenSet</span><span class="p">[</span><span class="n">Label</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`clade_union`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clade_union</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.is_leaf">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_leaf">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.is_leaf">[docs]</a>
     <span class="k">def</span> <span class="nf">is_leaf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns whether this is a leaf node.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.is_ua_node">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_ua_node">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.is_ua_node">[docs]</a>
     <span class="k">def</span> <span class="nf">is_ua_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns whether this is the source node in the DAG, from which all</span>
 <span class="sd">        others are reachable.&quot;&quot;&quot;</span>
@@ -221,21 +222,21 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.is_root">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_root">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.is_root">[docs]</a>
     <span class="k">def</span> <span class="nf">is_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`is_ua_node`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.is_history_root">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.is_history_root">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.is_history_root">[docs]</a>
     <span class="k">def</span> <span class="nf">is_history_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether node is a root of any histories in the DAG.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">is_ua_node</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.child_clades">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.child_clades">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.child_clades">[docs]</a>
     <span class="k">def</span> <span class="nf">child_clades</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the node&#39;s child clades, or a frozenset containing a</span>
 <span class="sd">        frozenset if this node is a UANode.&quot;&quot;&quot;</span>
@@ -243,14 +244,14 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.partitions">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.partitions">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.partitions">[docs]</a>
     <span class="k">def</span> <span class="nf">partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`child_clades`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_clades</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.sorted_child_clades">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.sorted_child_clades">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.sorted_child_clades">[docs]</a>
     <span class="k">def</span> <span class="nf">sorted_child_clades</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the node&#39;s child clades as a sorted tuple containing leaf</span>
 <span class="sd">        labels in sorted tuples.&quot;&quot;&quot;</span>
@@ -258,14 +259,14 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.sorted_partitions">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.sorted_partitions">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.sorted_partitions">[docs]</a>
     <span class="k">def</span> <span class="nf">sorted_partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated name for :meth:`sorted_child_clades`&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sorted_child_clades</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="HistoryDagNode.children">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.children">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.children">[docs]</a>
     <span class="k">def</span> <span class="nf">children</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">clade</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">Label</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
@@ -284,7 +285,7 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.add_edge">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.add_edge">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.add_edge">[docs]</a>
     <span class="k">def</span> <span class="nf">add_edge</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">target</span><span class="p">:</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span>
@@ -349,7 +350,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">remove_from_edgeset_byid</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HistoryDagNode.remove_node">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.remove_node">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.remove_node">[docs]</a>
     <span class="k">def</span> <span class="nf">remove_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodedict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recursively removes node self and any orphaned children from dag.</span>
 
@@ -369,7 +370,7 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.to_ascii">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.to_ascii">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.to_ascii">[docs]</a>
     <span class="k">def</span> <span class="nf">to_ascii</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name_func</span><span class="p">,</span>
@@ -426,7 +427,7 @@
 
 
 <div class="viewcode-block" id="HistoryDagNode.to_ete">
-<a class="viewcode-back" href="../../stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode.to_ete">[docs]</a>
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.HistoryDagNode.to_ete">[docs]</a>
     <span class="k">def</span> <span class="nf">to_ete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;unnamed&quot;</span><span class="p">,</span>
@@ -544,9 +545,13 @@
 
 
 
+<div class="viewcode-block" id="UANode">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.UANode">[docs]</a>
 <span class="k">class</span> <span class="nc">UANode</span><span class="p">(</span><span class="n">HistoryDagNode</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A universal ancestor node, the root node of a HistoryDag.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="UANode.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.UANode.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targetnodes</span><span class="p">:</span> <span class="s2">&quot;EdgeSet&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">UALabel</span><span class="p">()</span>
         <span class="c1"># an empty frozenset is not used as a key in any other node</span>
@@ -555,21 +560,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">parents</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">attr</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">():</span>
-            <span class="n">child</span><span class="o">.</span><span class="n">parents</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">child</span><span class="o">.</span><span class="n">parents</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="UANode.empty_copy">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.UANode.empty_copy">[docs]</a>
     <span class="k">def</span> <span class="nf">empty_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;UANode&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a UANode object with the same clades and label, but no</span>
 <span class="sd">        descendant edges.&quot;&quot;&quot;</span>
         <span class="n">newnode</span> <span class="o">=</span> <span class="n">UANode</span><span class="p">(</span><span class="n">EdgeSet</span><span class="p">())</span>
         <span class="n">newnode</span><span class="o">.</span><span class="n">attr</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">newnode</span>
+        <span class="k">return</span> <span class="n">newnode</span></div>
 
+
+<div class="viewcode-block" id="UANode.is_ua_node">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.UANode.is_ua_node">[docs]</a>
     <span class="k">def</span> <span class="nf">is_ua_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns whether this is the source node in the DAG, from which all</span>
 <span class="sd">        others are reachable.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="EdgeSet">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet">[docs]</a>
 <span class="k">class</span> <span class="nc">EdgeSet</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;A container class for edge target nodes, and associated probabilities</span>
 <span class="sd">    and weights.</span>
@@ -578,6 +593,8 @@
 <span class="sd">    set-like operations like lookup and enforce that elements are unique.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="EdgeSet.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">args</span><span class="p">,</span>
@@ -594,7 +611,8 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;__init__() takes 0 or 1 positional arguments but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2"> were given.&quot;</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_targets</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_targets</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -602,6 +620,8 @@
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">))</span>
         <span class="p">)</span>
 
+<div class="viewcode-block" id="EdgeSet.set_targets">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet.set_targets">[docs]</a>
     <span class="k">def</span> <span class="nf">set_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the target nodes of this node.</span>
 
@@ -623,8 +643,11 @@
                 <span class="n">probs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">probs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_edge_stats</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_edge_stats</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="EdgeSet.set_edge_stats">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet.set_edge_stats">[docs]</a>
     <span class="k">def</span> <span class="nf">set_edge_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the edge weights and/or probabilities of this EdgeSet.&quot;&quot;&quot;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -639,8 +662,11 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">&quot;length of provided probabilities list must match number of target nodes&quot;</span>
                 <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">probs</span> <span class="o">=</span> <span class="n">probs</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probs</span> <span class="o">=</span> <span class="n">probs</span></div>
 
+
+<div class="viewcode-block" id="EdgeSet.shallowcopy">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet.shallowcopy">[docs]</a>
     <span class="k">def</span> <span class="nf">shallowcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EdgeSet&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an identical EdgeSet object, which points to the same target</span>
 <span class="sd">        nodes.&quot;&quot;&quot;</span>
@@ -648,7 +674,8 @@
             <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">],</span>
             <span class="n">weights</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
             <span class="n">probs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">remove_from_edgeset_byid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_node</span><span class="p">):</span>
         <span class="n">idlist</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
@@ -659,6 +686,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">idx_to_remove</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_targetset</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
 
+<div class="viewcode-block" id="EdgeSet.sample">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet.sample">[docs]</a>
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_probabilities</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HistoryDagNode</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
@@ -678,8 +707,11 @@
             <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">factor</span> <span class="o">*</span> <span class="n">prob</span> <span class="k">for</span> <span class="n">factor</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">weights</span><span class="p">)]</span>
 
         <span class="n">index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">))),</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">index</span><span class="p">])</span></div>
 
+
+<div class="viewcode-block" id="EdgeSet.add_to_edgeset">
+<a class="viewcode-back" href="../../stubs/historydag.dag_node.html#historydag.EdgeSet.add_to_edgeset">[docs]</a>
     <span class="k">def</span> <span class="nf">add_to_edgeset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prob_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a target node to the EdgeSet.</span>
 
@@ -716,7 +748,9 @@
                     <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="empty_node">
