@@ -208,9 +208,10 @@ class TransitionModel:
 
     * ``base_indices`` is a dictionary mapping bases in ``self.bases`` to their indices
     * ``mask_vectors`` is a dictionary mapping ambiguity codes (including non-ambiguous bases)
-    to vectors of floats which are 0 at indices compatible with the ambiguity code, and infinity
-    otherwise.
+        to vectors of floats which are 0 at indices compatible with the ambiguity code, and infinity
+        otherwise.
     * ``bases`` is a tuple recording the correct order of unambiguous bases
+
 
     Args:
         bases: An ordered collection of valid character states

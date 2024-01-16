@@ -1,3 +1,9 @@
+"""Provides utilities for parsing BEAST outputs and storing sampled trees in HistoryDag objects.
+This module uses ``dendropy`` to parse the newick strings found in BEAST output files, since
+``ete3`` is incompatible with newick strings containing commas other than those which separate
+nodes. The ``historydag`` package does not require ``dendropy``, so to use this module, you must
+manually ensure that ``dendropy`` is installed in your environment."""
+
 import historydag as hdag
 from warnings import warn
 import dendropy
@@ -20,15 +26,17 @@ def dag_from_beast_trees(
     :meth:`load_beast_trees`.
 
     Args:
-        beast_xml_file: ''
-        beast_output_file: ''
+        beast_xml_file: The xml input file to BEAST
+        beast_output_file: The .trees output file from BEAST
         reference_sequence: Provide a reference sequence, if desired. Otherwise, an arbitrary
             observed sequence will be used.
         topologies_only: If True, no internal sequences will be recovered from the beast output.
             In this case, leaf compact genomes will contain observed (possibly ambiguous)
             sequences regardless of the value of `use_original_leaves`.
-        mask_ambiguous_sites: ''
-        remove_ambiguous_sites: ''
+        mask_ambiguous_sites: If True, ignore mutations for all sites whose observed set
+            of characters is a subset of {N, -, ?} (recommended).
+        remove_ambiguous_sites: If True, acts like ``mask_ambiguous_sites=True``, except
+            the sites in question are actually removed from the sequence, rather than masked.
         use_original_leaves: Use the original observed sequences for leaf node labels, instead
             of thos derived from simulated mutations.
         include_sequence_names_in_labels: If True, augment leaf node labels with a ``name`` attribute
@@ -121,6 +129,7 @@ def load_beast_trees(
         which are removed from sequences. If remove_ambiguous_sites is False, this set contains only
         sites ignored by BEAST. Otherwise, it also contains additional sites removed.
         Each tree has:
+
         * ancestral sequence attribute on each tree object, containing the complete reference
             for that tree
         * cg attribute on all nodes, containing a compact genome relative to the reference
