@@ -8,6 +8,7 @@ import operator
 from collections import UserDict
 from decimal import Decimal
 from warnings import warn
+from itertools import chain, combinations
 from typing import (
     List,
     Any,
@@ -1130,6 +1131,50 @@ def count_labeled_binary_topologies(n):
     """
     return prod(range(1, 2 * n - 2, 2))
 
+def powerset(iterable, start_size=0, end_size=None):
+    """Produce all subsets of iterable (as tuples of elements), with sizes
+    starting at start_size and ending at end_size (inclusive), or the size of the passed
+    iterable if end_size is None."""
+    items = list(iterable)
+    if end_size is None:
+        end_size = len(items)
+    return chain.from_iterable(combinations(items, r) for r in range(start_size, end_size + 1))
+
+def binary_support(clade_size, total_leaves, normalized=True):
+    """Calculate the fraction of binary trees on total_leaves
+    containing a particular clade containing clade_size leaves.
+    If normalized is False, instead returns the number of binary topologies
+    which would contain a particular clade of size clade_size."""
+    if clade_size > total_leaves:
+        raise ValueError("Clade size cannot exceed total number of leaves in tree")
+
+    count = (count_labeled_binary_topologies(clade_size) *
+             count_labeled_binary_topologies(total_leaves - clade_size + 1))
+    # This could certainly be more numerically stable
+    if normalized:
+        return count / count_labeled_binary_topologies(total_leaves)
+    else:
+        return count
+
+def iter_resolved_clade_supports(node_child_clades, threshold=-1):
+    """Returns a generator on clade, support pairs, for clades which
+    would result from binary resolution of a node posessing child clade
+    sets in node_child_clades. All clades with support > threshold are
+    yielded, avoiding iteration through too many clades on large multifurcations.
+
+    Note that the root clade, including all leaves contained in node_child_clades,
+    as well as all the clades contained in node_child_clades, are included and each
+    have a support of 1."""
+    num_children = len(node_child_clades)
+    if num_children < 3:
+        yield from []
+    else:
+        for unflattened_clade_size in range(1, num_children + 1):
+            # support will be the same for all clades of this size
+            support = binary_support(unflattened_clade_size, num_children)
+            if support > threshold:
+                for clade in map(lambda ns: frozenset(chain.from_iterable(ns)), powerset(node_child_clades, start_size=unflattened_clade_size, end_size=unflattened_clade_size)):
+                    yield (clade, support)
 
 def read_fasta(fastapath, sequence_type=str):
     """Load a fasta file as a generator which yields (sequence ID, sequence)
