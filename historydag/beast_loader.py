@@ -1,8 +1,11 @@
-"""Provides utilities for parsing BEAST outputs and storing sampled trees in HistoryDag objects.
+"""Provides utilities for parsing BEAST outputs and storing sampled trees in
+HistoryDag objects.
+
 This module uses ``dendropy`` to parse the newick strings found in BEAST output files, since
 ``ete3`` is incompatible with newick strings containing commas other than those which separate
 nodes. The ``historydag`` package does not require ``dendropy``, so to use this module, you must
-manually ensure that ``dendropy`` is installed in your environment."""
+manually ensure that ``dendropy`` is installed in your environment.
+"""
 
 import historydag as hdag
 from warnings import warn

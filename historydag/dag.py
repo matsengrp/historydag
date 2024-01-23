@@ -3714,12 +3714,14 @@ def history_dag_from_nodes(nodes: Sequence[HistoryDagNode]) -> HistoryDag:
 
 
 def make_binary_complete_dag(leaf_labels):
-    """Produce a history DAG containing all binary topologies on the provided iterable of
-    leaf labels."""
+    """Produce a history DAG containing all binary topologies on the provided
+    iterable of leaf labels."""
     leaf_labels = list(leaf_labels)
     model_label = leaf_labels[0]
     if not isinstance(model_label, tuple):
-        raise ValueError("Provided labels must be a historydag Label type (a typing.NamedTuple instance)")
+        raise ValueError(
+            "Provided labels must be a historydag Label type (a typing.NamedTuple instance)"
+        )
     field_values = tuple(Ellipsis for _ in model_label)
     internal_label = type(model_label)(*field_values)
 
@@ -3727,21 +3729,31 @@ def make_binary_complete_dag(leaf_labels):
     for clade in utils.powerset(leaf_labels, start_size=1):
         # Now need to get all splits of this clade into two child clades
         cladesize = len(clade)
-        for child_mask in utils.powerset(range(cladesize), start_size=1, end_size=cladesize - 1):
+        for child_mask in utils.powerset(
+            range(cladesize), start_size=1, end_size=cladesize - 1
+        ):
             splitter_mask = [False] * cladesize
             for idx in child_mask:
                 splitter_mask[idx] = True
-            clade1 = frozenset(clade[idx] for idx, flag in enumerate(splitter_mask) if flag)
-            clade2 = frozenset(clade[idx] for idx, flag in enumerate(splitter_mask) if not flag)
+            clade1 = frozenset(
+                clade[idx] for idx, flag in enumerate(splitter_mask) if flag
+            )
+            clade2 = frozenset(
+                clade[idx] for idx, flag in enumerate(splitter_mask) if not flag
+            )
             node_set.add(
                 HistoryDagNode(
-                    internal_label, {clade1: EdgeSet(), clade2: EdgeSet()}, {},
+                    internal_label,
+                    {clade1: EdgeSet(), clade2: EdgeSet()},
+                    {},
                 )
             )
     for leaf_label in leaf_labels:
         node_set.add(
             HistoryDagNode(
-                leaf_label, {}, {},
+                leaf_label,
+                {},
+                {},
             )
         )
     return history_dag_from_nodes(node_set)
