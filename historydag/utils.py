@@ -1003,7 +1003,6 @@ def _deprecate_message(message):
     return _deprecate
 
 
-# TODO: If this works, update the CLI code to incorporate this version of random resolving
 def resolve_ete(tree, feature_func_dict={}):
     """Given an ete tree, resolves all polytomies by creating a uniformly
     random bifurcating tree that is consistent with the multifurcating one.
@@ -1083,12 +1082,12 @@ def collapse_ete(tree, prob_muts=lambda n: 1, feature_func_dict={}, and_resolve=
                 new_node = ete3.Tree()
                 new_node.name = node.name
 
-                # TODO: THIS DOESN'T WORK!
-                #       Need to give nodes their own mutations. This replaces mutations with nothing
+                # NOTE: This doesn't give nodes their own mutations. This replaces mutations with nothing?
                 for feature, func in feature_func_dict.items():
                     new_node.add_feature(feature, func(node))
                 node.up.add_child(new_node)
                 new_nodes.append(new_node)
+
 
             # Randomly assign the children of node to each new node
             children = node.children.copy()
