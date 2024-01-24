@@ -1,6 +1,7 @@
 """Utility functions and classes for working with HistoryDag objects."""
 
 import ete3
+import math
 from math import log, exp, isfinite
 from collections import Counter
 from functools import wraps
@@ -1163,6 +1164,25 @@ def binary_support(clade_size, total_leaves, normalized=True):
         return count / count_labeled_binary_topologies(total_leaves)
     else:
         return count
+
+
+def count_resolved_clade_supports(n_child_clades, threshold=-1):
+    """Returns a generator on clade size, support pairs, for clades which would
+    result from binary resolution of a node posessing child clade sets in
+    node_child_clades.
+
+    Summing over the first element of yielded tuples gives the number of
+    elements which would be yielded by iter_resolved_clade_supports
+    provided with n_child_clades child clades and the same threshold
+    value.
+    """
+    num_children = n_child_clades
+    for unflattened_clade_size in range(1, num_children + 1):
+        # support will be the same for all clades of this size...
+        support = binary_support(unflattened_clade_size, num_children)
+        # ... so this check need only be done num_children times
+        if support > threshold:
+            yield (math.comb(num_children, unflattened_clade_size), support)
 
 
 def iter_resolved_clade_supports(node_child_clades, threshold=-1):

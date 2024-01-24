@@ -29,6 +29,29 @@ def test_binary_support():
             )
 
 
+def test_count_resolved_clade_supports():
+    def num_clades_above_threshold(n_leaves, threshold):
+        return sum(
+            1
+            for _ in hdag.utils.iter_resolved_clade_supports(
+                {frozenset({i}) for i in range(n_leaves)}, threshold=threshold
+            )
+        )
+
+    def count_clades_above_threshold(n_leaves, threshold):
+        return sum(
+            tup[0]
+            for tup in hdag.utils.count_resolved_clade_supports(
+                n_leaves, threshold=threshold
+            )
+        )
+
+    for count, threshold in zip(range(20), [0.001, 0.005, 0.01, 0.05, 0.1]):
+        assert num_clades_above_threshold(
+            count, threshold
+        ) == count_clades_above_threshold(count, threshold)
+
+
 def test_iter_resolved_clade_supports():
     # Check there are no duplicates and this works on nontrivial child clade
     # sets:
