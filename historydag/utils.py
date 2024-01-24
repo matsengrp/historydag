@@ -1176,22 +1176,20 @@ def iter_resolved_clade_supports(node_child_clades, threshold=-1):
     node_child_clades, are included and each have a support of 1.
     """
     num_children = len(node_child_clades)
-    if num_children < 3:
-        yield from []
-    else:
-        for unflattened_clade_size in range(1, num_children + 1):
-            # support will be the same for all clades of this size
-            support = binary_support(unflattened_clade_size, num_children)
-            if support > threshold:
-                for clade in map(
-                    lambda ns: frozenset(chain.from_iterable(ns)),
-                    powerset(
-                        node_child_clades,
-                        start_size=unflattened_clade_size,
-                        end_size=unflattened_clade_size,
-                    ),
-                ):
-                    yield (clade, support)
+    for unflattened_clade_size in range(1, num_children + 1):
+        # support will be the same for all clades of this size...
+        support = binary_support(unflattened_clade_size, num_children)
+        # ... so this check need only be done num_children times
+        if support > threshold:
+            for clade in map(
+                lambda ns: frozenset(chain.from_iterable(ns)),
+                powerset(
+                    node_child_clades,
+                    start_size=unflattened_clade_size,
+                    end_size=unflattened_clade_size,
+                ),
+            ):
+                yield (clade, support)
 
 
 def read_fasta(fastapath, sequence_type=str):

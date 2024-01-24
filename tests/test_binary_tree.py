@@ -32,24 +32,38 @@ def test_binary_support():
 def test_iter_resolved_clade_supports():
     # Check there are no duplicates and this works on nontrivial child clade
     # sets:
-    child_clade_set = {
-        frozenset({Label(i) for i in range(4)}),
-        frozenset({Label(i) for i in range(4, 6)}),
-        frozenset({Label(i) for i in range(6, 10)}),
-        frozenset({Label(10)}),
-        frozenset({Label(11)}),
-        frozenset({Label(12)}),
-        frozenset({Label(13)}),
-        frozenset({Label(14)}),
-    }
-    # Make sure child clades are pairwise disjoint
-    assert sum(len(s) for s in child_clade_set) == len(set(chain(*child_clade_set)))
+    for child_clade_set in (
+        {
+            frozenset({Label(i) for i in range(4)}),
+        },
+        {
+            frozenset({Label(i) for i in range(4)}),
+            frozenset({Label(i) for i in range(4, 6)}),
+        },
+        {
+            frozenset({Label(i) for i in range(4)}),
+            frozenset({Label(i) for i in range(4, 6)}),
+            frozenset({Label(i) for i in range(6, 10)}),
+        },
+        {
+            frozenset({Label(i) for i in range(4)}),
+            frozenset({Label(i) for i in range(4, 6)}),
+            frozenset({Label(i) for i in range(6, 10)}),
+            frozenset({Label(10)}),
+            frozenset({Label(11)}),
+            frozenset({Label(12)}),
+            frozenset({Label(13)}),
+            frozenset({Label(14)}),
+        },
+    ):
+        # Make sure child clades are pairwise disjoint
+        assert sum(len(s) for s in child_clade_set) == len(set(chain(*child_clade_set)))
 
-    clade_supports = list(
-        hdag.utils.iter_resolved_clade_supports(child_clade_set, threshold=0.02)
-    )
-    # Make sure there are no duplicated clades
-    assert len(clade_supports) == len(set(clade for clade, _ in clade_supports))
+        clade_supports = list(
+            hdag.utils.iter_resolved_clade_supports(child_clade_set, threshold=0.02)
+        )
+        # Make sure there are no duplicated clades
+        assert len(clade_supports) == len(set(clade for clade, _ in clade_supports))
 
     # Check that clade supports match those computed by actually counting
     num_leaves = 8
