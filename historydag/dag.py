@@ -98,6 +98,87 @@ def convert(dag, newclass):
     return newclass.from_history_dag(dag)
 
 
+# Preorder tree creation class
+
+TreeBuilderNode = Any
+class PreorderTreeBuilder:
+    pass
+
+
+class EteTreeBuilder(PreorderTreeBuilder):
+
+    def __init__(
+        self,
+        name_func: Callable[[HistoryDagNode], str] = lambda n: "unnamed",
+        features: Optional[List[str]] = [],
+        feature_funcs: Mapping[str, Callable[[HistoryDagNode], str]] = {},
+    ):
+        self.treeroot = None
+        self.name_func = name_func
+        self.feature_funcs = feature_funcs
+
+        for feature in features:
+
+            def feature_func(node):
+                return getattr(node.label, feature)
+            self.feature_funcs[feature] = feature_func
+
+        self.feature_funcs = tuple(self.feature_funcs.items())
+
+    def add_node(
+        self,
+        dag_node: HistoryDagNode,
+        parent: ete3.TreeNode = None,
+    ) -> ete3.TreeNode:
+        # Skip the UA Node
+        if isinstance(dag_node, UANode):
+            return None
+        newnode = ete3.TreeNode()
+        newnode.name = self.name_func(dag_node)
+        for feature, feature_func in self.feature_funcs:
+            newnode.add_feature(feature, feature_func(dag_node))
+        if parent is None:
+            assert self.treeroot is None
+            self.treeroot = newnode
+        else:
+            parent.add_child(child=newnode)
+        return newnode
+
+    def get_finished_tree(self):
+        return self.treeroot
+
+class PreorderHistoryBuilder(PreorderTreeBuilder):
+    def __init__(
+        self,
+        dag_type,
+    ):
+        self.nodes = []
+        self.edges = []
+        self.dag_type = dag_type
+
+    def add_node(
+        self,
+        dag_node: HistoryDagNode,
+        parent: int = None,
+    ) -> int:
+        new_node_idx = len(self.nodes)
+        new_node = dag_node.empty_copy()
+        self.nodes.append(new_node)
+        if parent is None:
+            assert new_node_idx == 0
+        else:
+            self.edges.append((parent, new_node_idx))
+        return new_node_idx
+
+    def get_finished_tree(self):
+        for parent_idx, child_idx in reversed(self.edges):
+            parent = self.nodes[parent_idx]
+            child = self.nodes[child_idx]
+            parent.add_edge(child)
+        return self.dag_type(self.nodes[0])
+
+        
+
 class HistoryDag:
     r"""An object to represent a collection of internally labeled trees. A
     wrapper object to contain exposed HistoryDag methods and point to a
@@ -286,12 +367,14 @@ class HistoryDag:
             dag.trim_optimal_weight(**key)
             return dag
         elif isinstance(key, int):
+            # This call to count_histories is essential because we use
+            # the cached node counts later. For faster indexing, call this
+            # method once and call _get_subhistory_by_subid yourself.
             length = self.count_histories()
             if key < 0:
                 key = length + key
             if not (key >= 0 and key < length):
                 raise IndexError
-            self.count_histories()
             return self.__class__(self.dagroot._get_subhistory_by_subid(key))
         else:
             raise TypeError(
@@ -679,6 +762,31 @@ class HistoryDag:
             return next(self.find_nodes(filter_func))
         except StopIteration:
             raise ValueError("No matching node found.")
+
+    def fast_sample(
+        self,
+        tree_builder: PreorderTreeBuilder=None,
+        edge_selector=lambda e: True,
+        log_probabilities=False,
+    ):
+        if tree_builder is None:
+            tree_builder = PreorderHistoryBuilder(type(self))
+        def get_sampled_children(node):
+            for clade, eset in node.clades.items():
+                mask = [edge_selector((node, target)) for target in eset.targets]
+                sampled_target, _ = eset.sample(mask=mask, log_probabilities=log_probabilities)
+                yield sampled_target
+
+        node_queue = [(self.dagroot, tree_builder.add_node(self.dagroot))]
+
+        while len(node_queue) > 0:
+            parent, parent_repr = node_queue.pop()
+            for child in get_sampled_children(parent):
+                child_repr = tree_builder.add_node(child, parent=parent_repr)
+                node_queue.append((child, child_repr))
+
+        return tree_builder.get_finished_tree()
+
 
     def sample(
         self, edge_selector=lambda e: True, log_probabilities=False
@@ -1171,29 +1279,19 @@ class HistoryDag:
         """
         # First build a dictionary of ete3 nodes keyed by HDagNodes.
         if features is None:
-            labelfeatures = list(
+            features = list(
                 list(self.dagroot.children())[0].label._asdict().keys()
             )
-        else:
-            labelfeatures = features
 
-        def etenode(node: HistoryDagNode) -> ete3.TreeNode:
-            newnode = ete3.TreeNode()
-            newnode.name = name_func(node)
-            for feature in labelfeatures:
-                newnode.add_feature(feature, getattr(node.label, feature))
-            for feature, func in feature_funcs.items():
-                newnode.add_feature(feature, func(node))
-            return newnode
 
-        nodedict = {node: etenode(node) for node in self.preorder(skip_ua_node=True)}
+        tree_builder = EteTreeBuilder(name_func=name_func, features=features, feature_funcs=feature_funcs)
+        nodes_to_process = [(self.dagroot, tree_builder.add_node(self.dagroot))]
+        while len(nodes_to_process) > 0:
+            node, node_repr = nodes_to_proces.pop()
+            for child in node.children():
+                nodes_to_process.append((child, tree_builder.add_node(child, parent=node_repr)))
 
-        for node in nodedict:
-            for target in node.children():
-                nodedict[node].add_child(child=nodedict[target])
-
-        # Since self is cladetree, dagroot can have only one child
-        return nodedict[list(self.dagroot.children())[0]]
+        return tree_builder.get_finished_tree()
 
     def to_graphviz(
         self,
@@ -3445,6 +3543,7 @@ class HistoryDag:
         if skip_ua_node:
             next(gen)
         yield from gen
+
 
 
 # DAG creation functions

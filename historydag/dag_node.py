@@ -527,8 +527,7 @@ class EdgeSet:
     ) -> Tuple[HistoryDagNode, float]:
         """Returns a randomly sampled child edge, and its corresponding weight.
 
-        When possible, only edges pointing to child nodes on which
-        ``selection_function`` evaluates to True will be sampled.
+        When possible, only edges with nonzero mask value will be sampled.
         """
         if log_probabilities:
             weights = [exp(weight) for weight in self.probs]
