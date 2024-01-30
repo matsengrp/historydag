@@ -107,7 +107,8 @@ def sankoff_upward(
         seq_len: The length of sequence for each leaf node.
         sequence_attr_name: the field name of the label attribute that is used to store sequences on nodes.
             Default value is set to 'sequence'
-        transition_model: The type of ``TransitionModel`` to use for Sankoff. See docstring for more information.
+        transition_model: The type of :meth:`parsimony_utils.TransitionModel` to use for Sankoff.
+            See docstring for more information.
         use_internal_node_sequences: (used when tree is of type ``ete3.TreeNode``) If True, then compute the
             transition cost for sequences assigned to internal nodes.
     """
@@ -385,10 +386,15 @@ def disambiguate(
         remove_cvs: Remove sankoff cost vectors from tree nodes after disambiguation.
         adj_dist: Recompute hamming parsimony distances on tree after disambiguation, and store them
             in ``dist`` node attributes.
+        transition_model: The type of :meth:`parsimony_utils.TransitionModel` to use for Sankoff.
+            See docstring for more information.
         min_ambiguities: If True, leaves ambiguities in reconstructed sequences, expressing which
             bases are possible at each site in a maximally parsimonious disambiguation of the given
             topology. In the history DAG paper, this is known as a strictly min-weight ambiguous labeling.
             Otherwise, sequences are resolved in one possible way, and include no ambiguities.
+        use_internal_node_sequences: If True, then instead of overwriting internal node sequences, only
+            disambiguate ambiguous bases in those sequences. For example, to fix a root sequence, this
+            option must be True.
     """
     if random_state is None:
         random.seed(tree.write(format=1))

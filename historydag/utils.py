@@ -8,6 +8,7 @@ import operator
 from collections import UserDict
 from decimal import Decimal
 from warnings import warn
+from itertools import chain, combinations
 from typing import (
     List,
     Any,
@@ -21,6 +22,29 @@ from typing import (
     Optional,
 )
 from typing import TYPE_CHECKING
+
+
+try:
+    from math import comb
+except ImportError:
+
+    def comb(n, k):
+        """
+        A fast way to calculate binomial coefficients
+        from https://stackoverflow.com/a/3025547
+        https://en.wikipedia.org/wiki/Binomial_coefficient#Multiplicative_formula
+        """
+        if 0 <= k <= n:
+            ntok = 1
+            ktok = 1
+            for t in range(1, min(k, n - k) + 1):
+                ntok *= n
+                ktok *= t
+                n -= 1
+            return ntok // ktok
+        else:
+            return 0
+
 
 if TYPE_CHECKING:
     from historydag.dag import HistoryDagNode, HistoryDag
@@ -1129,6 +1153,132 @@ def count_labeled_binary_topologies(n):
     and internal nodes are not ranked.
     """
     return prod(range(1, 2 * n - 2, 2))
+
+
+def powerset(iterable, start_size=0, end_size=None):
+    """Produce all subsets of iterable (as tuples of elements), with sizes
+    starting at start_size and ending at end_size (inclusive), or the size of
+    the passed iterable if end_size is None."""
+    items = list(iterable)
+    if end_size is None:
+        end_size = len(items)
+    return chain.from_iterable(
+        combinations(items, r) for r in range(start_size, end_size + 1)
+    )
+
+
+def binary_support(clade_size, total_leaves, normalized=True):
+    """Calculate the fraction of binary trees on total_leaves containing a
+    particular clade containing clade_size leaves.
+
+    If normalized is False, instead returns the number of binary
+    topologies which would contain a particular clade of size
+    clade_size.
+    """
+    if clade_size > total_leaves:
+        raise ValueError("Clade size cannot exceed total number of leaves in tree")
+
+    count = count_labeled_binary_topologies(
+        clade_size
+    ) * count_labeled_binary_topologies(total_leaves - clade_size + 1)
+    # This could certainly be more numerically stable
+    if normalized:
+        return count / count_labeled_binary_topologies(total_leaves)
+    else:
+        return count
+
+
+def count_resolved_clade_supports(
+    n_child_clades, threshold=-1, min_size=1, max_size=None
+):
+    """Returns a generator on clade size, support pairs, for clades which would
+    result from binary resolution of a node posessing child clade sets in
+    node_child_clades.
+
+    Clade size means number of children of this node which are grouped
+    below a node.
+
+    Summing over the first element of yielded tuples gives the number of
+    elements which would be yielded by :meth:`iter_resolved_clade_supports`
+    provided with n_child_clades child clades and the same threshold
+    value.
+
+    Args:
+        n_child_clades: The number of children of the multifurcating node
+        threshold: If a resolved node's clade support value is below this threshold,
+            that clade will not be counted.
+        min_size: The minimum size of a clade to be counted.
+        max_size: The (inclusive) maximum size of a clade to be counted.
+            The maximum value is ``len(node_child_clades)``, which is equivalent
+            to the default value.
+
+    Note that by default, the root clade, including all leaves contained in
+    node_child_clades, as well as all the clades contained in
+    node_child_clades, are included and each have a support of 1. To exclude leaves, pass
+    ``min_size=2``.
+    """
+    num_children = n_child_clades
+    if max_size is None:
+        max_size = num_children
+    elif max_size > num_children:
+        raise ValueError("max_size cannot be greater than n_child_clades")
+    elif max_size < 1:
+        raise ValueError("max_size cannot be less than 1")
+    for unflattened_clade_size in range(min_size, max_size + 1):
+        # support will be the same for all clades of this size...
+        support = binary_support(unflattened_clade_size, num_children)
+        # ... so this check need only be done num_children times
+        if support > threshold:
+            yield (comb(num_children, unflattened_clade_size), support)
+
+
+def iter_resolved_clade_supports(
+    node_child_clades, threshold=-1, min_size=1, max_size=None
+):
+    """Returns a generator on clade, support pairs, for clades which would
+    result from binary resolution of a node posessing child clade sets in
+    node_child_clades. All clades with support > threshold are yielded,
+    avoiding iteration through too many clades on large multifurcations.
+
+    Args:
+        node_child_clades: A set of frozensets containing the clades of the children of a
+            multifurcating node.
+        threshold: If a resolved node's clade support value is below this threshold,
+            that clade will not be yielded.
+        min_size: The minimum size of a clade to be yielded. Note this is NOT simply the
+            size of the clade set, but rather the number of children of the multifurcating
+            node which are below the resolved node corresponding to the clade.
+        max_size: The (inclusive) maximum size of a clade to be yielded. See `min_size`
+            for a description of what size means. The maximum value is ``len(node_child_clades)``,
+            which is equivalent to the default value.
+
+    Note that by default, the root clade, including all leaves contained in
+    node_child_clades, as well as all the clades contained in
+    node_child_clades, are included and each have a support of 1. To exclude leaves, pass
+    ``min_size=2``.
+    """
+    if max_size is None:
+        max_size = len(node_child_clades)
+    elif max_size > len(node_child_clades):
+        raise ValueError("max_size cannot be greater than the number of child clades")
+    elif max_size < 1:
+        raise ValueError("max_size cannot be less than 1")
+
+    num_children = len(node_child_clades)
+    for unflattened_clade_size in range(min_size, max_size + 1):
+        # support will be the same for all clades of this size...
+        support = binary_support(unflattened_clade_size, num_children)
+        # ... so this check need only be done num_children times
+        if support > threshold:
+            for clade in map(
+                lambda ns: frozenset(chain.from_iterable(ns)),
+                powerset(
+                    node_child_clades,
+                    start_size=unflattened_clade_size,
+                    end_size=unflattened_clade_size,
+                ),
+            ):
+                yield (clade, support)
 
 
 def read_fasta(fastapath, sequence_type=str):

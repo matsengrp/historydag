@@ -13,10 +13,14 @@ from typing import (
     Tuple,
     Dict,
     FrozenSet,
+    TYPE_CHECKING,
 )
 from copy import deepcopy
 from historydag import utils
 from historydag.utils import Weight, Label, UALabel
+
+if TYPE_CHECKING:
+    from historydag.dag import PreorderTreeBuilder
 
 
 class HistoryDagNode:
@@ -183,14 +187,15 @@ class HistoryDagNode:
                 prob_norm=prob_norm,
             )
 
-    def _get_subhistory_by_subid(self, subid: int) -> "HistoryDagNode":
-        r"""Returns the subtree below the current HistoryDagNode corresponding
-        to the given index."""
+    def _get_subhistory_by_subid(
+        self, subid: int, tree_builder: "PreorderTreeBuilder", parent_repr=None
+    ):
+        r"""Uses ``tree_builder`` to build the subtree below the current
+        HistoryDagNode corresponding to the given index."""
+        this_repr = tree_builder.add_node(self, parent=parent_repr)
         if self.is_leaf():  # base case - the node is a leaf
-            return self
+            return
         else:
-            history = self.empty_copy()
-
             # get the subtree for each of the clades
             for clade, eset in self.clades.items():
                 # get the sum of subtrees of the edges for this clade
@@ -205,13 +210,12 @@ class HistoryDagNode:
                         curr_index = curr_index - child._dp_data
                     else:
                         # add this edge to the tree somehow
-                        history.clades[clade].add_to_edgeset(
-                            child._get_subhistory_by_subid(curr_index)
+                        child._get_subhistory_by_subid(
+                            curr_index, tree_builder, parent_repr=this_repr
                         )
                         break
 
                 subid = subid / num_subtrees
-        return history
 
     def remove_edge_by_clade_and_id(self, target: "HistoryDagNode", clade: frozenset):
         key: frozenset
@@ -527,8 +531,8 @@ class EdgeSet:
     ) -> Tuple[HistoryDagNode, float]:
         """Returns a randomly sampled child edge, and its corresponding weight.
 
-        When possible, only edges pointing to child nodes on which
-        ``selection_function`` evaluates to True will be sampled.
+        When possible, only edges with nonzero mask value will be
+        sampled.
         """
         if log_probabilities:
             weights = [exp(weight) for weight in self.probs]

@@ -1,8 +1,12 @@
-"""This module provides a CompactGenome class, intended as a convenient and compact representation of
-a nucleotide sequence as a collection of mutations relative to a reference sequence. This object also
-provides methods to conveniently mutate CompactGenome objects according to a list of mutations, produce
-mutations defining the difference between two CompactGenome objects, and efficiently access the base
-at a site (or the entire sequence, as a string) implied by a CompactGenome.
+"""This module provides a CompactGenome class, intended as a convenient and
+compact representation of a nucleotide sequence as a collection of mutations
+relative to a reference sequence.
+
+This object also provides methods to conveniently mutate CompactGenome
+objects according to a list of mutations, produce mutations defining the
+difference between two CompactGenome objects, and efficiently access the
+base at a site (or the entire sequence, as a string) implied by a
+CompactGenome.
 """
 
 from frozendict import frozendict
