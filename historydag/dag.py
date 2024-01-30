@@ -101,11 +101,15 @@ def convert(dag, newclass):
 # Preorder tree creation class
 
 TreeBuilderNode = Any
+
+
 class PreorderTreeBuilder:
-    """Any class implementing a PreorderTreeBuilder interface can be used as a tree sample
-    constructor in :meth:`HistoryDag.fast_sample`. Subclasses implementing this interface may
-    implement an arbitrary constructor interface, as the user will be responsible for creating
-    instances to be used for sampling. In addition, subclasses must implement the following methods:
+    """Any class implementing a PreorderTreeBuilder interface can be used as a
+    tree sample constructor in :meth:`HistoryDag.fast_sample`. Subclasses
+    implementing this interface may implement an arbitrary constructor
+    interface, as the user will be responsible for creating instances to be
+    used for sampling. In addition, subclasses must implement the following
+    methods:
 
     Methods:
         add_node: This method must accept a :class:HistoryDagNode object ``dag_node`` and, optionally
@@ -119,11 +123,11 @@ class PreorderTreeBuilder:
             sampled tree, after any necessary clean-up or final tree construction steps. Its
             return value is the return value of :meth:`HistoryDag.fast_sample`.
     """
+
     pass
 
 
 class EteTreeBuilder(PreorderTreeBuilder):
-
     def __init__(
         self,
         name_func: Callable[[HistoryDagNode], str] = lambda n: "unnamed",
@@ -138,6 +142,7 @@ class EteTreeBuilder(PreorderTreeBuilder):
 
             def feature_func(node):
                 return getattr(node.label, feature)
+
             self.feature_funcs[feature] = feature_func
 
         self.feature_funcs = tuple(self.feature_funcs.items())
@@ -163,6 +168,7 @@ class EteTreeBuilder(PreorderTreeBuilder):
 
     def get_finished_tree(self):
         return self.treeroot
+
 
 class PreorderHistoryBuilder(PreorderTreeBuilder):
     def __init__(
@@ -191,7 +197,6 @@ class PreorderHistoryBuilder(PreorderTreeBuilder):
             parent.add_edge(child)
         return self.dag_type(self.root_node)
 
-        
 
 class HistoryDag:
     r"""An object to represent a collection of internally labeled trees. A
@@ -400,9 +405,9 @@ class HistoryDag:
 
     def get_histories_by_index(self, key_iterator, tree_builder_func=None):
         """Retrieving a history by index is slow, since each retrieval requires
-        running the ``trim_optimal_weight`` method on the entire DAG to populate
-        node counts. This method instead runs that method a single time and
-        yields a history for each index yielded by ``key_iterator``.
+        running the ``trim_optimal_weight`` method on the entire DAG to
+        populate node counts. This method instead runs that method a single
+        time and yields a history for each index yielded by ``key_iterator``.
 
         Args:
             key_iterator: An iterator on desired history indices. May be consumable, as
@@ -410,7 +415,8 @@ class HistoryDag:
             tree_builder_func: A function accepting an index and returning a
                 :class:`PreorderTreeBuilder` instance to be used to build the history
                 with that index. If None (default), then tree-shaped HistoryDag objects
-                will be yielded using :class:`PreorderHistoryBuilder`."""
+                will be yielded using :class:`PreorderHistoryBuilder`.
+        """
         if tree_builder_func is None:
 
             def tree_builder_func(idx):
@@ -422,11 +428,12 @@ class HistoryDag:
             if key < 0:
                 key = length + key
             if not (key >= 0 and key < length):
-                raise IndexError(f"Invalid index {key} in DAG containing {length} histories")
+                raise IndexError(
+                    f"Invalid index {key} in DAG containing {length} histories"
+                )
             builder = tree_builder_func(key)
             self.dagroot._get_subhistory_by_subid(key, builder)
             yield builder.get_finished_tree()
-
 
     def get_label_type(self) -> type:
         """Return the type for labels on this dag's nodes."""
@@ -811,14 +818,13 @@ class HistoryDag:
 
     def fast_sample(
         self,
-        tree_builder: PreorderTreeBuilder=None,
+        tree_builder: PreorderTreeBuilder = None,
         log_probabilities=False,
     ):
-        """This is a non-recursive alternative to :meth:`HistoryDag.sample`, which is likely
-        to be slower on small DAGs, but may allow significant optimizations on large DAGs, or
-        in the case that the data format being sampled is something other than a tree-shaped
-        HistoryDag object.
-
+        """This is a non-recursive alternative to :meth:`HistoryDag.sample`,
+        which is likely to be slower on small DAGs, but may allow significant
+        optimizations on large DAGs, or in the case that the data format being
+        sampled is something other than a tree-shaped HistoryDag object.
 
         This method does not provide an edge_selector argument like :meth:`HistoryDag.sample`.
         Instead, any masking of edges should be done prior to sampling using the :meth:`HistoryDag.set_sample_mask`
@@ -827,7 +833,8 @@ class HistoryDag:
         Args:
             tree_builder: a PreorderTreeBuilder instance to handle construction of the sampled tree.
             log_probabilities: Whether edge probabilities annotated on this DAG (using, for example,
-                :meth:`HistoryDag.probability_annotate`) are on a log-scale."""
+                :meth:`HistoryDag.probability_annotate`) are on a log-scale.
+        """
         if tree_builder is None:
             tree_builder = PreorderHistoryBuilder(type(self))
 
@@ -845,7 +852,6 @@ class HistoryDag:
                 node_queue.append((child, child_repr))
 
         return tree_builder.get_finished_tree()
-
 
     def sample(
         self, edge_selector=lambda e: True, log_probabilities=False
@@ -1341,17 +1347,18 @@ class HistoryDag:
         """
         # First build a dictionary of ete3 nodes keyed by HDagNodes.
         if features is None:
-            features = list(
-                list(self.dagroot.children())[0].label._asdict().keys()
-            )
+            features = list(list(self.dagroot.children())[0].label._asdict().keys())
 
-
-        tree_builder = EteTreeBuilder(name_func=name_func, features=features, feature_funcs=feature_funcs)
+        tree_builder = EteTreeBuilder(
+            name_func=name_func, features=features, feature_funcs=feature_funcs
+        )
         nodes_to_process = [(self.dagroot, tree_builder.add_node(self.dagroot))]
         while len(nodes_to_process) > 0:
             node, node_repr = nodes_to_process.pop()
             for child in node.children():
-                nodes_to_process.append((child, tree_builder.add_node(child, parent=node_repr)))
+                nodes_to_process.append(
+                    (child, tree_builder.add_node(child, parent=node_repr))
+                )
 
         return tree_builder.get_finished_tree()
 
@@ -3110,8 +3117,9 @@ class HistoryDag:
         return {key: aggregate_func(val) for key, val in edge_probabilities.items()}
 
     def set_sample_mask(self, edge_selector, log_probabilities=False):
-        """Zero out edge weights for masked edges before calling :meth:`HistoryDag.fast_sample`.
-        This should be equivalent to passing the same edge_selector function to :meth:`HistoryDag.sample`.
+        """Zero out edge weights for masked edges before calling
+        :meth:`HistoryDag.fast_sample`. This should be equivalent to passing
+        the same edge_selector function to :meth:`HistoryDag.sample`.
 
         Args:
             edge_selector: A function accepting an edge (a tuple of HistoryDagNode objects) and
@@ -3121,7 +3129,8 @@ class HistoryDag:
                 whether those probabilities are on a log scale.
 
         Take care to verify that you shouldn't instead use :meth:`HistoryDag.probability_annotate` with
-        a choice of ``edge_weight_func`` that takes into account the masking preferences."""
+        a choice of ``edge_weight_func`` that takes into account the masking preferences.
+        """
 
         if log_probabilities:
             mask_value = float("-inf")
@@ -3136,7 +3145,6 @@ class HistoryDag:
                     for i, val in enumerate(mask):
                         if not val:
                             eset.probs[i] = mask_value
-
 
     def probability_annotate(
         self,
@@ -3634,7 +3642,6 @@ class HistoryDag:
         if skip_ua_node:
             next(gen)
         yield from gen
-
 
 
 # DAG creation functions

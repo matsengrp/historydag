@@ -394,8 +394,10 @@ def test_fast_sample_with_node():
     ]
     for node in least_supported_nodes:
         mask_true = dag.nodes_above_node(node)
+
         def edge_selector(edge):
             return edge[-1] in mask_true
+
         dag.make_uniform()
         dag.set_sample_mask(edge_selector)
         tree_samples = [dag.fast_sample() for _ in range(min_count * 7)]
@@ -410,6 +412,7 @@ def test_fast_sample_with_node():
         # norms, avg = normalize_counts(Counter(tree.to_newick() for tree in tree_samples))
         # print(norms)
         # assert all(is_close(norm, avg) for norm in norms)
+
 
 def test_sample_with_node():
     random.seed(1)

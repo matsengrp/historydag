@@ -13,10 +13,14 @@ from typing import (
     Tuple,
     Dict,
     FrozenSet,
+    TYPE_CHECKING,
 )
 from copy import deepcopy
 from historydag import utils
 from historydag.utils import Weight, Label, UALabel
+
+if TYPE_CHECKING:
+    from historydag.dag import PreorderTreeBuilder
 
 
 class HistoryDagNode:
@@ -183,15 +187,15 @@ class HistoryDagNode:
                 prob_norm=prob_norm,
             )
 
-    def _get_subhistory_by_subid(self, subid: int, tree_builder, parent_repr=None) -> "HistoryDagNode":
-        r"""Returns the subtree below the current HistoryDagNode corresponding
-        to the given index."""
+    def _get_subhistory_by_subid(
+        self, subid: int, tree_builder: "PreorderTreeBuilder", parent_repr=None
+    ):
+        r"""Uses ``tree_builder`` to build the subtree below the current
+        HistoryDagNode corresponding to the given index."""
         this_repr = tree_builder.add_node(self, parent=parent_repr)
         if self.is_leaf():  # base case - the node is a leaf
             return
         else:
-            history = self.empty_copy()
-
             # get the subtree for each of the clades
             for clade, eset in self.clades.items():
                 # get the sum of subtrees of the edges for this clade
@@ -206,7 +210,9 @@ class HistoryDagNode:
                         curr_index = curr_index - child._dp_data
                     else:
                         # add this edge to the tree somehow
-                        child._get_subhistory_by_subid(curr_index, tree_builder, parent_repr=this_repr)
+                        child._get_subhistory_by_subid(
+                            curr_index, tree_builder, parent_repr=this_repr
+                        )
                         break
 
                 subid = subid / num_subtrees
@@ -525,7 +531,8 @@ class EdgeSet:
     ) -> Tuple[HistoryDagNode, float]:
         """Returns a randomly sampled child edge, and its corresponding weight.
 
-        When possible, only edges with nonzero mask value will be sampled.
+        When possible, only edges with nonzero mask value will be
+        sampled.
         """
         if log_probabilities:
             weights = [exp(weight) for weight in self.probs]
