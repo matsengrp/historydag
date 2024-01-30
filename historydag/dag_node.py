@@ -183,11 +183,12 @@ class HistoryDagNode:
                 prob_norm=prob_norm,
             )
 
-    def _get_subhistory_by_subid(self, subid: int) -> "HistoryDagNode":
+    def _get_subhistory_by_subid(self, subid: int, tree_builder, parent_repr=None) -> "HistoryDagNode":
         r"""Returns the subtree below the current HistoryDagNode corresponding
         to the given index."""
+        this_repr = tree_builder.add_node(self, parent=parent_repr)
         if self.is_leaf():  # base case - the node is a leaf
-            return self
+            return
         else:
             history = self.empty_copy()
 
@@ -205,13 +206,10 @@ class HistoryDagNode:
                         curr_index = curr_index - child._dp_data
                     else:
                         # add this edge to the tree somehow
-                        history.clades[clade].add_to_edgeset(
-                            child._get_subhistory_by_subid(curr_index)
-                        )
+                        child._get_subhistory_by_subid(curr_index, tree_builder, parent_repr=this_repr)
                         break
 
                 subid = subid / num_subtrees
-        return history
 
     def remove_edge_by_clade_and_id(self, target: "HistoryDagNode", clade: frozenset):
         key: frozenset

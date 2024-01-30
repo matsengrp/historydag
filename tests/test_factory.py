@@ -383,6 +383,34 @@ def test_from_nodes():
         assert wc == ndag.weight_count()
 
 
+def test_fast_sample_with_node():
+    random.seed(1)
+    dag = dags[-1]
+    dag.make_uniform()
+    node_to_count = dag.count_nodes()
+    min_count = min(node_to_count.values())
+    least_supported_nodes = [
+        node for node, val in node_to_count.items() if val == min_count
+    ]
+    for node in least_supported_nodes:
+        mask_true = dag.nodes_above_node(node)
+        def edge_selector(edge):
+            return edge[-1] in mask_true
+        dag.make_uniform()
+        dag.set_sample_mask(edge_selector)
+        tree_samples = [dag.fast_sample() for _ in range(min_count * 7)]
+        tree_samples[0]._check_valid()
+        tree_newicks = {tree.to_newick() for tree in tree_samples}
+        # We sampled all trees possible containing the node
+        assert len(tree_newicks) == min_count
+        # All trees sampled contained the node
+        assert all(node in set(tree.preorder()) for tree in tree_samples)
+        # # trees containing the node were sampled uniformly
+        # # (This is slow but seems to work)
+        # norms, avg = normalize_counts(Counter(tree.to_newick() for tree in tree_samples))
+        # print(norms)
+        # assert all(is_close(norm, avg) for norm in norms)
+
 def test_sample_with_node():
     random.seed(1)
     dag = dags[-1]
