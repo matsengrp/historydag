@@ -241,6 +241,18 @@ def test_sample():
     sample.to_graphviz(namedict=namedict)
 
 
+def test_fast_sample():
+    newicks = ["((a, b)b, c)c;", "((a, b)c, c)c;", "((a, b)a, c)c;", "((a, b)r, c)r;"]
+    newicks = ["((1, 2)2, 3)3;", "((1, 2)3, 3)3;", "((1, 2)1, 3)3;", "((1, 2)4, 3)4;"]
+    namedict = {(str(x),): x for x in range(5)}
+    dag = history_dag_from_newicks(newicks, ["name"])
+    for i in range(10):
+        assert dag.fast_sample().is_history()
+    sample = dag.fast_sample()
+    sample._check_valid()
+    sample.to_graphviz(namedict=namedict)
+
+
 def test_unifurcation():
     # Make sure that unifurcations are handled correctly
     # First make sure the call works when the problem is fixed:

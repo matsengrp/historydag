@@ -13,10 +13,14 @@ from typing import (
     Tuple,
     Dict,
     FrozenSet,
+    TYPE_CHECKING,
 )
 from copy import deepcopy
 from historydag import utils
 from historydag.utils import Weight, Label, UALabel
+
+if TYPE_CHECKING:
+    from historydag.dag import PreorderTreeBuilder
 
 
 class HistoryDagNode:
@@ -183,14 +187,15 @@ class HistoryDagNode:
                 prob_norm=prob_norm,
             )
 
-    def _get_subhistory_by_subid(self, subid: int) -> "HistoryDagNode":
-        r"""Returns the subtree below the current HistoryDagNode corresponding
-        to the given index."""
+    def _get_subhistory_by_subid(
+        self, subid: int, tree_builder: "PreorderTreeBuilder", parent_repr=None
+    ):
+        r"""Uses ``tree_builder`` to build the subtree below the current
+        HistoryDagNode corresponding to the given index."""
+        this_repr = tree_builder.add_node(self, parent=parent_repr)
         if self.is_leaf():  # base case - the node is a leaf
-            return self
+            return
         else:
-            history = self.empty_copy()
-
             # get the subtree for each of the clades
             for clade, eset in self.clades.items():
                 # get the sum of subtrees of the edges for this clade
@@ -205,13 +210,12 @@ class HistoryDagNode:
                         curr_index = curr_index - child._dp_data
                     else:
                         # add this edge to the tree somehow
-                        history.clades[clade].add_to_edgeset(
-                            child._get_subhistory_by_subid(curr_index)
+                        child._get_subhistory_by_subid(
+                            curr_index, tree_builder, parent_repr=this_repr
                         )
                         break
 
                 subid = subid / num_subtrees
-        return history
 
     def remove_edge_by_clade_and_id(self, target: "HistoryDagNode", clade: frozenset):
         key: frozenset
@@ -238,7 +242,61 @@ class HistoryDagNode:
             parent.remove_edge_by_clade_and_id(self, self.clade_union())
         self.removed = True
 
-    def to_ete_recursive(
+    def to_ascii(
+        self,
+        name_func,
+        show_internal=False,
+        compact=False,
+        sort_method=None,
+    ):
+        """A convenience function that uses the :meth:`to_ete` method and
+        ete3's ASCII drawing tools to render a sub-history below self.
+
+        Expects that this node is part of a tree-shaped history DAG. If this is not
+        true, this method may fail silently.
+
+        Args:
+            name_func: A function taking a HistoryDagNode and returning a string
+                to identify that node in the ascii tree.
+            show_internal: Whether to show internal node names.
+            compact: Whether to show the tree in a more compact format
+            sort_method: Either None, `ladderize`, `leaf-name`, or `child-name`.
+                `leaf-name` sorts children by the alphabetically first leaf name
+                below each child node. `child-name` sorts directly by child name.
+        Returns:
+            A string including whitespace and newlines (no tabs) which when printed
+            shows the structure of the history.
+        """
+        t = self.to_ete(name_func=name_func)
+
+        def child_name_sort(tree):
+            for node in tree.traverse(strategy="postorder"):
+                node.children.sort(key=lambda n: n.name)
+
+        def leaf_name_sort(tree):
+            for node in tree.traverse(strategy="postorder"):
+                if node.is_leaf():
+                    node.firstleaf = node.name
+                else:
+                    node.children.sort(key=lambda n: n.firstleaf)
+                    node.firstleaf = node.children[0].firstleaf
+
+        try:
+            sort_func = {
+                None: (lambda tree: None),
+                "ladderize": t.ladderize,
+                "leaf-name": leaf_name_sort,
+                "child-name": child_name_sort,
+            }[sort_method]
+        except KeyError:
+            raise KeyError(
+                "to_ascii method accepts sort_method None, `ladderize`, "
+                f"`child-name`, or `leaf-name`, not {sort_method}."
+            )
+        sort_func(t)
+        return t.get_ascii(show_internal=show_internal, compact=compact)
+
+    def to_ete(
         self,
         name_func: Callable[["HistoryDagNode"], str] = lambda n: "unnamed",
         feature_funcs: Mapping[str, Callable[["HistoryDagNode"], str]] = {},
@@ -261,7 +319,7 @@ class HistoryDagNode:
         for feature, func in feature_funcs.items():
             node.add_feature(feature, func(self))
         for child in self.children():
-            node.add_child(child.to_ete_recursive(name_func, feature_funcs, sort_func))
+            node.add_child(child.to_ete(name_func, feature_funcs, sort_func))
         return node
 
     def _sample(
@@ -473,8 +531,8 @@ class EdgeSet:
     ) -> Tuple[HistoryDagNode, float]:
         """Returns a randomly sampled child edge, and its corresponding weight.
 
-        When possible, only edges pointing to child nodes on which
-        ``selection_function`` evaluates to True will be sampled.
+        When possible, only edges with nonzero mask value will be
+        sampled.
         """
         if log_probabilities:
             weights = [exp(weight) for weight in self.probs]

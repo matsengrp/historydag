@@ -3,11 +3,12 @@ import random
 import ete3
 import numpy as np
 from itertools import product
+import historydag.utils as utils
+from historydag.utils import load_fasta
 from historydag.dag import (
     history_dag_from_histories,
     history_dag_from_etes,
     HistoryDag,
-    utils,
 )
 from copy import deepcopy
 import historydag.parsimony_utils as parsimony_utils
@@ -106,7 +107,8 @@ def sankoff_upward(
         seq_len: The length of sequence for each leaf node.
         sequence_attr_name: the field name of the label attribute that is used to store sequences on nodes.
             Default value is set to 'sequence'
-        transition_model: The type of ``TransitionModel`` to use for Sankoff. See docstring for more information.
+        transition_model: The type of :meth:`parsimony_utils.TransitionModel` to use for Sankoff.
+            See docstring for more information.
         use_internal_node_sequences: (used when tree is of type ``ete3.TreeNode``) If True, then compute the
             transition cost for sequences assigned to internal nodes.
     """
@@ -384,10 +386,15 @@ def disambiguate(
         remove_cvs: Remove sankoff cost vectors from tree nodes after disambiguation.
         adj_dist: Recompute hamming parsimony distances on tree after disambiguation, and store them
             in ``dist`` node attributes.
+        transition_model: The type of :meth:`parsimony_utils.TransitionModel` to use for Sankoff.
+            See docstring for more information.
         min_ambiguities: If True, leaves ambiguities in reconstructed sequences, expressing which
             bases are possible at each site in a maximally parsimonious disambiguation of the given
             topology. In the history DAG paper, this is known as a strictly min-weight ambiguous labeling.
             Otherwise, sequences are resolved in one possible way, and include no ambiguities.
+        use_internal_node_sequences: If True, then instead of overwriting internal node sequences, only
+            disambiguate ambiguous bases in those sequences. For example, to fix a root sequence, this
+            option must be True.
     """
     if random_state is None:
         random.seed(tree.write(format=1))
@@ -450,31 +457,6 @@ def disambiguate(
                 node.up.sequence, node.sequence
             )
     return tree
-
-
-def load_fasta(fastapath):
-    """Load a fasta file as a dictionary, with sequence ids as keys and
-    sequences as values."""
-    fasta_map = {}
-    with open(fastapath, "r") as fh:
-        seqid = None
-        for line in fh:
-            if line[0] == ">":
-                seqid = line[1:].strip()
-                if seqid in fasta_map:
-                    raise ValueError(
-                        "Duplicate records with matching identifier in fasta file"
-                    )
-                else:
-                    fasta_map[seqid] = ""
-            else:
-                if seqid is None and line.strip():
-                    raise ValueError(
-                        "First non-blank line in fasta does not contain identifier"
-                    )
-                else:
-                    fasta_map[seqid] += line.strip().upper()
-    return fasta_map
 
 
 def build_tree(

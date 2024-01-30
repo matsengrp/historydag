@@ -15,6 +15,7 @@ import operator
 from collections import UserDict
 from decimal import Decimal
 from warnings import warn
+from itertools import chain, combinations
 from typing import (
     List,
     Any,
@@ -29,12 +30,39 @@ from typing import (
 )
 from typing import TYPE_CHECKING
 
+
+try:
+    from math import comb
+except ImportError:
+
+    def comb(n, k):
+        """
+        A fast way to calculate binomial coefficients
+        from https://stackoverflow.com/a/3025547
+        https://en.wikipedia.org/wiki/Binomial_coefficient#Multiplicative_formula
+        """
+        if 0 <= k <= n:
+            ntok = 1
+            ktok = 1
+            for t in range(1, min(k, n - k) + 1):
+                ntok *= n
+                ktok *= t
+                n -= 1
+            return ntok // ktok
+        else:
+            return 0
+
+
 if TYPE_CHECKING:
     from historydag.dag import HistoryDagNode, HistoryDag
 
 Weight = Any
 Label = Union[NamedTuple, "UALabel"]
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+class TaxaError(ValueError):
+    pass
 
 
 class UALabel(str):
@@ -548,63 +576,182 @@ log_natural_probability_funcs = AddFuncDict(
 according to the natural distribution induced by the DAG topology."""
 
 
-def sum_rfdistance_funcs(reference_dag: "HistoryDag"):
+def _process_rf_one_sided_coefficients(one_sided, one_sided_coefficients):
+    rf_type_suffix = "distance"
+    RFType = IntState
+
+    if one_sided is None:
+        # Only then will one_sided_coefficients be considered
+        if one_sided_coefficients != (1, 1):
+            rf_type_suffix = "nonstandard"
+            # As long as both coefficients are integers, RF distances will
+            # be integers. Otherwise, we need to allow floats by using
+            # FloatState objects.
+            if not all(isinstance(it, int) for it in one_sided_coefficients):
+                RFType = FloatState
+    elif one_sided.lower() == "left":
+        one_sided_coefficients = (1, 0)
+        rf_type_suffix = "left_difference"
+    elif one_sided.lower() == "right":
+        one_sided_coefficients = (0, 1)
+        rf_type_suffix = "right_difference"
+    else:
+        raise ValueError(
+            f"Argument `one_sided` must have value 'left', 'right', or None, not {one_sided}"
+        )
+
+    s, t = one_sided_coefficients
+    return s, t, rf_type_suffix, RFType
+
+
+def sum_rfdistance_funcs(
+    reference_dag: "HistoryDag",
+    rooted: bool = True,
+    one_sided: str = None,
+    one_sided_coefficients: Tuple[float, float] = (1, 1),
+):
     """Provides functions to compute the sum over all histories in the provided
     reference DAG, of rooted RF distances to those histories.
 
     Args:
         reference_dag: The reference DAG. The sum will be computed over all RF
             distances to histories in this DAG
+        rooted: If False, use edges' splits for RF distance computation. Otherwise, use
+            the clade below each edge.
+        one_sided: May be 'left', 'right', or None. 'left' means that we count
+            splits (or clades, in the rooted case) which are in the reference trees but not
+            in the DAG tree, especially useful if trees in the DAG might be resolutions of
+            multifurcating trees in the reference DAG. 'right' means that we count splits or clades in
+            the DAG tree which are not in the reference trees, useful if the reference trees
+            are possibly resolutions of multifurcating trees in the DAG. If not None,
+            one_sided_coefficients are ignored.
+        one_sided_coefficients: coefficients for non-standard symmetric difference calculations
+            (explained in notes below)
 
     The reference DAG must have the same taxa as all the trees in the DAG on which these count
-    functions are used.
+    functions are used. If this is not true, methods using the keyword arguments produced by this
+    function may fail silently, returning values which mean nothing.
 
-    The edge weight is computed using the expression 2 * N[c_e] - |T| where c_e is the clade under
-    the relevant edge, and |T| is the number of trees in the reference dag. This provide rooted RF
-    distances, meaning that the clade below each edge is used for RF distance computation.
+    This function allows computation of sums of a Robinson-Foulds distance generalized by the
+    coefficients ``(s, t)`` provided to the ``one_sided_coefficients`` argument (or implicitly
+    set by the ``one_sided`` argument). Given a tree in the DAG with set of clades (or splits) A, and
+    a tree in the reference DAG with set of clades B, this distance is given by:
 
-    The weights are represented by an IntState object and are shifted by a constant K,
+    ``d_{s,t}(A, B) = s|B - A| + t|A - B|``
+
+    Notice that when s and t are both 1, this is the symmetric difference of A and B, the standard RF
+    distance.
+
+    For each tree A in a DAG, the AddFuncDict returned by this function computes the sum of this distance
+    over all trees B in the reference DAG.
+
+
+    Note that when computing unrooted weights, the sums are over all rooted trees in the reference
+    DAG, so a single unrooted tree contained twice in the reference DAG with different rootings
+    will be counted twice.
+
+    Weights are represented by an IntState object and are shifted by a constant K,
     which is the sum of number of clades in each tree in the DAG.
     """
-    N = reference_dag.count_nodes(collapse=True)
+    s, t, rf_type_suffix, RFType = _process_rf_one_sided_coefficients(
+        one_sided, one_sided_coefficients
+    )
 
-    # Remove the UA node clade union from N
-    try:
-        N.pop(frozenset())
-    except KeyError:
-        pass
+    N = reference_dag.count_nodes(collapse=True, rooted=rooted)
 
     # K is the constant that the weights are shifted by
-    K = sum(N.values())
+    K = s * sum(N.values())
 
-    num_trees = reference_dag.count_histories()
+    # We also scale num_trees by s...
+    num_trees = t * reference_dag.count_histories()
 
-    def make_intstate(n):
-        return IntState(n + K, state=n)
+    if rooted:
 
-    def edge_func(n1, n2):
-        clade = n2.clade_union()
-        if clade in N:
-            weight = num_trees - (2 * N[n2.clade_union()])
-        else:
-            # This clade's count should then just be 0:
-            weight = num_trees
-        return make_intstate(weight)
+        def make_intstate(n):
+            return RFType(n + K, state=n)
 
-    kwargs = AddFuncDict(
-        {
-            "start_func": lambda n: make_intstate(0),
-            "edge_weight_func": edge_func,
-            "accum_func": lambda wlist: make_intstate(
-                sum(w.state for w in wlist)
-            ),  # summation over edge weights
-        },
-        name="RF_rooted_sum",
-    )
+        def edge_func(n1, n2):
+            clade = n2.clade_union()
+            clade_count = N.get(clade, 0)
+            weight = num_trees - ((s + t) * clade_count)
+            return make_intstate(weight)
+
+        kwargs = AddFuncDict(
+            {
+                "start_func": lambda n: make_intstate(0),
+                "edge_weight_func": edge_func,
+                "accum_func": lambda wlist: make_intstate(
+                    sum(w.state for w in wlist)
+                ),  # summation over edge weights
+            },
+            name="RF_rooted_sum_" + rf_type_suffix,
+        )
+
+    else:
+        taxa = next(reference_dag.dagroot.children()).clade_union()
+        n_taxa = len(taxa)
+
+        def is_history_root(n):
+            # TODO this is slow and dirty! Make more efficient
+            return len(list(n.clade_union())) == n_taxa
+
+        def split(node):
+            cu = node.clade_union()
+            return frozenset({cu, taxa - cu})
+
+        # We accumulate tuples, where the first number contains the weight,
+        # except any contribution of a split below a bifurcating root node
+        # is contained in the second number. This way its contribution can be
+        # added exactly once
+
+        def make_intstate(tup):
+            return RFType(tup[0] + tup[1] + K, state=tup)
+
+        def summer(tupseq):
+            tupseq = list(tupseq)
+            a = 0
+            for ia, _ in tupseq:
+                a += ia
+            # second value should only be counted once. Any nonzero
+            # values of the second value will always be identical
+            if len(tupseq) == 0:
+                b = 0
+            else:
+                b = max(tupseq, key=lambda tup: abs(tup[1]))[1]
+            return (a, b)
+
+        def edge_func(n1, n2):
+            spl = split(n2)
+            spl_count = N.get(spl, 0)
+            if n1.is_ua_node():
+                return make_intstate((0, 0))
+            else:
+                val = num_trees - ((s + t) * spl_count)
+                if len(n1.clades) == 2 and is_history_root(n1):
+                    return make_intstate((0, val))
+                else:
+                    return make_intstate((val, 0))
+
+        kwargs = AddFuncDict(
+            {
+                "start_func": lambda n: make_intstate((0, 0)),
+                "edge_weight_func": edge_func,
+                "accum_func": lambda wlist: make_intstate(
+                    summer(w.state for w in wlist)
+                ),  # summation over edge weights
+            },
+            name="RF_unrooted_sum_" + rf_type_suffix,
+        )
+
     return kwargs
 
 
-def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
+def make_rfdistance_countfuncs(
+    ref_tree: "HistoryDag",
+    rooted: bool = False,
+    one_sided: str = None,
+    one_sided_coefficients: Tuple[float, float] = (1, 1),
+):
     """Provides functions to compute Robinson-Foulds (RF) distances of trees in
     a DAG, relative to a fixed reference tree.
 
@@ -620,13 +767,23 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         ref_tree: A tree with respect to which Robinson-Foulds distance will be computed.
         rooted: If False, use edges' splits for RF distance computation. Otherwise, use
             the clade below each edge.
+        one_sided: May be 'left', 'right', or None. 'left' means that we count
+            splits (or clades, in the rooted case) which are in the reference tree but not
+            in the DAG tree, especially useful if trees in the DAG might be resolutions of
+            a multifurcating reference. 'right' means that we count splits or clades in
+            the DAG tree which are not in the reference tree, useful if the reference tree
+            is possibly a resolution of multifurcating trees in the DAG. If not None,
+            one_sided_coefficients are ignored.
+        one_sided_coefficients: coefficients for non-standard symmetric difference calculations
+            (explained in notes below)
 
     The reference tree must have the same taxa as all the trees in the DAG.
 
     This calculation relies on the observation that the symmetric distance between
-    the splits A in a tree in the DAG, and the splits B in the reference tree, can
-    be computed as:
-    ``|A ^ B| = |A U B| - |A n B| = |A - B| + |B| - |A n B|``
+    the splits (or clades, in the rooted case) A in a tree in the DAG, and the splits
+    (or clades) B in the reference tree, can be computed as:
+
+    ``|B ^ A| = |B - A| + |A - B| = |B| - |A n B| + |A - B|``
 
     As long as tree edges are in bijection with splits, this can be computed without
     constructing the set A by considering each edge's split independently.
@@ -634,12 +791,33 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
     In order to accommodate multiple edges with the same split in a tree with root
     bifurcation, we keep track of the contribution of such edges separately.
 
+    One-sided RF distances are computed in this framework by introducing a pair of
+    ``one_sided_coefficients`` ``(s, t)``, which affect how much weight is given to
+    the right and left differences in the RF distance calculation:
+
+    ``d_{s,t}(A, B) = s|B - A| + t|A - B| = s(|B| - |A n B|) + t|A - B|``
+
+    When both ``s`` and ``t`` are 1, we get the standard RF distance.
+    When ``s=1`` and ``t=0``, then we have a one-sided "left" RF difference, counting
+    the number of splits in the reference tree which are not in each DAG tree. When
+    ``one_sided`` is set to `left`, then these coefficients will be used, regardless of
+    the values passed.
+    When ``s=0`` and ``t=1``, then we have a one-sided "right" RF difference, counting
+    the number of splits in each DAG tree which are not in the reference. When
+    ``one_sided`` is set to `right`, these coefficients will be used, regardless of
+    the values passed.
+
     The weight type is a tuple wrapped in an IntState object. The first tuple value `a` is the
     contribution of edges which are not part of a root bifurcation, where edges whose splits are in B
-    contribute `-1`, and edges whose splits are not in B contribute `-1`, and the second tuple
+    contribute `-1`, and edges whose splits are not in B contribute `1`, and the second tuple
     value `b` is the contribution of the edges which are part of a root bifurcation. The value
     of the IntState is computed as `a + sign(b) + |B|`, which on the UA node of the hDAG gives RF distance.
     """
+
+    s, t, rf_type_suffix, RFType = _process_rf_one_sided_coefficients(
+        one_sided, one_sided_coefficients
+    )
+
     taxa = frozenset(n.label for n in ref_tree.get_leaves())
 
     if not rooted:
@@ -653,15 +831,18 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
         ref_splits = ref_splits - {
             frozenset({taxa, frozenset()}),
         }
-        shift = len(ref_splits)
+        shift = s * len(ref_splits)
 
         n_taxa = len(taxa)
 
         def is_history_root(n):
+            # TODO this is slow and dirty! Make more efficient
             return len(list(n.clade_union())) == n_taxa
 
         def sign(n):
-            return (-1) * (n < 0) + (n > 0)
+            # Should return the value of a single term corresponding
+            # to the identical root splits below a bifurcating root
+            return (-s) * (n < 0) + t * (n > 0)
 
         def summer(tupseq):
             a, b = 0, 0
@@ -671,7 +852,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
             return (a, b)
 
         def make_intstate(tup):
-            return IntState(tup[0] + shift + sign(tup[1]), state=tup)
+            return RFType(tup[0] + shift + sign(tup[1]), state=tup)
 
         def edge_func(n1, n2):
             spl = split(n2)
@@ -684,9 +865,9 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
                     return make_intstate((0, 1))
             else:
                 if spl in ref_splits:
-                    return make_intstate((-1, 0))
+                    return make_intstate((-s, 0))
                 else:
-                    return make_intstate((1, 0))
+                    return make_intstate((t, 0))
 
         kwargs = AddFuncDict(
             {
@@ -696,23 +877,24 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
                     summer(w.state for w in wlist)
                 ),
             },
-            name="RF_unrooted_distance",
+            name="RF_unrooted_distance_" + rf_type_suffix,
         )
     else:
         ref_cus = frozenset(
             node.clade_union() for node in ref_tree.preorder(skip_ua_node=True)
         )
 
-        shift = len(ref_cus)
+        shift = s * len(ref_cus)
 
         def make_intstate(n):
-            return IntState(n + shift, state=n)
+            return RFType(n + shift, state=n)
 
         def edge_func(n1, n2):
             if n2.clade_union() in ref_cus:
-                return make_intstate(-1)
+                inval = 1
             else:
-                return make_intstate(1)
+                inval = 0
+            return make_intstate(t - (s + t) * inval)
 
         kwargs = AddFuncDict(
             {
@@ -720,7 +902,7 @@ def make_rfdistance_countfuncs(ref_tree: "HistoryDag", rooted: bool = False):
                 "edge_weight_func": edge_func,
                 "accum_func": lambda wlist: make_intstate(sum(w.state for w in wlist)),
             },
-            name="RF_rooted_distance",
+            name="RF_rooted_" + rf_type_suffix,
         )
 
     return kwargs
@@ -980,15 +1162,174 @@ def count_labeled_binary_topologies(n):
     return prod(range(1, 2 * n - 2, 2))
 
 
-def load_fasta(fastapath):
-    fasta_records = []
+def powerset(iterable, start_size=0, end_size=None):
+    """Produce all subsets of iterable (as tuples of elements), with sizes
+    starting at start_size and ending at end_size (inclusive), or the size of
+    the passed iterable if end_size is None."""
+    items = list(iterable)
+    if end_size is None:
+        end_size = len(items)
+    return chain.from_iterable(
+        combinations(items, r) for r in range(start_size, end_size + 1)
+    )
+
+
+def binary_support(clade_size, total_leaves, normalized=True):
+    """Calculate the fraction of binary trees on total_leaves containing a
+    particular clade containing clade_size leaves.
+
+    If normalized is False, instead returns the number of binary
+    topologies which would contain a particular clade of size
+    clade_size.
+    """
+    if clade_size > total_leaves:
+        raise ValueError("Clade size cannot exceed total number of leaves in tree")
+
+    count = count_labeled_binary_topologies(
+        clade_size
+    ) * count_labeled_binary_topologies(total_leaves - clade_size + 1)
+    # This could certainly be more numerically stable
+    if normalized:
+        return count / count_labeled_binary_topologies(total_leaves)
+    else:
+        return count
+
+
+def count_resolved_clade_supports(
+    n_child_clades, threshold=-1, min_size=1, max_size=None
+):
+    """Returns a generator on clade size, support pairs, for clades which would
+    result from binary resolution of a node posessing child clade sets in
+    node_child_clades.
+
+    Clade size means number of children of this node which are grouped
+    below a node.
+
+    Summing over the first element of yielded tuples gives the number of
+    elements which would be yielded by :meth:`iter_resolved_clade_supports`
+    provided with n_child_clades child clades and the same threshold
+    value.
+
+    Args:
+        n_child_clades: The number of children of the multifurcating node
+        threshold: If a resolved node's clade support value is below this threshold,
+            that clade will not be counted.
+        min_size: The minimum size of a clade to be counted.
+        max_size: The (inclusive) maximum size of a clade to be counted.
+            The maximum value is ``len(node_child_clades)``, which is equivalent
+            to the default value.
+
+    Note that by default, the root clade, including all leaves contained in
+    node_child_clades, as well as all the clades contained in
+    node_child_clades, are included and each have a support of 1. To exclude leaves, pass
+    ``min_size=2``.
+    """
+    num_children = n_child_clades
+    if max_size is None:
+        max_size = num_children
+    elif max_size > num_children:
+        raise ValueError("max_size cannot be greater than n_child_clades")
+    elif max_size < 1:
+        raise ValueError("max_size cannot be less than 1")
+    for unflattened_clade_size in range(min_size, max_size + 1):
+        # support will be the same for all clades of this size...
+        support = binary_support(unflattened_clade_size, num_children)
+        # ... so this check need only be done num_children times
+        if support > threshold:
+            yield (comb(num_children, unflattened_clade_size), support)
+
+
+def iter_resolved_clade_supports(
+    node_child_clades, threshold=-1, min_size=1, max_size=None
+):
+    """Returns a generator on clade, support pairs, for clades which would
+    result from binary resolution of a node posessing child clade sets in
+    node_child_clades. All clades with support > threshold are yielded,
+    avoiding iteration through too many clades on large multifurcations.
+
+    Args:
+        node_child_clades: A set of frozensets containing the clades of the children of a
+            multifurcating node.
+        threshold: If a resolved node's clade support value is below this threshold,
+            that clade will not be yielded.
+        min_size: The minimum size of a clade to be yielded. Note this is NOT simply the
+            size of the clade set, but rather the number of children of the multifurcating
+            node which are below the resolved node corresponding to the clade.
+        max_size: The (inclusive) maximum size of a clade to be yielded. See `min_size`
+            for a description of what size means. The maximum value is ``len(node_child_clades)``,
+            which is equivalent to the default value.
+
+    Note that by default, the root clade, including all leaves contained in
+    node_child_clades, as well as all the clades contained in
+    node_child_clades, are included and each have a support of 1. To exclude leaves, pass
+    ``min_size=2``.
+    """
+    if max_size is None:
+        max_size = len(node_child_clades)
+    elif max_size > len(node_child_clades):
+        raise ValueError("max_size cannot be greater than the number of child clades")
+    elif max_size < 1:
+        raise ValueError("max_size cannot be less than 1")
+
+    num_children = len(node_child_clades)
+    for unflattened_clade_size in range(min_size, max_size + 1):
+        # support will be the same for all clades of this size...
+        support = binary_support(unflattened_clade_size, num_children)
+        # ... so this check need only be done num_children times
+        if support > threshold:
+            for clade in map(
+                lambda ns: frozenset(chain.from_iterable(ns)),
+                powerset(
+                    node_child_clades,
+                    start_size=unflattened_clade_size,
+                    end_size=unflattened_clade_size,
+                ),
+            ):
+                yield (clade, support)
+
+
+def read_fasta(fastapath, sequence_type=str):
+    """Load a fasta file as a generator which yields (sequence ID, sequence)
+    pairs.
+
+    The function ``sequence_type`` will be called on each sequence as it
+    is read from the fasta file, and the resulting object will be yielded as the second
+    item in each sequence record pair.
+    """
+    seqids = set()
     with open(fastapath, "r") as fh:
+        seqid = None
+        sequence = ""
         for line in fh:
             if line[0] == ">":
-                fasta_records.append([line[1:].strip(), ""])
+                if seqid is not None:
+                    yield (seqid, sequence_type(sequence))
+                    seqids.add(seqid)
+                seqid = line[1:].strip()
+                sequence = ""
+                if seqid in seqids:
+                    raise ValueError(
+                        "Duplicate records with matching identifier in fasta file"
+                    )
             else:
-                fasta_records[-1][-1] += line.strip()
-    return dict(fasta_records)
+                if seqid is None and line.strip():
+                    raise ValueError(
+                        "First non-blank line in fasta does not contain identifier"
+                    )
+                else:
+                    sequence += line.strip().upper()
+        yield (seqid, sequence_type(sequence))
+
+
+def load_fasta(fastapath, sequence_type=str):
+    """Load a fasta file as a dictionary, with sequence ids as keys and
+    sequences as values.
+
+    The function ``sequence_type`` will be called on each sequence as it
+    is read from the fasta file, and the returned objects will be the values
+    in the resulting alignment dictionary.
+    """
+    return dict(read_fasta(fastapath, sequence_type=sequence_type))
 
 
 def _deprecate_message(message):

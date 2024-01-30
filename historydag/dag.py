@@ -26,7 +26,7 @@ from typing import (
 from collections import Counter, namedtuple
 from copy import deepcopy
 from historydag import utils
-from historydag.utils import Weight, Label, UALabel, prod
+from historydag.utils import Weight, Label, UALabel, prod, TaxaError
 from historydag.counterops import counter_sum, counter_prod
 import historydag.parsimony_utils as parsimony_utils
 from historydag.dag_node import (
@@ -99,6 +99,106 @@ def convert(dag, newclass):
     :meth:`HistoryDag.from_history_dag`.
     """
     return newclass.from_history_dag(dag)
+
+
+# Preorder tree creation class
+
+TreeBuilderNode = Any
+
+
+class PreorderTreeBuilder:
+    """Any class implementing a PreorderTreeBuilder interface can be used as a
+    tree sample constructor in :meth:`HistoryDag.fast_sample`. Subclasses
+    implementing this interface may implement an arbitrary constructor
+    interface, as the user will be responsible for creating instances to be
+    used for sampling. In addition, subclasses must implement the following
+    methods:
+
+    Methods:
+        add_node: This method must accept a :class:HistoryDagNode object ``dag_node`` and, optionally
+            a TreeBuilderNode instance ``parent``, representing the parent node of the node to be added,
+            and returns a TreeBuilderNode instance representing the added node in the sampled
+            tree. TreeBuilderNode can be any type which is convenient for the internal
+            implementation of the PreorderTreeBuilder subclass. This method can expect to be
+            called on nodes in a sampled tree in a pre-ordering. A parent node will always be
+            provided unless `dag_node` is the root node.
+        get_finished_tree: This method takes no arguments and returns the data defining the
+            sampled tree, after any necessary clean-up or final tree construction steps. Its
+            return value is the return value of :meth:`HistoryDag.fast_sample`.
+    """
+
+    pass
+
+
+class EteTreeBuilder(PreorderTreeBuilder):
+    def __init__(
+        self,
+        name_func: Callable[[HistoryDagNode], str] = lambda n: "unnamed",
+        features: Optional[List[str]] = [],
+        feature_funcs: Mapping[str, Callable[[HistoryDagNode], str]] = {},
+    ):
+        self.treeroot = None
+        self.name_func = name_func
+        self.feature_funcs = feature_funcs
+
+        for feature in features:
+
+            def feature_func(node):
+                return getattr(node.label, feature)
+
+            self.feature_funcs[feature] = feature_func
+
+        self.feature_funcs = tuple(self.feature_funcs.items())
+
+    def add_node(
+        self,
+        dag_node: HistoryDagNode,
+        parent: ete3.TreeNode = None,
+    ) -> ete3.TreeNode:
+        # Skip the UA Node
+        if isinstance(dag_node, UANode):
+            return None
+        newnode = ete3.TreeNode()
+        newnode.name = self.name_func(dag_node)
+        for feature, feature_func in self.feature_funcs:
+            newnode.add_feature(feature, feature_func(dag_node))
+        if parent is None:
+            assert self.treeroot is None
+            self.treeroot = newnode
+        else:
+            parent.add_child(child=newnode)
+        return newnode
+
+    def get_finished_tree(self):
+        return self.treeroot
+
+
+class PreorderHistoryBuilder(PreorderTreeBuilder):
+    def __init__(
+        self,
+        dag_type,
+    ):
+        self.root_node = None
+        self.edges = []
+        self.dag_type = dag_type
+
+    def add_node(
+        self,
+        dag_node: HistoryDagNode,
+        parent: HistoryDagNode = None,
+    ) -> HistoryDagNode:
+        new_node = dag_node.empty_copy()
+        if parent is None:
+            assert self.root_node is None
+            self.root_node = new_node
+        else:
+            self.edges.append((parent, new_node))
+        return new_node
+
+    def get_finished_tree(self):
+        for parent, child in reversed(self.edges):
+            parent.add_edge(child)
+        return self.dag_type(self.root_node)
 
 
 class HistoryDag:
@@ -201,11 +301,13 @@ class HistoryDag:
                     f", which requires label field '{fieldname}'."
                 )
             if fieldname in required_fields_set:
-                message += (
-                    " Automatic conversion from label fields"
-                    f" {' or '.join([str(converttuple[0]) for converttuple in cls._required_label_fields[fieldname]])}"
-                    " is supported."
-                )
+                fromtuples = cls._required_label_fields[fieldname]
+                if len(fromtuples) > 0:
+                    message += (
+                        " Automatic conversion from label fields"
+                        f" {' or '.join([str(converttuple[0]) for converttuple in fromtuples])}"
+                        " is supported."
+                    )
             raise TypeError(message)
 
         precursor_fields = set()
@@ -287,18 +389,54 @@ class HistoryDag:
             dag.trim_optimal_weight(**key)
             return dag
         elif isinstance(key, int):
+            # This call to count_histories is essential because we use
+            # the cached node counts later. For faster indexing, call this
+            # method once and call _get_subhistory_by_subid yourself.
             length = self.count_histories()
             if key < 0:
                 key = length + key
             if not (key >= 0 and key < length):
                 raise IndexError
-            self.count_histories()
-            return self.__class__(self.dagroot._get_subhistory_by_subid(key))
+            builder = PreorderHistoryBuilder(type(self))
+            self.dagroot._get_subhistory_by_subid(key, builder)
+            return builder.get_finished_tree()
         else:
             raise TypeError(
                 f"History DAG indices must be integers or utils.HistoryDagFilter"
                 f" objects, not {type(key)}"
             )
+
+    def get_histories_by_index(self, key_iterator, tree_builder_func=None):
+        """Retrieving a history by index is slow, since each retrieval requires
+        running the ``trim_optimal_weight`` method on the entire DAG to
+        populate node counts. This method instead runs that method a single
+        time and yields a history for each index yielded by ``key_iterator``.
+
+        Args:
+            key_iterator: An iterator on desired history indices. May be consumable, as
+                it will only be used once.
+            tree_builder_func: A function accepting an index and returning a
+                :class:`PreorderTreeBuilder` instance to be used to build the history
+                with that index. If None (default), then tree-shaped HistoryDag objects
+                will be yielded using :class:`PreorderHistoryBuilder`.
+        """
+        if tree_builder_func is None:
+
+            def tree_builder_func(idx):
+                return PreorderHistoryBuilder(type(self))
+
+        length = self.count_histories()
+
+        for key in key_iterator:
+            if key < 0:
+                key = length + key
+            if not (key >= 0 and key < length):
+                raise IndexError(
+                    f"Invalid index {key} in DAG containing {length} histories"
+                )
+            builder = tree_builder_func(key)
+            self.dagroot._get_subhistory_by_subid(key, builder)
+            yield builder.get_finished_tree()
 
     def get_label_type(self) -> type:
         """Return the type for labels on this dag's nodes."""
@@ -554,6 +692,14 @@ class HistoryDag:
 
         for node in po:
             if not node.is_ua_node():
+                # *** Clades are pairwise disjoint:
+                if not node.is_leaf():
+                    if len(node.clade_union()) != sum(
+                        len(clade) for clade in node.clades
+                    ):
+                        raise ValueError(
+                            "Found a node whose child clades are not pairwise disjoint"
+                        )
                 for clade, eset in node.clades.items():
                     for child in eset.targets:
                         # ***Parent clade equals child clade union for all edges:
@@ -587,7 +733,6 @@ class HistoryDag:
             # ... and there are no duplicate parents:
             if len(parents[node]) != len(set(parents[node])):
                 raise ValueError("Found duplicate parents")
-
         return True
 
     def serialize(self) -> bytes:
@@ -674,6 +819,43 @@ class HistoryDag:
         except StopIteration:
             raise ValueError("No matching node found.")
 
+    def fast_sample(
+        self,
+        tree_builder: PreorderTreeBuilder = None,
+        log_probabilities=False,
+    ):
+        """This is a non-recursive alternative to :meth:`HistoryDag.sample`,
+        which is likely to be slower on small DAGs, but may allow significant
+        optimizations on large DAGs, or in the case that the data format being
+        sampled is something other than a tree-shaped HistoryDag object.
+
+        This method does not provide an edge_selector argument like :meth:`HistoryDag.sample`.
+        Instead, any masking of edges should be done prior to sampling using the :meth:`HistoryDag.set_sample_mask`
+        method, or by modifying the arguments to :meth:`HistoryDag.probability_annotate`.
+
+        Args:
+            tree_builder: a PreorderTreeBuilder instance to handle construction of the sampled tree.
+            log_probabilities: Whether edge probabilities annotated on this DAG (using, for example,
+                :meth:`HistoryDag.probability_annotate`) are on a log-scale.
+        """
+        if tree_builder is None:
+            tree_builder = PreorderHistoryBuilder(type(self))
+
+        def get_sampled_children(node):
+            for clade, eset in node.clades.items():
+                sampled_target, _ = eset.sample(log_probabilities=log_probabilities)
+                yield sampled_target
+
+        node_queue = [(self.dagroot, tree_builder.add_node(self.dagroot))]
+
+        while len(node_queue) > 0:
+            parent, parent_repr = node_queue.pop()
+            for child in get_sampled_children(parent):
+                child_repr = tree_builder.add_node(child, parent=parent_repr)
+                node_queue.append((child, child_repr))
+
+        return tree_builder.get_finished_tree()
+
     def sample(
         self, edge_selector=lambda e: True, log_probabilities=False
     ) -> "HistoryDag":
@@ -681,10 +863,13 @@ class HistoryDag:
         DAG containing the root and all leaf nodes) For reproducibility, set
         ``random.seed`` before sampling.
 
-        When there is an option, edges pointing to nodes on which `selection_func` is True
+        When there is an option, edges pointing to nodes on which `edge_selector` is True
         will always be chosen.
 
         Returns a new HistoryDag object.
+
+        To use the more general sampling pattern which allows an arbitrary PreorderTreeBuilder
+        object, use :meth:`HistoryDag.fast_sample` instead.
         """
         return self.__class__(
             self.dagroot._sample(
@@ -814,45 +999,51 @@ class HistoryDag:
                 appropriate for that node. The relabel_func should return a consistent
                 NamedTuple type with name Label. That is, all returned labels
                 should have matching `_fields` attribute.
-                No two leaf nodes may be mapped to the same new label.
+                Method is only guaranteed to work when no two leaf nodes are
+                mapped to the same new label. If this is not the case, this method may
+                raise a warning or error, or may fail silently, returning an invalid
+                HistoryDag.
             relax_type: Whether to require the returned HistoryDag to be of the same subclass as self.
                 If True, the returned HistoryDag will be of the abstract type `HistoryDag`
         """
+        old_node_to_node_d = dict()
+        node_to_node_d = dict()
 
-        leaf_label_dict = {leaf.label: relabel_func(leaf) for leaf in self.get_leaves()}
-        if len(leaf_label_dict) != len(set(leaf_label_dict.values())):
-            raise RuntimeError(
-                "relabeling function maps multiple leaf nodes to the same new label"
-            )
-
-        def relabel_clade(old_clade):
-            return frozenset(leaf_label_dict[old_label] for old_label in old_clade)
-
-        def relabel_node(old_node):
-            if old_node.is_ua_node():
-                return UANode(
-                    EdgeSet(
-                        [relabel_node(old_child) for old_child in old_node.children()]
-                    )
+        for old_node in self.postorder():
+            new_children = [
+                old_node_to_node_d[old_child] for old_child in old_node.children()
+            ]
+            child_clades = frozenset({child.clade_union() for child in new_children})
+            if len(child_clades) != len(old_node.clades):
+                warnings.warn(
+                    f"relabel_func {relabel_func.__name__} maps multiple"
+                    " leaf nodes to the same label. This is not supported"
+                    " and may fail with an error or silently. If you ignore"
+                    " this warning, at least run _check_valid() on the result"
                 )
+            if old_node.is_ua_node():
+                new_node = UANode(EdgeSet())
             else:
-                clades = {
-                    relabel_clade(old_clade): EdgeSet(
-                        [relabel_node(old_child) for old_child in old_eset.targets],
-                        weights=old_eset.weights,
-                        probs=old_eset.probs,
-                    )
-                    for old_clade, old_eset in old_node.clades.items()
-                }
-                return HistoryDagNode(relabel_func(old_node), clades, old_node.attr)
+                new_node = HistoryDagNode(
+                    relabel_func(old_node),
+                    {clade: EdgeSet() for clade in child_clades},
+                    old_node.attr,
+                )
+            new_node = node_to_node_d.get(new_node, new_node)
+            node_to_node_d[new_node] = new_node
 
+            old_node_to_node_d[old_node] = new_node
+
+            for child in new_children:
+                new_node.add_edge(child, weight=1, prob=1, prob_norm=False)
+
+        # Last node in postorder should be UA node
+        assert new_node.is_ua_node()
+        dag = HistoryDag(new_node)
         if relax_type:
-            newdag = HistoryDag(relabel_node(self.dagroot))
+            return dag
         else:
-            newdag = self.__class__(relabel_node(self.dagroot))
-        # do any necessary collapsing
-        newdag = newdag.sample() | newdag
-        return newdag
+            return type(self).from_history_dag(dag)
 
     def add_label_fields(self, new_field_names=[], new_field_values=lambda n: []):
         """Returns a copy of the DAG in which each node's label is extended to
@@ -875,7 +1066,7 @@ class HistoryDag:
         return self.relabel(add_fields)
 
     def remove_label_fields(self, fields_to_remove=[]):
-        """Returns a oopy of the DAG with the list of `fields_to_remove`
+        """Returns a copy of the DAG with the list of `fields_to_remove`
         dropped from each node's label.
 
         Args:
@@ -1121,6 +1312,22 @@ class HistoryDag:
         return newick(next(self.dagroot.children())) + ";"
 
     @utils._history_method
+    def to_ascii(
+        self,
+        name_func,
+        **kwargs,
+    ):
+        """A convenience function that uses the :meth:`to_ete` method and
+        ete3's ASCII drawing tools to render a history.
+
+        See :meth:`HistoryDagNode.to_ascii` for details.
+        """
+        return next(self.dagroot.children()).to_ascii(
+            name_func,
+            **kwargs,
+        )
+
+    @utils._history_method
     def to_ete(
         self,
         name_func: Callable[[HistoryDagNode], str] = lambda n: "unnamed",
@@ -1143,29 +1350,20 @@ class HistoryDag:
         """
         # First build a dictionary of ete3 nodes keyed by HDagNodes.
         if features is None:
-            labelfeatures = list(
-                list(self.dagroot.children())[0].label._asdict().keys()
-            )
-        else:
-            labelfeatures = features
+            features = list(list(self.dagroot.children())[0].label._asdict().keys())
 
-        def etenode(node: HistoryDagNode) -> ete3.TreeNode:
-            newnode = ete3.TreeNode()
-            newnode.name = name_func(node)
-            for feature in labelfeatures:
-                newnode.add_feature(feature, getattr(node.label, feature))
-            for feature, func in feature_funcs.items():
-                newnode.add_feature(feature, func(node))
-            return newnode
+        tree_builder = EteTreeBuilder(
+            name_func=name_func, features=features, feature_funcs=feature_funcs
+        )
+        nodes_to_process = [(self.dagroot, tree_builder.add_node(self.dagroot))]
+        while len(nodes_to_process) > 0:
+            node, node_repr = nodes_to_process.pop()
+            for child in node.children():
+                nodes_to_process.append(
+                    (child, tree_builder.add_node(child, parent=node_repr))
+                )
 
-        nodedict = {node: etenode(node) for node in self.preorder(skip_ua_node=True)}
-
-        for node in nodedict:
-            for target in node.children():
-                nodedict[node].add_child(child=nodedict[target])
-
-        # Since self is cladetree, dagroot can have only one child
-        return nodedict[list(self.dagroot.children())[0]]
+        return tree_builder.get_finished_tree()
 
     def to_graphviz(
         self,
@@ -1173,6 +1371,13 @@ class HistoryDag:
         namedict: Mapping[Label, str] = {},
         show_child_clades: bool = True,
         show_partitions: bool = None,
+        level_leaves: bool = False,
+        graph_attr: dict = {},
+        node_attr: dict = {},
+        edge_attr: dict = {},
+        edge_attr_inheritance: str = "none",
+        show_edge_probs: bool = False,
+        show_edge_weights: bool = False,
     ) -> gv.Digraph:
         r"""Converts history DAG to graphviz (dot format) Digraph object.
 
@@ -1183,6 +1388,20 @@ class HistoryDag:
                 used instead, if both are provided.
             show_child_clades: Whether to include child clades in output.
             show_partitions: Deprecated alias for show_child_clades.
+            level_leaves: Whether to draw leaves on the same level, or wherever they fall naturally.
+            graph_attr: Additional graphviz graph attributes (see graphviz docs)
+            node_attr: Additional graphviz node attributes (see graphviz docs)
+            edge_attr: Additional graphviz edge attributes (see graphviz docs)
+            edge_attr_inheritance: "parent" to inherit from parent node, "child" to inherit from child, or "none".
+            show_edge_probs: whether to show edge probabilities
+            show_edge_weights: whether to show edge weights
+
+        Notes:
+            Graphviz dot format attributes are documented at https://graphviz.org/doc/info/attrs.html
+            The graphviz attributes passed to this method are for the entire graph. Attributes for
+            individual nodes can be included in individual node attr dictionaries under the key ``gv_attrs``.
+            For example, ``node.attr['gv_attrs'] = {'color': 'red'}`` will color a node red in the graphviz
+            output.
         """
         if show_partitions is not None:
             show_child_clades = show_partitions
@@ -1190,39 +1409,78 @@ class HistoryDag:
         def labeller(label):
             if label in namedict:
                 return str(namedict[label])
+            elif isinstance(label, UALabel):
+                return "UA_node"
             elif len(str(tuple(label))) < 11:
                 return str(tuple(label))
             else:
                 return str(hash(label))
+
+        if labelfunc is None:
+
+            def labelfunc(n):
+                return labeller(n.label)
 
         def taxa(clade):
             ls = [labeller(taxon) for taxon in clade]
             ls.sort()
             return ",".join(ls)
 
-        if labelfunc is None:
-            labelfunc = utils.ignore_uanode("UA_node")(lambda n: labeller(n.label))
+        def gv_attrs(node):
+            if isinstance(node.attr, dict) and "gv_attrs" in node.attr:
+                return node.attr["gv_attrs"]
+            else:
+                return dict()
 
-        G = gv.Digraph("labeled partition DAG", node_attr={"shape": "record"})
-        for node in self.postorder():
-            if node.is_leaf() or show_child_clades is False:
-                G.node(str(id(node)), f"<label> {labelfunc(node)}")
+        def gv_edge_attrs(parent, child):
+            if edge_attr_inheritance == "parent":
+                return gv_attrs(parent)
+            elif edge_attr_inheritance == "child":
+                return gv_attrs(child)
+            else:
+                return dict()
+
+        _node_attr = {"shape": "record"}
+        _node_attr.update(node_attr)
+        G = gv.Digraph(
+            "labeled partition DAG",
+            graph_attr=graph_attr,
+            edge_attr=edge_attr,
+            node_attr=_node_attr,
+        )
+
+        leaves = self.get_leaves()
+        internal_nodes = filter(lambda n: not n.is_leaf(), self.preorder())
+        with G.subgraph() as s:
+            if level_leaves:
+                s.attr(rank="same")
+            for node in leaves:
+                s.node(str(id(node)), f"<label> {labelfunc(node)}", **gv_attrs(node))
+
+        for node in internal_nodes:
+            if node.is_ua_node() or show_child_clades is False:
+                G.node(str(id(node)), f"<label> {labelfunc(node)}", **gv_attrs(node))
             else:
                 splits = "|".join(
                     [f"<{taxa(clade)}> {taxa(clade)}" for clade in node.clades]
                 )
-                G.node(str(id(node)), f"{{ <label> {labelfunc(node)} |{{{splits}}} }}")
+                G.node(
+                    str(id(node)),
+                    f"{{ <label> {labelfunc(node)} |{{{splits}}} }}",
+                    **gv_attrs(node),
+                )
             for clade in node.clades:
                 for target, weight, prob in node.clades[clade]:
                     label = ""
-                    if prob < 1.0:
+                    if show_edge_probs:
                         label += f"p:{prob:.2f}"
-                    if weight > 0.0:
+                    if show_edge_weights:
                         label += f"w:{weight}"
                     G.edge(
                         f"{id(node)}:{taxa(clade) if show_child_clades else 'label'}:s",
                         f"{id(target)}:n",
                         label=label,
+                        **gv_edge_attrs(node, target),
                     )
         return G
 
@@ -1403,6 +1661,7 @@ class HistoryDag:
     def summary(self):
         """Print summary info about the history DAG."""
         print(type(self))
+        print(f"Label fields:\t{self.get_label_type()._fields}")
         print(f"Nodes:\t{self.num_nodes()}")
         print(f"Edges:\t{self.num_edges()}")
         print(f"Histories:\t{self.count_histories()}")
@@ -1920,7 +2179,7 @@ class HistoryDag:
 
         return downward_weights, upward_weights
 
-    def count_nodes(self, collapse=False) -> Dict[HistoryDagNode, int]:
+    def count_nodes(self, collapse=False, rooted=True) -> Dict[HistoryDagNode, int]:
         """Counts the number of trees each node takes part in.
 
         For node supports with respect to a uniform distribution on trees, use
@@ -1930,6 +2189,11 @@ class HistoryDag:
             collapse: A flag that when set to true, treats nodes as clade unions and
                 ignores label information. Then, the returned dictionary is keyed by
                 clade union sets.
+            rooted: A flag which is ignored unless ``collapse`` is ``True``. When ``rooted`` is also ``False``,
+                the returned dictionary is keyed by splits -- that is, sets containing each clade
+                union and its complement, with values the number of (rooted) trees in the DAG containing
+                each split. Splits are not double-counted when a tree has a bifurcating root.
+                If False, dag is expected to have trees all on the same set of leaf labels.
 
         Returns:
             A dictionary mapping each node in the DAG to the number of trees
@@ -1974,7 +2238,37 @@ class HistoryDag:
                     collapsed_n2c[clade] = 0
 
                 collapsed_n2c[clade] += node2count[node]
-            return collapsed_n2c
+            if rooted:
+                # Remove the UA node clade union from N
+                try:
+                    collapsed_n2c.pop(frozenset())
+                except KeyError:
+                    pass
+                return collapsed_n2c
+            else:
+                # Create dictionary counting in how many trees each split
+                # occurs as child of bifurcating root
+                split2adjustment = {}
+                all_taxa = next(self.dagroot.children()).clade_union()
+                if any(all_taxa != n.clade_union() for n in self.dagroot.children()):
+                    raise TaxaError(
+                        "Unrooted splits cannot be counted properly because"
+                        " trees in this dag are on different sets of taxa."
+                    )
+                for treeroot in self.dagroot.children():
+                    if len(treeroot.clades) == 2:
+                        split = frozenset(treeroot.clades.keys())
+                        before = split2adjustment.get(split, 0)
+                        split2adjustment[split] = before + node2count[treeroot]
+                split2count = {}
+                for clade, count in collapsed_n2c.items():
+                    split = frozenset({clade, all_taxa - clade})
+                    before = split2count.get(split, 0)
+                    split2count[split] = before + count
+                for split, adjustment in split2adjustment.items():
+                    split2count[split] -= adjustment
+                split2count.pop(frozenset({all_taxa, frozenset()}), None)
+                return split2count
         else:
             return node2count
 
@@ -2201,6 +2495,9 @@ class HistoryDag:
     def optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
+        rooted: bool = True,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Returns the optimal (min or max) summed rooted RF distance to all
@@ -2212,16 +2509,27 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history DAG.
         """
-        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        kwargs = utils.sum_rfdistance_funcs(
+            reference_dag,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients,
+        )
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
     def trim_optimal_sum_rf_distance(
         self,
         reference_dag: "HistoryDag",
+        rooted: bool = True,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Trims the DAG to contain only histories with the optimal (min or
         max) sum rooted RF distance to the given reference DAG.
+
+        See :meth:`utils.sum_rfdistance_funcs` for detailed documentation of
+        arguments.
 
         Trimming to the minimum sum RF distance is equivalent to finding 'median' topologies,
         and trimming to maximum sum rf distance is equivalent to finding topological outliers.
@@ -2232,17 +2540,27 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        kwargs = utils.sum_rfdistance_funcs(
+            reference_dag,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients,
+        )
         return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
 
     def trim_optimal_rf_distance(
         self,
         history: "HistoryDag",
         rooted: bool = False,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Trims this history DAG to the optimal (min or max) RF distance to a
         given history.
+
+        See :meth:`utils.make_rfdistance_countfuncs` for detailed documentation of
+        arguments.
 
         Also returns that optimal RF distance
 
@@ -2252,16 +2570,26 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
+        kwargs = utils.make_rfdistance_countfuncs(
+            history,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients,
+        )
         return self.trim_optimal_weight(**kwargs, optimal_func=optimal_func)
 
     def optimal_rf_distance(
         self,
         history: "HistoryDag",
         rooted: bool = False,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
         optimal_func: Callable[[List[Weight]], Weight] = min,
     ):
         """Returns the optimal (min or max) RF distance to a given history.
+
+        See :meth:`utils.make_rfdistance_countfuncs` for detailed documentation of
+        arguments.
 
         The given history must be on the same taxa as all trees in the DAG.
         Since computing reference splits is expensive, it is better to use
@@ -2269,25 +2597,53 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
+        kwargs = utils.make_rfdistance_countfuncs(
+            history,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients,
+        )
         return self.optimal_weight_annotate(**kwargs, optimal_func=optimal_func)
 
-    def count_rf_distances(self, history: "HistoryDag", rooted: bool = False):
+    def count_rf_distances(
+        self,
+        history: "HistoryDag",
+        rooted: bool = False,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
+    ):
         """Returns a Counter containing all RF distances to a given history.
 
         The given history must be on the same taxa as all trees in the DAG.
+
+        See :meth:`utils.make_rfdistance_countfuncs` for detailed documentation of
+        arguments.
 
         Since computing reference splits is expensive, it is better to use
         :meth:`weight_count` and :meth:`utils.make_rfdistance_countfuncs`
         instead of making multiple calls to this method with the same reference
         history.
         """
-        kwargs = utils.make_rfdistance_countfuncs(history, rooted=rooted)
+        kwargs = utils.make_rfdistance_countfuncs(
+            history,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients,
+        )
         return self.weight_count(**kwargs)
 
-    def count_sum_rf_distances(self, reference_dag: "HistoryDag", rooted: bool = False):
+    def count_sum_rf_distances(
+        self,
+        reference_dag: "HistoryDag",
+        rooted: bool = True,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
+    ):
         """Returns a Counter containing all sum RF distances to a given
         reference DAG.
+
+        See :meth:`utils.sum_rfdistance_funcs` for detailed documentation of
+        arguments.
 
         The given history DAG must be on the same taxa as all trees in the DAG.
 
@@ -2296,14 +2652,42 @@ class HistoryDag:
         instead of making multiple calls to this method with the same reference
         history DAG.
         """
-        kwargs = utils.sum_rfdistance_funcs(reference_dag)
+        kwargs = utils.sum_rfdistance_funcs(
+            reference_dag,
+            rooted=rooted,
+            one_sided=one_sided,
+            one_sided_coefficients=one_sided_coefficients,
+        )
         return self.weight_count(**kwargs)
 
-    def sum_rf_distances(self, reference_dag: "HistoryDag" = None):
-        r"""Computes the sum of all Robinson-Foulds distances between a history
-        in this DAG and a history in the reference DAG.
+    def sum_rf_distances(
+        self,
+        reference_dag: "HistoryDag" = None,
+        rooted: bool = True,
+        one_sided: str = None,
+        one_sided_coefficients: Tuple[float, float] = (1, 1),
+    ):
+        r"""Computes the sum of Robinson-Foulds distances over all pairs of
+        histories in this DAG and the provided reference DAG.
 
-        This is rooted RF distance.
+        Args:
+            reference_dag: If None, the sum of pairwise distances between histories in this DAG
+                is computed. If provided, the sum is over pairs containing one history in this DAG and
+                one from ``reference_dag``.
+            rooted: If False, use edges' splits for RF distance computation. Otherwise, use
+                the clade below each edge.
+            one_sided: May be 'left', 'right', or None. 'left' means that we count
+                splits (or clades, in the rooted case) which are in the reference trees but not
+                in the DAG tree, especially useful if trees in the DAG might be resolutions of
+                multifurcating trees in the reference DAG. 'right' means that we count splits or clades in
+                the DAG tree which are not in the reference trees, useful if the reference trees
+                are possibly resolutions of multifurcating trees in the DAG. If not None,
+                one_sided_coefficients are ignored.
+            one_sided_coefficients: coefficients for non-standard symmetric difference calculations.
+                See :meth:`utils.make_rfdistance_countfuncs` for more details.
+
+        Returns:
+            An integer sum of RF distances.
 
         If T is the set of histories in the reference DAG, and T' is the set of histories in
         this DAG, then the returned sum is:
@@ -2315,22 +2699,16 @@ class HistoryDag:
         That is, since RF distance is symmetric, when T = T' (such as when ``reference_dag=None``),
         or when the intersection of T and T' is nonempty, some distances are counted twice.
 
-        Args:
-            reference_dag: If None, the sum of pairwise distances between histories in this DAG
-                is computed. If provided, the sum is over pairs containing one history in this DAG and
-                one from ``reference_dag``.
-
-        Returns:
-            An integer sum of RF distances.
+        Note that when computing one-sided distances, or when the one_sided_coefficients values are not
+        equal, this 'distance' is no longer symmetric.
         """
+        s, t, _, _ = utils._process_rf_one_sided_coefficients(
+            one_sided, one_sided_coefficients
+        )
 
         def get_data(dag):
             n_histories = dag.count_histories()
-            N = dag.count_nodes(collapse=True)
-            try:
-                N.pop(frozenset())
-            except KeyError:
-                pass
+            N = dag.count_nodes(collapse=True, rooted=rooted)
 
             clade_count_sum = sum(N.values())
             return (n_histories, N, clade_count_sum)
@@ -2353,13 +2731,13 @@ class HistoryDag:
         )
 
         return (
-            n_histories * clade_count_sum_prime
-            + n_histories_prime * clade_count_sum
-            - 2 * intersection_term
+            t * n_histories * clade_count_sum_prime
+            + s * n_histories_prime * clade_count_sum
+            - (s + t) * intersection_term
         )
 
     def average_pairwise_rf_distance(
-        self, reference_dag: "HistoryDag" = None, non_identical=True
+        self, reference_dag: "HistoryDag" = None, non_identical=True, **kwargs
     ):
         """Return the average Robinson-Foulds distance between pairs of
         histories.
@@ -2368,6 +2746,7 @@ class HistoryDag:
             reference_dag: A history DAG from which to take the second history in
                 each pair. If None, ``self`` will be used as the reference.
             non_identical: If True, mean divisor will be the number of non-identical pairs.
+            kwargs: See :meth:`historydag.sum_rf_distances` for additional keyword arguments
 
         Returns:
             The average rf-distance between pairs of histories, where the first history
@@ -2376,7 +2755,9 @@ class HistoryDag:
             ``non_identical`` is True, in which case the number of histories which appear
             in both DAGs is subtracted from this constant.
         """
-        sum_pairwise_distance = self.sum_rf_distances(reference_dag=reference_dag)
+        sum_pairwise_distance = self.sum_rf_distances(
+            reference_dag=reference_dag, **kwargs
+        )
         if reference_dag is None:
             # ignore the diagonal in the distance matrix, since it contains
             # zeros:
@@ -2965,6 +3346,36 @@ class HistoryDag:
             prob_list.append(accum_func([node_probabilities[edge[0]], prob]))
 
         return {key: aggregate_func(val) for key, val in edge_probabilities.items()}
+
+    def set_sample_mask(self, edge_selector, log_probabilities=False):
+        """Zero out edge weights for masked edges before calling
+        :meth:`HistoryDag.fast_sample`. This should be equivalent to passing
+        the same edge_selector function to :meth:`HistoryDag.sample`.
+
+        Args:
+            edge_selector: A function accepting an edge (a tuple of HistoryDagNode objects) and
+                returning True of False. An edge marked False will be ineligible for sampling, unless
+                all other edges in the same edge set are also marked False.
+            log_probabilities: Since the mask is applied by modifying edge probabilities, one must specify
+                whether those probabilities are on a log scale.
+
+        Take care to verify that you shouldn't instead use :meth:`HistoryDag.probability_annotate` with
+        a choice of ``edge_weight_func`` that takes into account the masking preferences.
+        """
+
+        if log_probabilities:
+            mask_value = float("-inf")
+        else:
+            mask_value = 0
+
+        for node in self.preorder():
+            for clade, eset in node.clades.items():
+                mask = tuple(edge_selector((node, target)) for target in eset.targets)
+                # If all mask values are false, then skip modifying probs.
+                if any(mask):
+                    for i, val in enumerate(mask):
+                        if not val:
+                            eset.probs[i] = mask_value
 
     def probability_annotate(
         self,
@@ -3557,6 +3968,50 @@ def from_tree(
     dagroot = UANode(EdgeSet([dag], weights=[edge_weight_func(treeroot)]))
     return HistoryDag(dagroot)
 
+    # name_func,
+    # show_internal=False,
+    # compact=False,
+    # sort_method=None,
+
+
+def ascii_compare_histories(
+    history1,
+    history2,
+    name_func,
+    name_func2=None,
+    **kwargs,
+):
+    """A convenience function to print two histories as ascii art trees side-
+    by-side.
+
+    Provided histories can be HistoryDag or HistoryDagNode objects, so all or part
+    of two histories may be compared.
+
+    Args:
+        history1: The first history to compare. Will appear on the left
+        history2: The second history to compare. Will appear on the right
+        name_func: A function mapping each HistoryDagNode to a node name string.
+        name_func2: A different name_func to be used for history2. If not provided,
+            ``name_func`` will be used.
+        kwargs: This function also accepts all keyword arguments allowed by
+            :meth:`HistoryDag.to_ascii`
+    """
+    if name_func2 is None:
+        name_func2 = name_func
+    a1 = history1.to_ascii(name_func=name_func, **kwargs).split("\n")
+    a2 = history2.to_ascii(name_func=name_func2, **kwargs).split("\n")
+
+    # There are no tabs in the ascii lines, only constant-width characters.
+    offset = max(len(it) for it in a1) + 2
+    # expand all lines in a1 so they have len offset
+    a1padded = []
+    for line in a1:
+        add = offset - len(line)
+        a1padded.append(line + (" " * add))
+
+    for l1, l2 in zip(a1padded, a2):
+        print(l1 + l2)
+
 
 def history_dag_from_trees(
     treelist: List[ete3.TreeNode],
@@ -3669,7 +4124,7 @@ def history_dag_from_nodes(nodes: Sequence[HistoryDagNode]) -> HistoryDag:
     ua_node = UANode(EdgeSet())
     if ua_node in nodes:
         ua_node = nodes[ua_node].empty_copy()
-    nodes.pop(ua_node)
+        nodes.pop(ua_node)
     clade_dict = _clade_union_dict(nodes.keys())
     edge_dict = {
         node: [child for clade in node.clades for child in clade_dict[clade]]
@@ -3684,3 +4139,49 @@ def history_dag_from_nodes(nodes: Sequence[HistoryDagNode]) -> HistoryDag:
             node.add_edge(child)
 
     return HistoryDag(ua_node)
+
+
+def make_binary_complete_dag(leaf_labels):
+    """Produce a history DAG containing all binary topologies on the provided
+    iterable of leaf labels."""
+    leaf_labels = list(leaf_labels)
+    model_label = leaf_labels[0]
+    if not isinstance(model_label, tuple):
+        raise ValueError(
+            "Provided labels must be a historydag Label type (a typing.NamedTuple instance)"
+        )
+    field_values = tuple(Ellipsis for _ in model_label)
+    internal_label = type(model_label)(*field_values)
+
+    node_set = {UANode(EdgeSet())}
+    for clade in utils.powerset(leaf_labels, start_size=1):
+        # Now need to get all splits of this clade into two child clades
+        cladesize = len(clade)
+        for child_mask in utils.powerset(
+            range(cladesize), start_size=1, end_size=cladesize - 1
+        ):
+            splitter_mask = [False] * cladesize
+            for idx in child_mask:
+                splitter_mask[idx] = True
+            clade1 = frozenset(
+                clade[idx] for idx, flag in enumerate(splitter_mask) if flag
+            )
+            clade2 = frozenset(
+                clade[idx] for idx, flag in enumerate(splitter_mask) if not flag
+            )
+            node_set.add(
+                HistoryDagNode(
+                    internal_label,
+                    {clade1: EdgeSet(), clade2: EdgeSet()},
+                    {},
+                )
+            )
+    for leaf_label in leaf_labels:
+        node_set.add(
+            HistoryDagNode(
+                leaf_label,
+                {},
+                {},
+            )
+        )
+    return history_dag_from_nodes(node_set)

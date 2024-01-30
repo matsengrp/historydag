@@ -1,6 +1,23 @@
+"""This module provides a CompactGenome class, intended as a convenient and
+compact representation of a nucleotide sequence as a collection of mutations
+relative to a reference sequence.
+
+This object also provides methods to conveniently mutate CompactGenome
+objects according to a list of mutations, produce mutations defining the
+difference between two CompactGenome objects, and efficiently access the
+base at a site (or the entire sequence, as a string) implied by a
+CompactGenome.
+"""
+
 from frozendict import frozendict
 from typing import Dict, Sequence
 from warnings import warn
+from historydag.parsimony_utils import (
+    standard_nt_ambiguity_map,
+    default_nt_transitions,
+    CharacterSequence,
+)
+from historydag.utils import read_fasta
 
 
 class CompactGenome:
@@ -117,13 +134,15 @@ class CompactGenome:
 
         Each tuple should contain (one-based site, from_base, to_base)
         """
+        # Is this tested? What does raw mean? Are there checks? What's mutate
+        # for?
         res = dict(self.mutations)
         for site, from_base, to_base in muts:
             ref = self.reference[site - 1]
             if ref != to_base:
                 res[site] = (ref, to_base)
             else:
-                res.pop(site)
+                res.pop(site, None)
         return CompactGenome(res, self.reference)
 
     def apply_muts(self, muts: Sequence[str], reverse: bool = False, debug=False):
@@ -346,3 +365,112 @@ def cg_diff(parent_cg: CompactGenome, child_cg: CompactGenome):
         child_base = child_cg.get_site(key)
         if parent_base != child_base:
             yield (parent_base, child_base, key)
+
+
+def ambiguous_cg_diff(
+    parent_cg: CompactGenome,
+    child_cg: CompactGenome,
+    transition_model=default_nt_transitions,
+    randomize=False,
+):
+    """Yields a minimal collection of mutations in the format (parent_nuc,
+    child_nuc, one-based sequence_index) distinguishing two compact genomes,
+    such that applying the resulting mutations to `parent_cg` would yield a
+    compact genome compatible with the possibly ambiguous `child_cg`.
+
+    If randomize is True, mutations will be randomized when there are
+    multiple possible min-weight choices.
+    """
+    for parent_base, child_base, key in cg_diff(parent_cg, child_cg):
+        nbase, _ = transition_model.min_character_mutation(
+            parent_base,
+            child_base,
+            site=key,
+            randomize=randomize,
+        )
+        if parent_base != nbase:
+            yield (parent_base, nbase, key)
+
+
+def reconcile_cgs(
+    cg_list, check_references=True, ambiguitymap=standard_nt_ambiguity_map
+):
+    """Returns a compact genome containing ambiguous bases, representing the
+    least ambiguous sequence of which all provided cgs in `cg_list` are
+    resolutions. Also returns a flag indicating whether the resulting CG
+    contains ambiguities.
+
+    If `check_references` is False, reference sequences will be assumed equal.
+    """
+    ambiguous_flag = False
+    if len(cg_list) == 1:
+        return (cg_list[0], ambiguous_flag)
+
+    cg_list = list(cg_list)
+    model_cg = cg_list[0]
+    reference = model_cg.reference
+    if check_references:
+        assert all(cg.reference == reference for cg in cg_list)
+
+    # This can almost certainly be made more efficient
+    difference_sites = dict()
+    for ocg in cg_list[1:]:
+        diff = list(cg_diff(model_cg, ocg))
+        if len(diff) > 0:
+            ambiguous_flag = True
+        for parent_nuc, child_nuc, one_idx in diff:
+            if one_idx not in difference_sites:
+                difference_sites[one_idx] = {parent_nuc, child_nuc}
+            else:
+                # Parent nuc must already be added!
+                difference_sites[one_idx].add(child_nuc)
+
+    def process_charset(charset):
+        diff = charset - ambiguitymap.bases
+        if len(diff) > 0:
+            charset.intersection_update(ambiguitymap.bases)
+            for char in diff:
+                charset.update(ambiguitymap[char])
+        return frozenset(charset)
+
+    mutstring_list = [
+        model_cg.get_site(idx)
+        + str(idx)
+        + ambiguitymap.reversed[process_charset(charset)]
+        for idx, charset in difference_sites.items()
+    ]
+
+    return (model_cg.apply_muts(mutstring_list), ambiguous_flag)
+
+
+def read_alignment(alignment_file, reference_sequence: CharacterSequence = None):
+    """Read a fasta or vcf alignment and return a dictionary mapping sequence
+    ID strings to CompactGenomes.
+
+    Args:
+        alignment_file: A file containing a fasta or vcf alignment. File format
+            is determined by extension. `.fa`, `.fasta`, or `.vcf` are expected.
+        reference_sequence: If a fasta file is provided, the first sequence in that
+            file will be used as the compact genome reference sequence, unless one
+            is explicitly provided to this keyword argument.
+    """
+    extension = alignment_file.split(".")[-1].lower()
+
+    if extension in ("fa", "fasta"):
+        fasta_gen = read_fasta(alignment_file)
+        cg_dict = {}
+        if reference_sequence is None:
+            # Now we just have to add an empty CG to the alignment
+            refseq_id, reference_sequence = next(fasta_gen)
+            cg_dict[refseq_id] = CompactGenome({}, reference_sequence)
+        cg_dict.update(
+            (seqid, compact_genome_from_sequence(seq, reference_sequence))
+            for seqid, seq in fasta_gen
+        )
+    elif extension in ("vcf",):
+        raise NotImplementedError
+    else:
+        raise ValueError(
+            f"Unrecognized extension '.{extension}'. Provide a .fa, .fasta, or .vcf file."
+        )
+    return cg_dict

@@ -54,5 +54,8 @@ Modules
     mutation_annotated_dag
     utils
     parsimony
+    parsimony_utils
     compact_genome
+    dag_node
     counterops
+    beast_loader
