@@ -1,7 +1,6 @@
 """Utility functions and classes for working with HistoryDag objects."""
 
 import ete3
-import math
 from math import log, exp, isfinite
 from collections import Counter
 from functools import wraps
@@ -23,6 +22,29 @@ from typing import (
     Optional,
 )
 from typing import TYPE_CHECKING
+
+
+try:
+    from math import comb
+except ImportError:
+
+    def comb(n, k):
+        """
+        A fast way to calculate binomial coefficients
+        from https://stackoverflow.com/a/3025547
+        https://en.wikipedia.org/wiki/Binomial_coefficient#Multiplicative_formula
+        """
+        if 0 <= k <= n:
+            ntok = 1
+            ktok = 1
+            for t in range(1, min(k, n - k) + 1):
+                ntok *= n
+                ktok *= t
+                n -= 1
+            return ntok // ktok
+        else:
+            return 0
+
 
 if TYPE_CHECKING:
     from historydag.dag import HistoryDagNode, HistoryDag
@@ -1207,7 +1229,7 @@ def count_resolved_clade_supports(
         support = binary_support(unflattened_clade_size, num_children)
         # ... so this check need only be done num_children times
         if support > threshold:
-            yield (math.comb(num_children, unflattened_clade_size), support)
+            yield (comb(num_children, unflattened_clade_size), support)
 
 
 def iter_resolved_clade_supports(
