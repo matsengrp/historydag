@@ -26,6 +26,7 @@ from historydag.utils import (
     collapse_ete,
     resolve_ete,
     count_labeled_binary_topologies,
+    open_maybe_gzipped,
 )
 
 import historydag.dag_pb2 as dpb
@@ -35,6 +36,7 @@ from typing import NamedTuple, Callable
 import numpy as np
 from scipy.linalg import expm
 import random
+import fileinput
 
 random.seed(123)
 
@@ -235,7 +237,7 @@ class CGHistoryDag(HistoryDag):
         data = self.to_protobuf(
             leaf_data_func=leaf_data_func, randomize_leaf_muts=randomize_leaf_muts
         )
-        with open(filename, "wb") as fh:
+        with open_maybe_gzipped(filename, "wb") as fh:
             fh.write(data.SerializeToString())
 
     def flatten(self, sort_compact_genomes=False):
@@ -853,7 +855,7 @@ def load_MAD_protobuf(
 def load_MAD_protobuf_file(filename, **kwargs):
     """Load a mutation annotated DAG protobuf file and return a
     CGHistoryDag."""
-    with open(filename, "rb") as fh:
+    with open_maybe_gzipped(filename, "rb") as fh:
         pb_data = dpb.data()
         pb_data.ParseFromString(fh.read())
     return load_MAD_protobuf(pb_data, **kwargs)

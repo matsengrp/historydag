@@ -667,7 +667,9 @@ class UnitTransitionModel(TransitionModel):
         self,
         field_name: str,
         leaf_ambiguities: AmbiguityMap = False,
+        count_root_muts: bool = True,
         name: str = "HammingParsimony",
+        **kwargs,
     ) -> AddFuncDict:
         """Create a :class:`historydag.utils.AddFuncDict` object for counting
         parsimony in a HistoryDag with labels containing compact genomes.
@@ -678,7 +680,7 @@ class UnitTransitionModel(TransitionModel):
             name: the name for the returned AddFuncDict object
         """
         return super().get_weighted_cg_parsimony_countfuncs(
-            field_name, leaf_ambiguities=leaf_ambiguities, name=name
+            field_name, leaf_ambiguities=leaf_ambiguities, name=name, count_root_muts=count_root_muts,
         )
 
     def get_weighted_parsimony_countfuncs(

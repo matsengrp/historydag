@@ -16,6 +16,8 @@ from collections import UserDict
 from decimal import Decimal
 from warnings import warn
 from itertools import chain, combinations
+from pathlib import Path
+import gzip
 from typing import (
     List,
     Any,
@@ -1504,3 +1506,11 @@ def _test_resolve_ete(n, trials=10):
         tree_counts[idx] += 1
 
     return tree_list, tree_counts, num_bifurcating_trees
+
+
+def open_maybe_gzipped(infile, *args, **kwargs):
+    infile = Path(infile)
+    if infile.suffix == '.gz':
+        return gzip.open(infile, *args, **kwargs)
+    else:
+        return open(infile, *args, **kwargs)
