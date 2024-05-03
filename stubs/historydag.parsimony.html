@@ -16,7 +16,7 @@
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -217,7 +217,8 @@ does assume that the remaining internal nodes are in fact equipped with a sequen
 <li><p><strong>seq_len</strong> – The length of sequence for each leaf node.</p></li>
 <li><p><strong>sequence_attr_name</strong> – the field name of the label attribute that is used to store sequences on nodes.
 Default value is set to ‘sequence’</p></li>
-<li><p><strong>transition_model</strong> – The type of <code class="docutils literal notranslate"><span class="pre">TransitionModel</span></code> to use for Sankoff. See docstring for more information.</p></li>
+<li><p><strong>transition_model</strong> – The type of <code class="xref py py-meth docutils literal notranslate"><span class="pre">parsimony_utils.TransitionModel()</span></code> to use for Sankoff.
+See docstring for more information.</p></li>
 <li><p><strong>use_internal_node_sequences</strong> – (used when tree is of type <code class="docutils literal notranslate"><span class="pre">ete3.TreeNode</span></code>) If True, then compute the
 transition cost for sequences assigned to internal nodes.</p></li>
 </ul>
@@ -266,10 +267,15 @@ from this function is otherwise deterministic.</p></li>
 <li><p><strong>remove_cvs</strong> – Remove sankoff cost vectors from tree nodes after disambiguation.</p></li>
 <li><p><strong>adj_dist</strong> – Recompute hamming parsimony distances on tree after disambiguation, and store them
 in <code class="docutils literal notranslate"><span class="pre">dist</span></code> node attributes.</p></li>
+<li><p><strong>transition_model</strong> – The type of <code class="xref py py-meth docutils literal notranslate"><span class="pre">parsimony_utils.TransitionModel()</span></code> to use for Sankoff.
+See docstring for more information.</p></li>
 <li><p><strong>min_ambiguities</strong> – If True, leaves ambiguities in reconstructed sequences, expressing which
 bases are possible at each site in a maximally parsimonious disambiguation of the given
 topology. In the history DAG paper, this is known as a strictly min-weight ambiguous labeling.
 Otherwise, sequences are resolved in one possible way, and include no ambiguities.</p></li>
+<li><p><strong>use_internal_node_sequences</strong> – If True, then instead of overwriting internal node sequences, only
+disambiguate ambiguous bases in those sequences. For example, to fix a root sequence, this
+option must be True.</p></li>
 </ul>
 </dd>
 </dl>
@@ -291,8 +297,8 @@ internal node sequences will be fully ambiguous (contain repeated N’s).</p>
 <li><p><strong>reference_id</strong> – key in <cite>fasta_map</cite> corresponding to the root sequence of the tree, if root sequence is fixed.</p></li>
 <li><p><strong>reference_sequence</strong> – fixed root sequence of the tree, if root sequence is fixed</p></li>
 <li><p><strong>ignore_internal_sequences</strong> – if True, sequences at non-leaf nodes specified in fasta_map</p></li>
-<li><p><strong>ignored</strong> (<em>and newickstring will be</em>) – </p></li>
-<li><p><strong>ambiguous.</strong> (<em>and all internal sequences will be fully</em>) – </p></li>
+<li><p><strong>ignored</strong> (<em>and newickstring will be</em>)</p></li>
+<li><p><strong>ambiguous.</strong> (<em>and all internal sequences will be fully</em>)</p></li>
 </ul>
 </dd>
 </dl>

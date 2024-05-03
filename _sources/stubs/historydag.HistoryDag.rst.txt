@@ -33,12 +33,14 @@
       ~HistoryDag.edge_probabilities
       ~HistoryDag.explode_nodes
       ~HistoryDag.export_edge_probabilities
+      ~HistoryDag.fast_sample
       ~HistoryDag.find_node
       ~HistoryDag.find_nodes
       ~HistoryDag.from_history_dag
       ~HistoryDag.get_annotated_edges
       ~HistoryDag.get_edges
       ~HistoryDag.get_histories
+      ~HistoryDag.get_histories_by_index
       ~HistoryDag.get_label_type
       ~HistoryDag.get_leaves
       ~HistoryDag.get_probability_countfuncs
@@ -83,6 +85,7 @@
       ~HistoryDag.sample_with_edge
       ~HistoryDag.sample_with_node
       ~HistoryDag.serialize
+      ~HistoryDag.set_sample_mask
       ~HistoryDag.shared_history_count
       ~HistoryDag.sum_probability
       ~HistoryDag.sum_rf_distances

@@ -15,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -199,7 +199,8 @@
 <span class="sd">        seq_len: The length of sequence for each leaf node.</span>
 <span class="sd">        sequence_attr_name: the field name of the label attribute that is used to store sequences on nodes.</span>
 <span class="sd">            Default value is set to &#39;sequence&#39;</span>
-<span class="sd">        transition_model: The type of ``TransitionModel`` to use for Sankoff. See docstring for more information.</span>
+<span class="sd">        transition_model: The type of :meth:`parsimony_utils.TransitionModel` to use for Sankoff.</span>
+<span class="sd">            See docstring for more information.</span>
 <span class="sd">        use_internal_node_sequences: (used when tree is of type ``ete3.TreeNode``) If True, then compute the</span>
 <span class="sd">            transition cost for sequences assigned to internal nodes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -483,10 +484,15 @@
 <span class="sd">        remove_cvs: Remove sankoff cost vectors from tree nodes after disambiguation.</span>
 <span class="sd">        adj_dist: Recompute hamming parsimony distances on tree after disambiguation, and store them</span>
 <span class="sd">            in ``dist`` node attributes.</span>
+<span class="sd">        transition_model: The type of :meth:`parsimony_utils.TransitionModel` to use for Sankoff.</span>
+<span class="sd">            See docstring for more information.</span>
 <span class="sd">        min_ambiguities: If True, leaves ambiguities in reconstructed sequences, expressing which</span>
 <span class="sd">            bases are possible at each site in a maximally parsimonious disambiguation of the given</span>
 <span class="sd">            topology. In the history DAG paper, this is known as a strictly min-weight ambiguous labeling.</span>
 <span class="sd">            Otherwise, sequences are resolved in one possible way, and include no ambiguities.</span>
+<span class="sd">        use_internal_node_sequences: If True, then instead of overwriting internal node sequences, only</span>
+<span class="sd">            disambiguate ambiguous bases in those sequences. For example, to fix a root sequence, this</span>
+<span class="sd">            option must be True.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>

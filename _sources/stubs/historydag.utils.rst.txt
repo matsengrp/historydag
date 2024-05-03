@@ -22,19 +22,23 @@
    
       access_field
       access_nodefield_default
+      binary_support
       cartesian_product
       collapse_adjacent_sequences
       count_labeled_binary_topologies
+      count_resolved_clade_supports
       edge_difference_funcs
       explode_label
       hist
       ignore_uanode
       is_collapsed
+      iter_resolved_clade_supports
       load_fasta
       logsumexp
       make_newickcountfuncs
       make_rfdistance_countfuncs
       natural_edge_probability
+      powerset
       prod
       read_fasta
       sum_rfdistance_funcs

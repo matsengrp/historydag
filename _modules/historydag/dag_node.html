@@ -15,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -94,10 +94,14 @@
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">FrozenSet</span><span class="p">,</span>
+    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">historydag</span> <span class="kn">import</span> <span class="n">utils</span>
 <span class="kn">from</span> <span class="nn">historydag.utils</span> <span class="kn">import</span> <span class="n">Weight</span><span class="p">,</span> <span class="n">Label</span><span class="p">,</span> <span class="n">UALabel</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">historydag.dag</span> <span class="kn">import</span> <span class="n">PreorderTreeBuilder</span>
 
 
 <div class="viewcode-block" id="HistoryDagNode">
@@ -311,14 +315,15 @@
             <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_get_subhistory_by_subid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns the subtree below the current HistoryDagNode corresponding</span>
-<span class="sd">        to the given index.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_get_subhistory_by_subid</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">subid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">tree_builder</span><span class="p">:</span> <span class="s2">&quot;PreorderTreeBuilder&quot;</span><span class="p">,</span> <span class="n">parent_repr</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Uses ``tree_builder`` to build the subtree below the current</span>
+<span class="sd">        HistoryDagNode corresponding to the given index.&quot;&quot;&quot;</span>
+        <span class="n">this_repr</span> <span class="o">=</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent_repr</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>  <span class="c1"># base case - the node is a leaf</span>
-            <span class="k">return</span> <span class="bp">self</span>
+            <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">()</span>
-
             <span class="c1"># get the subtree for each of the clades</span>
             <span class="k">for</span> <span class="n">clade</span><span class="p">,</span> <span class="n">eset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="c1"># get the sum of subtrees of the edges for this clade</span>
@@ -333,13 +338,12 @@
                         <span class="n">curr_index</span> <span class="o">=</span> <span class="n">curr_index</span> <span class="o">-</span> <span class="n">child</span><span class="o">.</span><span class="n">_dp_data</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="c1"># add this edge to the tree somehow</span>
-                        <span class="n">history</span><span class="o">.</span><span class="n">clades</span><span class="p">[</span><span class="n">clade</span><span class="p">]</span><span class="o">.</span><span class="n">add_to_edgeset</span><span class="p">(</span>
-                            <span class="n">child</span><span class="o">.</span><span class="n">_get_subhistory_by_subid</span><span class="p">(</span><span class="n">curr_index</span><span class="p">)</span>
+                        <span class="n">child</span><span class="o">.</span><span class="n">_get_subhistory_by_subid</span><span class="p">(</span>
+                            <span class="n">curr_index</span><span class="p">,</span> <span class="n">tree_builder</span><span class="p">,</span> <span class="n">parent_repr</span><span class="o">=</span><span class="n">this_repr</span>
                         <span class="p">)</span>
                         <span class="k">break</span>
 
                 <span class="n">subid</span> <span class="o">=</span> <span class="n">subid</span> <span class="o">/</span> <span class="n">num_subtrees</span>
-        <span class="k">return</span> <span class="n">history</span>
 
     <span class="k">def</span> <span class="nf">remove_edge_by_clade_and_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="s2">&quot;HistoryDagNode&quot;</span><span class="p">,</span> <span class="n">clade</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">):</span>
         <span class="n">key</span><span class="p">:</span> <span class="nb">frozenset</span>
@@ -693,8 +697,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HistoryDagNode</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a randomly sampled child edge, and its corresponding weight.</span>
 
-<span class="sd">        When possible, only edges pointing to child nodes on which</span>
-<span class="sd">        ``selection_function`` evaluates to True will be sampled.</span>
+<span class="sd">        When possible, only edges with nonzero mask value will be</span>
+<span class="sd">        sampled.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">log_probabilities</span><span class="p">:</span>
             <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">exp</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span> <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">]</span>

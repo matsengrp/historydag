@@ -15,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -182,6 +182,121 @@
 <span class="sd">    :meth:`HistoryDag.from_history_dag`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">newclass</span><span class="o">.</span><span class="n">from_history_dag</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Preorder tree creation class</span>
+
+<span class="n">TreeBuilderNode</span> <span class="o">=</span> <span class="n">Any</span>
+
+
+<div class="viewcode-block" id="PreorderTreeBuilder">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.PreorderTreeBuilder">[docs]</a>
+<span class="k">class</span> <span class="nc">PreorderTreeBuilder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Any class implementing a PreorderTreeBuilder interface can be used as a</span>
+<span class="sd">    tree sample constructor in :meth:`HistoryDag.fast_sample`. Subclasses</span>
+<span class="sd">    implementing this interface may implement an arbitrary constructor</span>
+<span class="sd">    interface, as the user will be responsible for creating instances to be</span>
+<span class="sd">    used for sampling. In addition, subclasses must implement the following</span>
+<span class="sd">    methods:</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        add_node: This method must accept a :class:HistoryDagNode object ``dag_node`` and, optionally</span>
+<span class="sd">            a TreeBuilderNode instance ``parent``, representing the parent node of the node to be added,</span>
+<span class="sd">            and returns a TreeBuilderNode instance representing the added node in the sampled</span>
+<span class="sd">            tree. TreeBuilderNode can be any type which is convenient for the internal</span>
+<span class="sd">            implementation of the PreorderTreeBuilder subclass. This method can expect to be</span>
+<span class="sd">            called on nodes in a sampled tree in a pre-ordering. A parent node will always be</span>
+<span class="sd">            provided unless `dag_node` is the root node.</span>
+<span class="sd">        get_finished_tree: This method takes no arguments and returns the data defining the</span>
+<span class="sd">            sampled tree, after any necessary clean-up or final tree construction steps. Its</span>
+<span class="sd">            return value is the return value of :meth:`HistoryDag.fast_sample`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="EteTreeBuilder">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.EteTreeBuilder">[docs]</a>
+<span class="k">class</span> <span class="nc">EteTreeBuilder</span><span class="p">(</span><span class="n">PreorderTreeBuilder</span><span class="p">):</span>
+<div class="viewcode-block" id="EteTreeBuilder.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.EteTreeBuilder.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">HistoryDagNode</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;unnamed&quot;</span><span class="p">,</span>
+        <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">feature_funcs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">HistoryDagNode</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">treeroot</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_func</span> <span class="o">=</span> <span class="n">name_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_funcs</span> <span class="o">=</span> <span class="n">feature_funcs</span>
+
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">feature_func</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">feature</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">feature_funcs</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span> <span class="o">=</span> <span class="n">feature_func</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_funcs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_funcs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span></div>
+
+
+    <span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dag_node</span><span class="p">:</span> <span class="n">HistoryDagNode</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">:</span>
+        <span class="c1"># Skip the UA Node</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dag_node</span><span class="p">,</span> <span class="n">UANode</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">newnode</span> <span class="o">=</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">()</span>
+        <span class="n">newnode</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_func</span><span class="p">(</span><span class="n">dag_node</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">feature</span><span class="p">,</span> <span class="n">feature_func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_funcs</span><span class="p">:</span>
+            <span class="n">newnode</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">feature_func</span><span class="p">(</span><span class="n">dag_node</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">treeroot</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">treeroot</span> <span class="o">=</span> <span class="n">newnode</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">newnode</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">newnode</span>
+
+    <span class="k">def</span> <span class="nf">get_finished_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">treeroot</span></div>
+
+
+
+<div class="viewcode-block" id="PreorderHistoryBuilder">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.PreorderHistoryBuilder">[docs]</a>
+<span class="k">class</span> <span class="nc">PreorderHistoryBuilder</span><span class="p">(</span><span class="n">PreorderTreeBuilder</span><span class="p">):</span>
+<div class="viewcode-block" id="PreorderHistoryBuilder.__init__">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.PreorderHistoryBuilder.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dag_type</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dag_type</span> <span class="o">=</span> <span class="n">dag_type</span></div>
+
+
+    <span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dag_node</span><span class="p">:</span> <span class="n">HistoryDagNode</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">HistoryDagNode</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HistoryDagNode</span><span class="p">:</span>
+        <span class="n">new_node</span> <span class="o">=</span> <span class="n">dag_node</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">new_node</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">parent</span><span class="p">,</span> <span class="n">new_node</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">new_node</span>
+
+    <span class="k">def</span> <span class="nf">get_finished_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">):</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dag_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">)</span></div>
 
 
 
@@ -381,18 +496,57 @@
             <span class="n">dag</span><span class="o">.</span><span class="n">trim_optimal_weight</span><span class="p">(</span><span class="o">**</span><span class="n">key</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">dag</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="c1"># This call to count_histories is essential because we use</span>
+            <span class="c1"># the cached node counts later. For faster indexing, call this</span>
+            <span class="c1"># method once and call _get_subhistory_by_subid yourself.</span>
             <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_histories</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">key</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">key</span> <span class="o">=</span> <span class="n">length</span> <span class="o">+</span> <span class="n">key</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">key</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">IndexError</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">count_histories</span><span class="p">()</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">_get_subhistory_by_subid</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">PreorderHistoryBuilder</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">_get_subhistory_by_subid</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">builder</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">get_finished_tree</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;History DAG indices must be integers or utils.HistoryDagFilter&quot;</span>
                 <span class="sa">f</span><span class="s2">&quot; objects, not </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
+
+<div class="viewcode-block" id="HistoryDag.get_histories_by_index">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.HistoryDag.get_histories_by_index">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_histories_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_iterator</span><span class="p">,</span> <span class="n">tree_builder_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieving a history by index is slow, since each retrieval requires</span>
+<span class="sd">        running the ``trim_optimal_weight`` method on the entire DAG to</span>
+<span class="sd">        populate node counts. This method instead runs that method a single</span>
+<span class="sd">        time and yields a history for each index yielded by ``key_iterator``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_iterator: An iterator on desired history indices. May be consumable, as</span>
+<span class="sd">                it will only be used once.</span>
+<span class="sd">            tree_builder_func: A function accepting an index and returning a</span>
+<span class="sd">                :class:`PreorderTreeBuilder` instance to be used to build the history</span>
+<span class="sd">                with that index. If None (default), then tree-shaped HistoryDag objects</span>
+<span class="sd">                will be yielded using :class:`PreorderHistoryBuilder`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tree_builder_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">tree_builder_func</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">PreorderHistoryBuilder</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_histories</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">key_iterator</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">length</span> <span class="o">+</span> <span class="n">key</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">key</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Invalid index </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in DAG containing </span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2"> histories&quot;</span>
+                <span class="p">)</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">tree_builder_func</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">_get_subhistory_by_subid</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">builder</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">builder</span><span class="o">.</span><span class="n">get_finished_tree</span><span class="p">()</span></div>
+
 
 <div class="viewcode-block" id="HistoryDag.get_label_type">
 <a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.HistoryDag.get_label_type">[docs]</a>
@@ -811,6 +965,46 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No matching node found.&quot;</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="HistoryDag.fast_sample">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.HistoryDag.fast_sample">[docs]</a>
+    <span class="k">def</span> <span class="nf">fast_sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tree_builder</span><span class="p">:</span> <span class="n">PreorderTreeBuilder</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">log_probabilities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This is a non-recursive alternative to :meth:`HistoryDag.sample`,</span>
+<span class="sd">        which is likely to be slower on small DAGs, but may allow significant</span>
+<span class="sd">        optimizations on large DAGs, or in the case that the data format being</span>
+<span class="sd">        sampled is something other than a tree-shaped HistoryDag object.</span>
+
+<span class="sd">        This method does not provide an edge_selector argument like :meth:`HistoryDag.sample`.</span>
+<span class="sd">        Instead, any masking of edges should be done prior to sampling using the :meth:`HistoryDag.set_sample_mask`</span>
+<span class="sd">        method, or by modifying the arguments to :meth:`HistoryDag.probability_annotate`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tree_builder: a PreorderTreeBuilder instance to handle construction of the sampled tree.</span>
+<span class="sd">            log_probabilities: Whether edge probabilities annotated on this DAG (using, for example,</span>
+<span class="sd">                :meth:`HistoryDag.probability_annotate`) are on a log-scale.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tree_builder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tree_builder</span> <span class="o">=</span> <span class="n">PreorderHistoryBuilder</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">get_sampled_children</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">clade</span><span class="p">,</span> <span class="n">eset</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">sampled_target</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">eset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">log_probabilities</span><span class="o">=</span><span class="n">log_probabilities</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">sampled_target</span>
+
+        <span class="n">node_queue</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="p">,</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="p">))]</span>
+
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_queue</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">parent_repr</span> <span class="o">=</span> <span class="n">node_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">get_sampled_children</span><span class="p">(</span><span class="n">parent</span><span class="p">):</span>
+                <span class="n">child_repr</span> <span class="o">=</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent_repr</span><span class="p">)</span>
+                <span class="n">node_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">child</span><span class="p">,</span> <span class="n">child_repr</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">get_finished_tree</span><span class="p">()</span></div>
+
+
 <div class="viewcode-block" id="HistoryDag.sample">
 <a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.HistoryDag.sample">[docs]</a>
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
@@ -820,10 +1014,13 @@
 <span class="sd">        DAG containing the root and all leaf nodes) For reproducibility, set</span>
 <span class="sd">        ``random.seed`` before sampling.</span>
 
-<span class="sd">        When there is an option, edges pointing to nodes on which `selection_func` is True</span>
+<span class="sd">        When there is an option, edges pointing to nodes on which `edge_selector` is True</span>
 <span class="sd">        will always be chosen.</span>
 
 <span class="sd">        Returns a new HistoryDag object.</span>
+
+<span class="sd">        To use the more general sampling pattern which allows an arbitrary PreorderTreeBuilder</span>
+<span class="sd">        object, use :meth:`HistoryDag.fast_sample` instead.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">_sample</span><span class="p">(</span>
@@ -1364,29 +1561,20 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># First build a dictionary of ete3 nodes keyed by HDagNodes.</span>
         <span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">labelfeatures</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-                <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">children</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">_asdict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">labelfeatures</span> <span class="o">=</span> <span class="n">features</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">children</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">_asdict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
-        <span class="k">def</span> <span class="nf">etenode</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">HistoryDagNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">:</span>
-            <span class="n">newnode</span> <span class="o">=</span> <span class="n">ete3</span><span class="o">.</span><span class="n">TreeNode</span><span class="p">()</span>
-            <span class="n">newnode</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name_func</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">labelfeatures</span><span class="p">:</span>
-                <span class="n">newnode</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">feature</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">feature</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">feature_funcs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">newnode</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">newnode</span>
+        <span class="n">tree_builder</span> <span class="o">=</span> <span class="n">EteTreeBuilder</span><span class="p">(</span>
+            <span class="n">name_func</span><span class="o">=</span><span class="n">name_func</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="n">feature_funcs</span><span class="o">=</span><span class="n">feature_funcs</span>
+        <span class="p">)</span>
+        <span class="n">nodes_to_process</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="p">,</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="p">))]</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes_to_process</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">node</span><span class="p">,</span> <span class="n">node_repr</span> <span class="o">=</span> <span class="n">nodes_to_process</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">():</span>
+                <span class="n">nodes_to_process</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">node_repr</span><span class="p">))</span>
+                <span class="p">)</span>
 
-        <span class="n">nodedict</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="p">:</span> <span class="n">etenode</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preorder</span><span class="p">(</span><span class="n">skip_ua_node</span><span class="o">=</span><span class="kc">True</span><span class="p">)}</span>
-
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodedict</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">():</span>
-                <span class="n">nodedict</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">child</span><span class="o">=</span><span class="n">nodedict</span><span class="p">[</span><span class="n">target</span><span class="p">])</span>
-
-        <span class="c1"># Since self is cladetree, dagroot can have only one child</span>
-        <span class="k">return</span> <span class="n">nodedict</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dagroot</span><span class="o">.</span><span class="n">children</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span></div>
+        <span class="k">return</span> <span class="n">tree_builder</span><span class="o">.</span><span class="n">get_finished_tree</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="HistoryDag.to_graphviz">
@@ -3272,6 +3460,39 @@
 
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">aggregate_func</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">edge_probabilities</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
+<div class="viewcode-block" id="HistoryDag.set_sample_mask">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.HistoryDag.set_sample_mask">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_sample_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edge_selector</span><span class="p">,</span> <span class="n">log_probabilities</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Zero out edge weights for masked edges before calling</span>
+<span class="sd">        :meth:`HistoryDag.fast_sample`. This should be equivalent to passing</span>
+<span class="sd">        the same edge_selector function to :meth:`HistoryDag.sample`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            edge_selector: A function accepting an edge (a tuple of HistoryDagNode objects) and</span>
+<span class="sd">                returning True of False. An edge marked False will be ineligible for sampling, unless</span>
+<span class="sd">                all other edges in the same edge set are also marked False.</span>
+<span class="sd">            log_probabilities: Since the mask is applied by modifying edge probabilities, one must specify</span>
+<span class="sd">                whether those probabilities are on a log scale.</span>
+
+<span class="sd">        Take care to verify that you shouldn&#39;t instead use :meth:`HistoryDag.probability_annotate` with</span>
+<span class="sd">        a choice of ``edge_weight_func`` that takes into account the masking preferences.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">log_probabilities</span><span class="p">:</span>
+            <span class="n">mask_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mask_value</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preorder</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">clade</span><span class="p">,</span> <span class="n">eset</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">clades</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">edge_selector</span><span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span> <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">eset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+                <span class="c1"># If all mask values are false, then skip modifying probs.</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">val</span><span class="p">:</span>
+                            <span class="n">eset</span><span class="o">.</span><span class="n">probs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask_value</span></div>
+
+
 <div class="viewcode-block" id="HistoryDag.probability_annotate">
 <a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.HistoryDag.probability_annotate">[docs]</a>
     <span class="k">def</span> <span class="nf">probability_annotate</span><span class="p">(</span>
@@ -4079,7 +4300,7 @@
     <span class="n">ua_node</span> <span class="o">=</span> <span class="n">UANode</span><span class="p">(</span><span class="n">EdgeSet</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">ua_node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
         <span class="n">ua_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">ua_node</span><span class="p">]</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">()</span>
-    <span class="n">nodes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ua_node</span><span class="p">)</span>
+        <span class="n">nodes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ua_node</span><span class="p">)</span>
     <span class="n">clade_dict</span> <span class="o">=</span> <span class="n">_clade_union_dict</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
     <span class="n">edge_dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">node</span><span class="p">:</span> <span class="p">[</span><span class="n">child</span> <span class="k">for</span> <span class="n">clade</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">clades</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">clade_dict</span><span class="p">[</span><span class="n">clade</span><span class="p">]]</span>
@@ -4094,6 +4315,55 @@
             <span class="n">node</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">HistoryDag</span><span class="p">(</span><span class="n">ua_node</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_binary_complete_dag">
+<a class="viewcode-back" href="../../stubs/historydag.dag.html#historydag.make_binary_complete_dag">[docs]</a>
+<span class="k">def</span> <span class="nf">make_binary_complete_dag</span><span class="p">(</span><span class="n">leaf_labels</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Produce a history DAG containing all binary topologies on the provided</span>
+<span class="sd">    iterable of leaf labels.&quot;&quot;&quot;</span>
+    <span class="n">leaf_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">leaf_labels</span><span class="p">)</span>
+    <span class="n">model_label</span> <span class="o">=</span> <span class="n">leaf_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_label</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Provided labels must be a historydag Label type (a typing.NamedTuple instance)&quot;</span>
+        <span class="p">)</span>
+    <span class="n">field_values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">Ellipsis</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">model_label</span><span class="p">)</span>
+    <span class="n">internal_label</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model_label</span><span class="p">)(</span><span class="o">*</span><span class="n">field_values</span><span class="p">)</span>
+
+    <span class="n">node_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">UANode</span><span class="p">(</span><span class="n">EdgeSet</span><span class="p">())}</span>
+    <span class="k">for</span> <span class="n">clade</span> <span class="ow">in</span> <span class="n">utils</span><span class="o">.</span><span class="n">powerset</span><span class="p">(</span><span class="n">leaf_labels</span><span class="p">,</span> <span class="n">start_size</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Now need to get all splits of this clade into two child clades</span>
+        <span class="n">cladesize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clade</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">child_mask</span> <span class="ow">in</span> <span class="n">utils</span><span class="o">.</span><span class="n">powerset</span><span class="p">(</span>
+            <span class="nb">range</span><span class="p">(</span><span class="n">cladesize</span><span class="p">),</span> <span class="n">start_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_size</span><span class="o">=</span><span class="n">cladesize</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="n">splitter_mask</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">cladesize</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">child_mask</span><span class="p">:</span>
+                <span class="n">splitter_mask</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">clade1</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+                <span class="n">clade</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">splitter_mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">flag</span>
+            <span class="p">)</span>
+            <span class="n">clade2</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+                <span class="n">clade</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">splitter_mask</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">flag</span>
+            <span class="p">)</span>
+            <span class="n">node_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                <span class="n">HistoryDagNode</span><span class="p">(</span>
+                    <span class="n">internal_label</span><span class="p">,</span>
+                    <span class="p">{</span><span class="n">clade1</span><span class="p">:</span> <span class="n">EdgeSet</span><span class="p">(),</span> <span class="n">clade2</span><span class="p">:</span> <span class="n">EdgeSet</span><span class="p">()},</span>
+                    <span class="p">{},</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">leaf_label</span> <span class="ow">in</span> <span class="n">leaf_labels</span><span class="p">:</span>
+        <span class="n">node_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="n">HistoryDagNode</span><span class="p">(</span>
+                <span class="n">leaf_label</span><span class="p">,</span>
+                <span class="p">{},</span>
+                <span class="p">{},</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">history_dag_from_nodes</span><span class="p">(</span><span class="n">node_set</span><span class="p">)</span></div>
 
 </pre></div>
 

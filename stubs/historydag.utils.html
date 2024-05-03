@@ -16,7 +16,7 @@
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -104,6 +104,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.utils.count_labeled_binary_topologies"><code class="docutils literal notranslate"><span class="pre">count_labeled_binary_topologies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.utils.powerset"><code class="docutils literal notranslate"><span class="pre">powerset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.utils.binary_support"><code class="docutils literal notranslate"><span class="pre">binary_support()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.utils.count_resolved_clade_supports"><code class="docutils literal notranslate"><span class="pre">count_resolved_clade_supports()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.utils.iter_resolved_clade_supports"><code class="docutils literal notranslate"><span class="pre">iter_resolved_clade_supports()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.utils.read_fasta"><code class="docutils literal notranslate"><span class="pre">read_fasta()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.utils.load_fasta"><code class="docutils literal notranslate"><span class="pre">load_fasta()</span></code></a></li>
 </ul>
@@ -164,14 +168,20 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.access_nodefield_default" title="historydag.utils.access_nodefield_default"><code class="xref py py-obj docutils literal notranslate"><span class="pre">access_nodefield_default</span></code></a>(fieldname, default)</p></td>
 <td><p>A decorator for accessing label fields on a HistoryDagNode.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.cartesian_product" title="historydag.utils.cartesian_product"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cartesian_product</span></code></a>(optionlist[, accum])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.binary_support" title="historydag.utils.binary_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">binary_support</span></code></a>(clade_size, total_leaves[, ...])</p></td>
+<td><p>Calculate the fraction of binary trees on total_leaves containing a particular clade containing clade_size leaves.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.cartesian_product" title="historydag.utils.cartesian_product"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cartesian_product</span></code></a>(optionlist[, accum])</p></td>
 <td><p>The cartesian product of iterables in a list.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.collapse_adjacent_sequences" title="historydag.utils.collapse_adjacent_sequences"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collapse_adjacent_sequences</span></code></a>(tree)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.collapse_adjacent_sequences" title="historydag.utils.collapse_adjacent_sequences"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collapse_adjacent_sequences</span></code></a>(tree)</p></td>
 <td><p>Collapse nonleaf nodes that have the same sequence.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.count_labeled_binary_topologies" title="historydag.utils.count_labeled_binary_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count_labeled_binary_topologies</span></code></a>(n)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.count_labeled_binary_topologies" title="historydag.utils.count_labeled_binary_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count_labeled_binary_topologies</span></code></a>(n)</p></td>
 <td><p>Returns the number of binary topologies on n labeled leaves.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.count_resolved_clade_supports" title="historydag.utils.count_resolved_clade_supports"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count_resolved_clade_supports</span></code></a>(n_child_clades)</p></td>
+<td><p>Returns a generator on clade size, support pairs, for clades which would result from binary resolution of a node posessing child clade sets in node_child_clades.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.edge_difference_funcs" title="historydag.utils.edge_difference_funcs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edge_difference_funcs</span></code></a>(reference_dag[, key])</p></td>
 <td><p>Provides functions to compute the number of edges in a history which do not appear in a reference HistoryDag.</p></td>
@@ -188,20 +198,26 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.is_collapsed" title="historydag.utils.is_collapsed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_collapsed</span></code></a>(tree)</p></td>
 <td><p>Return whether the provided tree is collapsed.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.load_fasta" title="historydag.utils.load_fasta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_fasta</span></code></a>(fastapath[, sequence_type])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.iter_resolved_clade_supports" title="historydag.utils.iter_resolved_clade_supports"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_resolved_clade_supports</span></code></a>(node_child_clades)</p></td>
+<td><p>Returns a generator on clade, support pairs, for clades which would result from binary resolution of a node posessing child clade sets in node_child_clades.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.load_fasta" title="historydag.utils.load_fasta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_fasta</span></code></a>(fastapath[, sequence_type])</p></td>
 <td><p>Load a fasta file as a dictionary, with sequence ids as keys and sequences as values.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.logsumexp" title="historydag.utils.logsumexp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logsumexp</span></code></a>(ls)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.logsumexp" title="historydag.utils.logsumexp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logsumexp</span></code></a>(ls)</p></td>
 <td><p>A numerically stable implementation of logsumexp, similar to Scipy's.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.make_newickcountfuncs" title="historydag.utils.make_newickcountfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_newickcountfuncs</span></code></a>([name_func, features, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.make_newickcountfuncs" title="historydag.utils.make_newickcountfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_newickcountfuncs</span></code></a>([name_func, features, ...])</p></td>
 <td><p>Provides functions to count newick strings.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.make_rfdistance_countfuncs" title="historydag.utils.make_rfdistance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_rfdistance_countfuncs</span></code></a>(ref_tree[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.make_rfdistance_countfuncs" title="historydag.utils.make_rfdistance_countfuncs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_rfdistance_countfuncs</span></code></a>(ref_tree[, ...])</p></td>
 <td><p>Provides functions to compute Robinson-Foulds (RF) distances of trees in a DAG, relative to a fixed reference tree.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.natural_edge_probability" title="historydag.utils.natural_edge_probability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">natural_edge_probability</span></code></a>(parent, child)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.natural_edge_probability" title="historydag.utils.natural_edge_probability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">natural_edge_probability</span></code></a>(parent, child)</p></td>
 <td><p>Return the downward-conditional edge probability of the edge from parent to child.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.utils.powerset" title="historydag.utils.powerset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">powerset</span></code></a>(iterable[, start_size, end_size])</p></td>
+<td><p>Produce all subsets of iterable (as tuples of elements), with sizes starting at start_size and ending at end_size (inclusive), or the size of the passed iterable if end_size is None.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#historydag.utils.prod" title="historydag.utils.prod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prod</span></code></a>(ls)</p></td>
 <td><p>Return product of elements of the input list.</p></td>
@@ -684,6 +700,84 @@ constructor. Instances should be functionally indistinguishable from
 <dd><p>Returns the number of binary topologies on n labeled leaves.</p>
 <p>In these topologies, left and right branches are not distinguished,
 and internal nodes are not ranked.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.utils.powerset">
+<span class="sig-prename descclassname"><span class="pre">historydag.utils.</span></span><span class="sig-name descname"><span class="pre">powerset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/utils.html#powerset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.utils.powerset" title="Link to this definition"></a></dt>
+<dd><p>Produce all subsets of iterable (as tuples of elements), with sizes
+starting at start_size and ending at end_size (inclusive), or the size of
+the passed iterable if end_size is None.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.utils.binary_support">
+<span class="sig-prename descclassname"><span class="pre">historydag.utils.</span></span><span class="sig-name descname"><span class="pre">binary_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clade_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_leaves</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/utils.html#binary_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.utils.binary_support" title="Link to this definition"></a></dt>
+<dd><p>Calculate the fraction of binary trees on total_leaves containing a
+particular clade containing clade_size leaves.</p>
+<p>If normalized is False, instead returns the number of binary
+topologies which would contain a particular clade of size
+clade_size.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.utils.count_resolved_clade_supports">
+<span class="sig-prename descclassname"><span class="pre">historydag.utils.</span></span><span class="sig-name descname"><span class="pre">count_resolved_clade_supports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_child_clades</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/utils.html#count_resolved_clade_supports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.utils.count_resolved_clade_supports" title="Link to this definition"></a></dt>
+<dd><p>Returns a generator on clade size, support pairs, for clades which would
+result from binary resolution of a node posessing child clade sets in
+node_child_clades.</p>
+<p>Clade size means number of children of this node which are grouped
+below a node.</p>
+<p>Summing over the first element of yielded tuples gives the number of
+elements which would be yielded by <a class="reference internal" href="#historydag.utils.iter_resolved_clade_supports" title="historydag.utils.iter_resolved_clade_supports"><code class="xref py py-meth docutils literal notranslate"><span class="pre">iter_resolved_clade_supports()</span></code></a>
+provided with n_child_clades child clades and the same threshold
+value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_child_clades</strong> – The number of children of the multifurcating node</p></li>
+<li><p><strong>threshold</strong> – If a resolved node’s clade support value is below this threshold,
+that clade will not be counted.</p></li>
+<li><p><strong>min_size</strong> – The minimum size of a clade to be counted.</p></li>
+<li><p><strong>max_size</strong> – The (inclusive) maximum size of a clade to be counted.
+The maximum value is <code class="docutils literal notranslate"><span class="pre">len(node_child_clades)</span></code>, which is equivalent
+to the default value.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Note that by default, the root clade, including all leaves contained in
+node_child_clades, as well as all the clades contained in
+node_child_clades, are included and each have a support of 1. To exclude leaves, pass
+<code class="docutils literal notranslate"><span class="pre">min_size=2</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.utils.iter_resolved_clade_supports">
+<span class="sig-prename descclassname"><span class="pre">historydag.utils.</span></span><span class="sig-name descname"><span class="pre">iter_resolved_clade_supports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_child_clades</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/utils.html#iter_resolved_clade_supports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.utils.iter_resolved_clade_supports" title="Link to this definition"></a></dt>
+<dd><p>Returns a generator on clade, support pairs, for clades which would
+result from binary resolution of a node posessing child clade sets in
+node_child_clades. All clades with support &gt; threshold are yielded,
+avoiding iteration through too many clades on large multifurcations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_child_clades</strong> – A set of frozensets containing the clades of the children of a
+multifurcating node.</p></li>
+<li><p><strong>threshold</strong> – If a resolved node’s clade support value is below this threshold,
+that clade will not be yielded.</p></li>
+<li><p><strong>min_size</strong> – The minimum size of a clade to be yielded. Note this is NOT simply the
+size of the clade set, but rather the number of children of the multifurcating
+node which are below the resolved node corresponding to the clade.</p></li>
+<li><p><strong>max_size</strong> – The (inclusive) maximum size of a clade to be yielded. See <cite>min_size</cite>
+for a description of what size means. The maximum value is <code class="docutils literal notranslate"><span class="pre">len(node_child_clades)</span></code>,
+which is equivalent to the default value.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Note that by default, the root clade, including all leaves contained in
+node_child_clades, as well as all the clades contained in
+node_child_clades, are included and each have a support of 1. To exclude leaves, pass
+<code class="docutils literal notranslate"><span class="pre">min_size=2</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">

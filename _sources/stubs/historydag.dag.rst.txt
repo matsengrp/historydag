@@ -24,6 +24,7 @@
       history_dag_from_newicks
       history_dag_from_nodes
       history_dag_from_trees
+      make_binary_complete_dag
    
    
 
@@ -33,7 +34,10 @@
 
    .. autosummary::
    
+      EteTreeBuilder
       HistoryDag
+      PreorderHistoryBuilder
+      PreorderTreeBuilder
    
    
 

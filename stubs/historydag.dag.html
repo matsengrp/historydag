@@ -16,7 +16,7 @@
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -59,9 +59,23 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">historydag.dag</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.dag.IntersectionError"><code class="docutils literal notranslate"><span class="pre">IntersectionError</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.dag.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.dag.PreorderTreeBuilder"><code class="docutils literal notranslate"><span class="pre">PreorderTreeBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.PreorderTreeBuilder.add_node"><code class="docutils literal notranslate"><span class="pre">PreorderTreeBuilder.add_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.PreorderTreeBuilder.get_finished_tree"><code class="docutils literal notranslate"><span class="pre">PreorderTreeBuilder.get_finished_tree()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.dag.EteTreeBuilder"><code class="docutils literal notranslate"><span class="pre">EteTreeBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.EteTreeBuilder.__init__"><code class="docutils literal notranslate"><span class="pre">EteTreeBuilder.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.dag.PreorderHistoryBuilder"><code class="docutils literal notranslate"><span class="pre">PreorderHistoryBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.PreorderHistoryBuilder.__init__"><code class="docutils literal notranslate"><span class="pre">PreorderHistoryBuilder.__init__()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.dag.HistoryDag"><code class="docutils literal notranslate"><span class="pre">HistoryDag</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.from_history_dag"><code class="docutils literal notranslate"><span class="pre">HistoryDag.from_history_dag()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.__init__"><code class="docutils literal notranslate"><span class="pre">HistoryDag.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.get_histories_by_index"><code class="docutils literal notranslate"><span class="pre">HistoryDag.get_histories_by_index()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.get_label_type"><code class="docutils literal notranslate"><span class="pre">HistoryDag.get_label_type()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.trim_below_weight"><code class="docutils literal notranslate"><span class="pre">HistoryDag.trim_below_weight()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.get_histories"><code class="docutils literal notranslate"><span class="pre">HistoryDag.get_histories()</span></code></a></li>
@@ -74,6 +88,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.num_leaves"><code class="docutils literal notranslate"><span class="pre">HistoryDag.num_leaves()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.find_nodes"><code class="docutils literal notranslate"><span class="pre">HistoryDag.find_nodes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.find_node"><code class="docutils literal notranslate"><span class="pre">HistoryDag.find_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.fast_sample"><code class="docutils literal notranslate"><span class="pre">HistoryDag.fast_sample()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.sample"><code class="docutils literal notranslate"><span class="pre">HistoryDag.sample()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.nodes_above_node"><code class="docutils literal notranslate"><span class="pre">HistoryDag.nodes_above_node()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.sample_with_node"><code class="docutils literal notranslate"><span class="pre">HistoryDag.sample_with_node()</span></code></a></li>
@@ -138,6 +153,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.get_probability_countfuncs"><code class="docutils literal notranslate"><span class="pre">HistoryDag.get_probability_countfuncs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.sum_probability"><code class="docutils literal notranslate"><span class="pre">HistoryDag.sum_probability()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.node_probabilities"><code class="docutils literal notranslate"><span class="pre">HistoryDag.node_probabilities()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.set_sample_mask"><code class="docutils literal notranslate"><span class="pre">HistoryDag.set_sample_mask()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.probability_annotate"><code class="docutils literal notranslate"><span class="pre">HistoryDag.probability_annotate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.natural_distribution_annotate"><code class="docutils literal notranslate"><span class="pre">HistoryDag.natural_distribution_annotate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#historydag.dag.HistoryDag.uniform_distribution_annotate"><code class="docutils literal notranslate"><span class="pre">HistoryDag.uniform_distribution_annotate()</span></code></a></li>
@@ -160,6 +176,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#historydag.dag.history_dag_from_histories"><code class="docutils literal notranslate"><span class="pre">history_dag_from_histories()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.dag.history_dag_from_clade_trees"><code class="docutils literal notranslate"><span class="pre">history_dag_from_clade_trees()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#historydag.dag.history_dag_from_nodes"><code class="docutils literal notranslate"><span class="pre">history_dag_from_nodes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#historydag.dag.make_binary_complete_dag"><code class="docutils literal notranslate"><span class="pre">make_binary_complete_dag()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="historydag.sequence_dag.html">historydag.sequence_dag</a></li>
@@ -237,13 +254,25 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#historydag.dag.history_dag_from_trees" title="historydag.dag.history_dag_from_trees"><code class="xref py py-obj docutils literal notranslate"><span class="pre">history_dag_from_trees</span></code></a>(treelist, ...)</p></td>
 <td><p>Create a <a class="reference internal" href="historydag.HistoryDag.html#historydag.HistoryDag" title="historydag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">historydag.HistoryDag</span></code></a> from a list of trees.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.dag.make_binary_complete_dag" title="historydag.dag.make_binary_complete_dag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_binary_complete_dag</span></code></a>(leaf_labels)</p></td>
+<td><p>Produce a history DAG containing all binary topologies on the provided iterable of leaf labels.</p></td>
+</tr>
 </tbody>
 </table>
 <p class="rubric">Classes</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.dag.HistoryDag" title="historydag.dag.HistoryDag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoryDag</span></code></a>(dagroot[, attr])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.dag.EteTreeBuilder" title="historydag.dag.EteTreeBuilder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EteTreeBuilder</span></code></a>([name_func, features, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.dag.HistoryDag" title="historydag.dag.HistoryDag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoryDag</span></code></a>(dagroot[, attr])</p></td>
 <td><p>An object to represent a collection of internally labeled trees.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#historydag.dag.PreorderHistoryBuilder" title="historydag.dag.PreorderHistoryBuilder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PreorderHistoryBuilder</span></code></a>(dag_type)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#historydag.dag.PreorderTreeBuilder" title="historydag.dag.PreorderTreeBuilder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PreorderTreeBuilder</span></code></a>()</p></td>
+<td><p>Any class implementing a PreorderTreeBuilder interface can be used as a tree sample constructor in <a class="reference internal" href="#historydag.dag.HistoryDag.fast_sample" title="historydag.dag.HistoryDag.fast_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.fast_sample()</span></code></a>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -267,6 +296,57 @@
 <p>This is a wrapper for the <code class="docutils literal notranslate"><span class="pre">newclass.from_history_dag</span></code> method,
 which for most subclasses should be identical to
 <a class="reference internal" href="#historydag.dag.HistoryDag.from_history_dag" title="historydag.dag.HistoryDag.from_history_dag"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.from_history_dag()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.dag.PreorderTreeBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.dag.</span></span><span class="sig-name descname"><span class="pre">PreorderTreeBuilder</span></span><a class="reference internal" href="../_modules/historydag/dag.html#PreorderTreeBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.PreorderTreeBuilder" title="Link to this definition"></a></dt>
+<dd><p>Any class implementing a PreorderTreeBuilder interface can be used as a
+tree sample constructor in <a class="reference internal" href="#historydag.dag.HistoryDag.fast_sample" title="historydag.dag.HistoryDag.fast_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.fast_sample()</span></code></a>. Subclasses
+implementing this interface may implement an arbitrary constructor
+interface, as the user will be responsible for creating instances to be
+used for sampling. In addition, subclasses must implement the following
+methods:</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.PreorderTreeBuilder.add_node">
+<span class="sig-name descname"><span class="pre">add_node</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#historydag.dag.PreorderTreeBuilder.add_node" title="Link to this definition"></a></dt>
+<dd><p>This method must accept a :class:HistoryDagNode object <code class="docutils literal notranslate"><span class="pre">dag_node</span></code> and, optionally
+a TreeBuilderNode instance <code class="docutils literal notranslate"><span class="pre">parent</span></code>, representing the parent node of the node to be added,
+and returns a TreeBuilderNode instance representing the added node in the sampled
+tree. TreeBuilderNode can be any type which is convenient for the internal
+implementation of the PreorderTreeBuilder subclass. This method can expect to be
+called on nodes in a sampled tree in a pre-ordering. A parent node will always be
+provided unless <cite>dag_node</cite> is the root node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.PreorderTreeBuilder.get_finished_tree">
+<span class="sig-name descname"><span class="pre">get_finished_tree</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#historydag.dag.PreorderTreeBuilder.get_finished_tree" title="Link to this definition"></a></dt>
+<dd><p>This method takes no arguments and returns the data defining the
+sampled tree, after any necessary clean-up or final tree construction steps. Its
+return value is the return value of <a class="reference internal" href="#historydag.dag.HistoryDag.fast_sample" title="historydag.dag.HistoryDag.fast_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.fast_sample()</span></code></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.dag.EteTreeBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.dag.</span></span><span class="sig-name descname"><span class="pre">EteTreeBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">lambda</span> <span class="pre">n:</span> <span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_funcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#EteTreeBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.EteTreeBuilder" title="Link to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.EteTreeBuilder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">lambda</span> <span class="pre">n:</span> <span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_funcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#EteTreeBuilder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.EteTreeBuilder.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="historydag.dag.PreorderHistoryBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">historydag.dag.</span></span><span class="sig-name descname"><span class="pre">PreorderHistoryBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#PreorderHistoryBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.PreorderHistoryBuilder" title="Link to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.PreorderHistoryBuilder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#PreorderHistoryBuilder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.PreorderHistoryBuilder.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -329,6 +409,27 @@ in converted node labels, if possible. Otherwise, an exception will be raised.</
 <dt class="sig sig-object py" id="historydag.dag.HistoryDag.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dagroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#HistoryDag.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.HistoryDag.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.HistoryDag.get_histories_by_index">
+<span class="sig-name descname"><span class="pre">get_histories_by_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key_iterator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_builder_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#HistoryDag.get_histories_by_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.HistoryDag.get_histories_by_index" title="Link to this definition"></a></dt>
+<dd><p>Retrieving a history by index is slow, since each retrieval requires
+running the <code class="docutils literal notranslate"><span class="pre">trim_optimal_weight</span></code> method on the entire DAG to
+populate node counts. This method instead runs that method a single
+time and yields a history for each index yielded by <code class="docutils literal notranslate"><span class="pre">key_iterator</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key_iterator</strong> – An iterator on desired history indices. May be consumable, as
+it will only be used once.</p></li>
+<li><p><strong>tree_builder_func</strong> – A function accepting an index and returning a
+<a class="reference internal" href="#historydag.dag.PreorderTreeBuilder" title="historydag.dag.PreorderTreeBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreorderTreeBuilder</span></code></a> instance to be used to build the history
+with that index. If None (default), then tree-shaped HistoryDag objects
+will be yielded using <a class="reference internal" href="#historydag.dag.PreorderHistoryBuilder" title="historydag.dag.PreorderHistoryBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreorderHistoryBuilder</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="historydag.dag.HistoryDag.get_label_type">
@@ -478,14 +579,37 @@ to True.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.HistoryDag.fast_sample">
+<span class="sig-name descname"><span class="pre">fast_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree_builder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#HistoryDag.fast_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.HistoryDag.fast_sample" title="Link to this definition"></a></dt>
+<dd><p>This is a non-recursive alternative to <a class="reference internal" href="#historydag.dag.HistoryDag.sample" title="historydag.dag.HistoryDag.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.sample()</span></code></a>,
+which is likely to be slower on small DAGs, but may allow significant
+optimizations on large DAGs, or in the case that the data format being
+sampled is something other than a tree-shaped HistoryDag object.</p>
+<p>This method does not provide an edge_selector argument like <a class="reference internal" href="#historydag.dag.HistoryDag.sample" title="historydag.dag.HistoryDag.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.sample()</span></code></a>.
+Instead, any masking of edges should be done prior to sampling using the <a class="reference internal" href="#historydag.dag.HistoryDag.set_sample_mask" title="historydag.dag.HistoryDag.set_sample_mask"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.set_sample_mask()</span></code></a>
+method, or by modifying the arguments to <a class="reference internal" href="#historydag.dag.HistoryDag.probability_annotate" title="historydag.dag.HistoryDag.probability_annotate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.probability_annotate()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tree_builder</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="#historydag.dag.PreorderTreeBuilder" title="historydag.dag.PreorderTreeBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreorderTreeBuilder</span></code></a>]</span>) – a PreorderTreeBuilder instance to handle construction of the sampled tree.</p></li>
+<li><p><strong>log_probabilities</strong> – Whether edge probabilities annotated on this DAG (using, for example,
+<a class="reference internal" href="#historydag.dag.HistoryDag.probability_annotate" title="historydag.dag.HistoryDag.probability_annotate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.probability_annotate()</span></code></a>) are on a log-scale.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="historydag.dag.HistoryDag.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edge_selector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">lambda</span> <span class="pre">e:</span> <span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#HistoryDag.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.HistoryDag.sample" title="Link to this definition"></a></dt>
 <dd><p>Samples a history from the history DAG. (A history is a sub-history
 DAG containing the root and all leaf nodes) For reproducibility, set
 <code class="docutils literal notranslate"><span class="pre">random.seed</span></code> before sampling.</p>
-<p>When there is an option, edges pointing to nodes on which <cite>selection_func</cite> is True
+<p>When there is an option, edges pointing to nodes on which <cite>edge_selector</cite> is True
 will always be chosen.</p>
 <p>Returns a new HistoryDag object.</p>
+<p>To use the more general sampling pattern which allows an arbitrary PreorderTreeBuilder
+object, use <a class="reference internal" href="#historydag.dag.HistoryDag.fast_sample" title="historydag.dag.HistoryDag.fast_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.fast_sample()</span></code></a> instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#historydag.dag.HistoryDag" title="historydag.dag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a></span></p>
@@ -1664,6 +1788,27 @@ probabilities in the DAG.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="historydag.dag.HistoryDag.set_sample_mask">
+<span class="sig-name descname"><span class="pre">set_sample_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edge_selector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#HistoryDag.set_sample_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.HistoryDag.set_sample_mask" title="Link to this definition"></a></dt>
+<dd><p>Zero out edge weights for masked edges before calling
+<a class="reference internal" href="#historydag.dag.HistoryDag.fast_sample" title="historydag.dag.HistoryDag.fast_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.fast_sample()</span></code></a>. This should be equivalent to passing
+the same edge_selector function to <a class="reference internal" href="#historydag.dag.HistoryDag.sample" title="historydag.dag.HistoryDag.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.sample()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>edge_selector</strong> – A function accepting an edge (a tuple of HistoryDagNode objects) and
+returning True of False. An edge marked False will be ineligible for sampling, unless
+all other edges in the same edge set are also marked False.</p></li>
+<li><p><strong>log_probabilities</strong> – Since the mask is applied by modifying edge probabilities, one must specify
+whether those probabilities are on a log scale.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Take care to verify that you shouldn’t instead use <a class="reference internal" href="#historydag.dag.HistoryDag.probability_annotate" title="historydag.dag.HistoryDag.probability_annotate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.probability_annotate()</span></code></a> with
+a choice of <code class="docutils literal notranslate"><span class="pre">edge_weight_func</span></code> that takes into account the masking preferences.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="historydag.dag.HistoryDag.probability_annotate">
 <span class="sig-name descname"><span class="pre">probability_annotate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edge_weight_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_probabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_edgeweights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accum_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#HistoryDag.probability_annotate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.HistoryDag.probability_annotate" title="Link to this definition"></a></dt>
 <dd><p>Uses the supplied edge weight function to compute conditional
@@ -1989,6 +2134,13 @@ those nodes.</p>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#historydag.dag.HistoryDag" title="historydag.dag.HistoryDag"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDag</span></code></a></span></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="historydag.dag.make_binary_complete_dag">
+<span class="sig-prename descclassname"><span class="pre">historydag.dag.</span></span><span class="sig-name descname"><span class="pre">make_binary_complete_dag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leaf_labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/historydag/dag.html#make_binary_complete_dag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#historydag.dag.make_binary_complete_dag" title="Link to this definition"></a></dt>
+<dd><p>Produce a history DAG containing all binary topologies on the provided
+iterable of leaf labels.</p>
 </dd></dl>
 
 </section>
