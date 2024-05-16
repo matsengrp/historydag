@@ -69,18 +69,20 @@ panel.
 Installing
 ==========
 
-Although the package is not on PyPI, installation is straightforward:
+The package is on PyPI and conda-forge, so installation is straightforward:
 
 .. code-block:: console
 
-   pip install https://github.com/matsengrp/historydag/archive/refs/heads/main.zip
+   conda create -n historydag python=3.10
+   conda activate historydag
+   conda install -c conda-forge historydag
 
-Alternatively, clone the repository and install:
+(Any Python version >= 3.7 should work)
+Alternatively, use pip:
 
 .. code-block:: console
 
-   git clone https://github.com/matsengrp/historydag.git
-   pip install historydag/
+   pip install historydag
 
 
 
