@@ -664,7 +664,7 @@ def load_MAD_protobuf(
 
                 def _id_func(nid):
                     if self.is_leaf(nid):
-                        return pbdata.node_names[node_id].condensed_leaves[0]
+                        return pbdata.node_names[nid].condensed_leaves[0]
                     else:
                         return str(nid)
 
@@ -672,7 +672,7 @@ def load_MAD_protobuf(
 
                 def _id_func(nid):
                     if self.is_leaf(nid):
-                        return pbdata.node_names[node_id].condensed_leaves[0]
+                        return pbdata.node_names[nid].condensed_leaves[0]
                     else:
                         return None
 
