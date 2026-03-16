@@ -4,15 +4,6 @@
 .. automodule:: historydag.sequence_dag
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@
       AmbiguousLeafSequenceHistoryDag
       SequenceHistoryDag
    
-   
-
-   
-   
-   
-
-
-

@@ -1,22 +1,20 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.sequence_dag &mdash; historydag  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -79,16 +77,16 @@
            <div itemprop="articleBody">
              
   <h1>Source code for historydag.sequence_dag</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">frozendict</span> <span class="kn">import</span> <span class="n">frozendict</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">frozendict</span><span class="w"> </span><span class="kn">import</span> <span class="n">frozendict</span>
 
-<span class="kn">from</span> <span class="nn">historydag</span> <span class="kn">import</span> <span class="n">HistoryDag</span>
-<span class="kn">import</span> <span class="nn">historydag.parsimony_utils</span> <span class="k">as</span> <span class="nn">parsimony_utils</span>
-<span class="kn">from</span> <span class="nn">historydag.utils</span> <span class="kn">import</span> <span class="n">UALabel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">historydag</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistoryDag</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">historydag.parsimony_utils</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">parsimony_utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">historydag.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">UALabel</span>
 
 
 <div class="viewcode-block" id="SequenceHistoryDag">
 <a class="viewcode-back" href="../../stubs/historydag.sequence_dag.html#historydag.sequence_dag.SequenceHistoryDag">[docs]</a>
-<span class="k">class</span> <span class="nc">SequenceHistoryDag</span><span class="p">(</span><span class="n">HistoryDag</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SequenceHistoryDag</span><span class="p">(</span><span class="n">HistoryDag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A HistoryDag subclass with node labels containing full, unambiguous</span>
 <span class="sd">    nucleotide sequences.</span>
 
@@ -124,7 +122,7 @@
 
 <div class="viewcode-block" id="SequenceHistoryDag.hamming_parsimony_count">
 <a class="viewcode-back" href="../../stubs/historydag.sequence_dag.html#historydag.sequence_dag.SequenceHistoryDag.hamming_parsimony_count">[docs]</a>
-    <span class="k">def</span> <span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Count the hamming parsimony scores of all trees in the history DAG.</span>
 
 <span class="sd">        Returns a Counter with integer keys.</span>
@@ -134,7 +132,7 @@
 
 <div class="viewcode-block" id="SequenceHistoryDag.summary">
 <a class="viewcode-back" href="../../stubs/historydag.sequence_dag.html#historydag.sequence_dag.SequenceHistoryDag.summary">[docs]</a>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">HistoryDag</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">min_pars</span><span class="p">,</span> <span class="n">max_pars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_range_annotate</span><span class="p">(</span>
             <span class="o">**</span><span class="n">parsimony_utils</span><span class="o">.</span><span class="n">hamming_distance_countfuncs</span>
@@ -146,7 +144,7 @@
 
 <div class="viewcode-block" id="AmbiguousLeafSequenceHistoryDag">
 <a class="viewcode-back" href="../../stubs/historydag.sequence_dag.html#historydag.sequence_dag.AmbiguousLeafSequenceHistoryDag">[docs]</a>
-<span class="k">class</span> <span class="nc">AmbiguousLeafSequenceHistoryDag</span><span class="p">(</span><span class="n">SequenceHistoryDag</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AmbiguousLeafSequenceHistoryDag</span><span class="p">(</span><span class="n">SequenceHistoryDag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A HistoryDag subclass with node labels containing full nucleotide</span>
 <span class="sd">    sequences.</span>
 
@@ -179,7 +177,7 @@
 
 <div class="viewcode-block" id="AmbiguousLeafSequenceHistoryDag.hamming_parsimony_count">
 <a class="viewcode-back" href="../../stubs/historydag.sequence_dag.html#historydag.sequence_dag.AmbiguousLeafSequenceHistoryDag.hamming_parsimony_count">[docs]</a>
-    <span class="k">def</span> <span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hamming_parsimony_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Count the hamming parsimony scores of all trees in the history DAG.</span>
 
 <span class="sd">        Returns a Counter with integer keys.</span>
@@ -191,7 +189,7 @@
 
 <div class="viewcode-block" id="AmbiguousLeafSequenceHistoryDag.summary">
 <a class="viewcode-back" href="../../stubs/historydag.sequence_dag.html#historydag.sequence_dag.AmbiguousLeafSequenceHistoryDag.summary">[docs]</a>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">HistoryDag</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">min_pars</span><span class="p">,</span> <span class="n">max_pars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_range_annotate</span><span class="p">(</span>
             <span class="o">**</span><span class="n">parsimony_utils</span><span class="o">.</span><span class="n">leaf_ambiguous_hamming_distance_countfuncs</span>

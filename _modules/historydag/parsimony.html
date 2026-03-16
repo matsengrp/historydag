@@ -1,22 +1,20 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.parsimony &mdash; historydag  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -80,24 +78,25 @@
              
   <h1>Source code for historydag.parsimony</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;A module implementing Sankoff Algorithm.&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">random</span>
-<span class="kn">import</span> <span class="nn">ete3</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
-<span class="kn">import</span> <span class="nn">historydag.utils</span> <span class="k">as</span> <span class="nn">utils</span>
-<span class="kn">from</span> <span class="nn">historydag.utils</span> <span class="kn">import</span> <span class="n">load_fasta</span>
-<span class="kn">from</span> <span class="nn">historydag.dag</span> <span class="kn">import</span> <span class="p">(</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ete3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">historydag.utils</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">historydag.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_fasta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">historydag.dag</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">history_dag_from_histories</span><span class="p">,</span>
     <span class="n">history_dag_from_etes</span><span class="p">,</span>
     <span class="n">HistoryDag</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">import</span> <span class="nn">historydag.parsimony_utils</span> <span class="k">as</span> <span class="nn">parsimony_utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">historydag.parsimony_utils</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">parsimony_utils</span>
 
 
 <div class="viewcode-block" id="replace_label_attr">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.replace_label_attr">[docs]</a>
-<span class="k">def</span> <span class="nf">replace_label_attr</span><span class="p">(</span><span class="n">original_label</span><span class="p">,</span> <span class="n">list_of_replacements</span><span class="o">=</span><span class="p">{}):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">replace_label_attr</span><span class="p">(</span><span class="n">original_label</span><span class="p">,</span> <span class="n">list_of_replacements</span><span class="o">=</span><span class="p">{}):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generalizes :meth: ``_replace()`` for namedtuple datatype to replace</span>
 <span class="sd">    multiple fields at once, and by string rather than as a keyword argument.</span>
 
@@ -111,7 +110,7 @@
 
 <div class="viewcode-block" id="make_weighted_hamming_count_funcs">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.make_weighted_hamming_count_funcs">[docs]</a>
-<span class="k">def</span> <span class="nf">make_weighted_hamming_count_funcs</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_weighted_hamming_count_funcs</span><span class="p">(</span>
     <span class="n">transition_model</span><span class="o">=</span><span class="n">parsimony_utils</span><span class="o">.</span><span class="n">default_nt_transitions</span><span class="p">,</span>
     <span class="n">allow_ambiguous_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">sequence_label</span><span class="o">=</span><span class="s2">&quot;sequence&quot;</span><span class="p">,</span>
@@ -144,7 +143,7 @@
 
 <div class="viewcode-block" id="sankoff_postorder_iter_accum">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.sankoff_postorder_iter_accum">[docs]</a>
-<span class="k">def</span> <span class="nf">sankoff_postorder_iter_accum</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sankoff_postorder_iter_accum</span><span class="p">(</span>
     <span class="n">postorder_iter</span><span class="p">,</span> <span class="n">node_clade_function</span><span class="p">,</span> <span class="n">child_node_function</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is a re-take of :meth:`postorder_history_accum` that is altered so</span>
@@ -180,7 +179,7 @@
 
 <div class="viewcode-block" id="sankoff_upward">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.sankoff_upward">[docs]</a>
-<span class="k">def</span> <span class="nf">sankoff_upward</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sankoff_upward</span><span class="p">(</span>
     <span class="n">node_list</span><span class="p">,</span>
     <span class="n">seq_len</span><span class="p">,</span>
     <span class="n">sequence_attr_name</span><span class="o">=</span><span class="s2">&quot;sequence&quot;</span><span class="p">,</span>
@@ -243,14 +242,14 @@
         <span class="n">sequence_attr_idx</span> <span class="o">=</span> <span class="n">node_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sequence_attr_name</span><span class="p">)</span>
         <span class="n">max_transition_cost</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">adj_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">seq_len</span>
 
-        <span class="k">def</span> <span class="nf">children_cost</span><span class="p">(</span><span class="n">child_cost_vectors</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">children_cost</span><span class="p">(</span><span class="n">child_cost_vectors</span><span class="p">):</span>
             <span class="n">costs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">child_cost_vectors</span><span class="p">:</span>
                 <span class="n">cost</span> <span class="o">=</span> <span class="n">adj_arr</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">c</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">transition_model</span><span class="o">.</span><span class="n">bases</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">costs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">cost_vector</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">cost_vector</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">():</span>
                 <span class="k">return</span> <span class="p">[</span>
                     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
@@ -272,7 +271,7 @@
                     <span class="p">)</span>
                 <span class="p">]</span>
 
-        <span class="k">def</span> <span class="nf">accum_between_clade</span><span class="p">(</span><span class="n">list_of_clade_cvs</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">accum_between_clade</span><span class="p">(</span><span class="n">list_of_clade_cvs</span><span class="p">):</span>
             <span class="n">cost_vectors</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">min_cost</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">list_of_clade_cvs</span><span class="p">):</span>
@@ -300,7 +299,7 @@
 
 <div class="viewcode-block" id="sankoff_downward">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.sankoff_downward">[docs]</a>
-<span class="k">def</span> <span class="nf">sankoff_downward</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sankoff_downward</span><span class="p">(</span>
     <span class="n">dag</span><span class="p">,</span>
     <span class="n">skip_ua_children</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">partial_node_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -335,12 +334,12 @@
     <span class="c1"># `join_bases` is the method for creating a new instance of sequence given an iterable of bases &#39;n&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">seq_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
 
-        <span class="k">def</span> <span class="nf">join_bases</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">join_bases</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
 
-        <span class="k">def</span> <span class="nf">join_bases</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">join_bases</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">seq_instance</span><span class="p">)([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">n</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">partial_node_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -358,12 +357,12 @@
     <span class="c1"># save the field names/types of the label datatype for this dag</span>
     <span class="n">adj_arr</span> <span class="o">=</span> <span class="n">transition_model</span><span class="o">.</span><span class="n">get_adjacency_array</span><span class="p">(</span><span class="n">seq_len</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">transition_cost</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transition_cost</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">adj_arr</span><span class="p">[</span>
             <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)),</span> <span class="p">[</span><span class="n">transition_model</span><span class="o">.</span><span class="n">base_indices</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
         <span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">compute_sequence_data</span><span class="p">(</span><span class="n">cost_vector</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_sequence_data</span><span class="p">(</span><span class="n">cost_vector</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute all possible sequences that minimize transition costs as</span>
 <span class="sd">        given by cost_vector.</span>
 
@@ -463,7 +462,7 @@
 
 <div class="viewcode-block" id="disambiguate">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.disambiguate">[docs]</a>
-<span class="k">def</span> <span class="nf">disambiguate</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">disambiguate</span><span class="p">(</span>
     <span class="n">tree</span><span class="p">,</span>
     <span class="n">compute_cvs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -560,7 +559,7 @@
 
 <div class="viewcode-block" id="build_tree">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.build_tree">[docs]</a>
-<span class="k">def</span> <span class="nf">build_tree</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_tree</span><span class="p">(</span>
     <span class="n">newickstring</span><span class="p">,</span>
     <span class="n">fasta_map</span><span class="p">,</span>
     <span class="n">newickformat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -604,7 +603,7 @@
 
 <div class="viewcode-block" id="build_trees_from_files">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.build_trees_from_files">[docs]</a>
-<span class="k">def</span> <span class="nf">build_trees_from_files</span><span class="p">(</span><span class="n">newickfiles</span><span class="p">,</span> <span class="n">fastafile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_trees_from_files</span><span class="p">(</span><span class="n">newickfiles</span><span class="p">,</span> <span class="n">fastafile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Same as `build_tree`, but takes a list of filenames containing newick</span>
 <span class="sd">    strings, and a filename for a fasta file, and returns a generator on</span>
 <span class="sd">    trees.&quot;&quot;&quot;</span>
@@ -618,7 +617,7 @@
 
 <div class="viewcode-block" id="parsimony_score">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.parsimony_score">[docs]</a>
-<span class="k">def</span> <span class="nf">parsimony_score</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">transition_model</span><span class="o">=</span><span class="n">parsimony_utils</span><span class="o">.</span><span class="n">default_nt_transitions</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parsimony_score</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">transition_model</span><span class="o">=</span><span class="n">parsimony_utils</span><span class="o">.</span><span class="n">default_nt_transitions</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the parsimony score of a (disambiguated) ete tree.</span>
 
 <span class="sd">    Tree must have &#39;sequence&#39; attributes on all nodes.</span>
@@ -632,7 +631,7 @@
 
 <div class="viewcode-block" id="remove_invariant_sites">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.remove_invariant_sites">[docs]</a>
-<span class="k">def</span> <span class="nf">remove_invariant_sites</span><span class="p">(</span><span class="n">fasta_map</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_invariant_sites</span><span class="p">(</span><span class="n">fasta_map</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Eliminate invariant characters in a fasta alignment and record the</span>
 <span class="sd">    0-based indices of those variant sites.&quot;&quot;&quot;</span>
     <span class="c1"># eliminate characters for which there&#39;s no diversity:</span>
@@ -649,7 +648,7 @@
 
 <div class="viewcode-block" id="parsimony_scores_from_topologies">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.parsimony_scores_from_topologies">[docs]</a>
-<span class="k">def</span> <span class="nf">parsimony_scores_from_topologies</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parsimony_scores_from_topologies</span><span class="p">(</span>
     <span class="n">newicks</span><span class="p">,</span> <span class="n">fasta_map</span><span class="p">,</span> <span class="n">gap_as_char</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">remove_invariants</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a generator on parsimony scores of trees specified by newick</span>
@@ -677,7 +676,7 @@
 
 <div class="viewcode-block" id="parsimony_scores_from_files">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.parsimony_scores_from_files">[docs]</a>
-<span class="k">def</span> <span class="nf">parsimony_scores_from_files</span><span class="p">(</span><span class="n">treefiles</span><span class="p">,</span> <span class="n">fastafile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parsimony_scores_from_files</span><span class="p">(</span><span class="n">treefiles</span><span class="p">,</span> <span class="n">fastafile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the parsimony scores of trees specified by newick files and a</span>
 <span class="sd">    fasta file.</span>
 
@@ -685,7 +684,7 @@
 <span class="sd">    arguments are passed to ``parsimony_scores_from_topologies``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">load_newick</span><span class="p">(</span><span class="n">npath</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_newick</span><span class="p">(</span><span class="n">npath</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">npath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
@@ -697,7 +696,7 @@
 
 <div class="viewcode-block" id="build_dag_from_trees">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.build_dag_from_trees">[docs]</a>
-<span class="k">def</span> <span class="nf">build_dag_from_trees</span><span class="p">(</span><span class="n">trees</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_dag_from_trees</span><span class="p">(</span><span class="n">trees</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a history DAG from trees containing a `sequence` attribute on all</span>
 <span class="sd">    nodes.</span>
 
@@ -720,7 +719,7 @@
 
 <div class="viewcode-block" id="disambiguate_history">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.disambiguate_history">[docs]</a>
-<span class="k">def</span> <span class="nf">disambiguate_history</span><span class="p">(</span><span class="n">history</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">disambiguate_history</span><span class="p">(</span><span class="n">history</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A rather ugly way to disambiguate a history, by converting to ete, using</span>
 <span class="sd">    the disambiguate method, then converting back to HistoryDag.&quot;&quot;&quot;</span>
     <span class="n">seq_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">())</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">sequence</span><span class="p">)</span>
@@ -738,7 +737,7 @@
 
 <div class="viewcode-block" id="treewise_sankoff_in_dag">
 <a class="viewcode-back" href="../../stubs/historydag.parsimony.html#historydag.parsimony.treewise_sankoff_in_dag">[docs]</a>
-<span class="k">def</span> <span class="nf">treewise_sankoff_in_dag</span><span class="p">(</span><span class="n">dag</span><span class="p">,</span> <span class="n">cover_edges</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">treewise_sankoff_in_dag</span><span class="p">(</span><span class="n">dag</span><span class="p">,</span> <span class="n">cover_edges</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform tree-wise sankoff to compute labels for all nodes in the DAG.&quot;&quot;&quot;</span>
     <span class="n">newdag</span> <span class="o">=</span> <span class="n">history_dag_from_histories</span><span class="p">(</span>
         <span class="n">disambiguate_history</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>

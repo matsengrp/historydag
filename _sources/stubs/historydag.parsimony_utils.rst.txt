@@ -4,7 +4,6 @@
 .. automodule:: historydag.parsimony_utils
 
    
-   
    .. rubric:: Module Attributes
 
    .. autosummary::
@@ -22,10 +21,6 @@
       compact_genome_hamming_distance_countfuncs
       leaf_ambiguous_compact_genome_hamming_distance_countfuncs
    
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -34,10 +29,6 @@
       hamming_cg_edge_weight_ambiguous_leaves
       hamming_edge_weight
       hamming_edge_weight_ambiguous_leaves
-   
-   
-
-   
    
    .. rubric:: Classes
 
@@ -49,11 +40,3 @@
       TransitionModel
       UnitTransitionModel
    
-   
-
-   
-   
-   
-
-
-

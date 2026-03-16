@@ -4,11 +4,6 @@
 .. automodule:: historydag.mutation_annotated_dag
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,10 +12,6 @@
       load_MAD_protobuf_file
       load_json_file
       unflatten
-   
-   
-
-   
    
    .. rubric:: Classes
 
@@ -31,11 +22,3 @@
       HDagJSONEncoder
       NodeIDHistoryDag
    
-   
-
-   
-   
-   
-
-
-

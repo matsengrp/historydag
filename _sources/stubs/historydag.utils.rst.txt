@@ -4,17 +4,12 @@
 .. automodule:: historydag.utils
 
    
-   
    .. rubric:: Module Attributes
 
    .. autosummary::
    
       node_countfuncs
       log_natural_probability_funcs
-   
-   
-
-   
    
    .. rubric:: Functions
 
@@ -43,10 +38,6 @@
       read_fasta
       sum_rfdistance_funcs
    
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -59,17 +50,9 @@
       StrState
       UALabel
    
-   
-
-   
-   
    .. rubric:: Exceptions
 
    .. autosummary::
    
       TaxaError
    
-   
-
-
-

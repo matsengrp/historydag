@@ -4,20 +4,11 @@
 .. automodule:: historydag.dag_node
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
    
       empty_node
-   
-   
-
-   
    
    .. rubric:: Classes
 
@@ -27,11 +18,3 @@
       HistoryDagNode
       UANode
    
-   
-
-   
-   
-   
-
-
-

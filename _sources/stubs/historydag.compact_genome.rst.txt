@@ -4,11 +4,6 @@
 .. automodule:: historydag.compact_genome
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -20,21 +15,9 @@
       reconcile_cgs
       unpack_mut_string
    
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
    
       CompactGenome
    
-   
-
-   
-   
-   
-
-
-

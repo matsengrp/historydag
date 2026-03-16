@@ -4,11 +4,6 @@
 .. automodule:: historydag.parsimony
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -29,15 +24,3 @@
       sankoff_upward
       treewise_sankoff_in_dag
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

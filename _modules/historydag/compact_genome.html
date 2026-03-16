@@ -1,22 +1,20 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>historydag.compact_genome &mdash; historydag  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -90,20 +88,20 @@
 <span class="sd">CompactGenome.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">frozendict</span> <span class="kn">import</span> <span class="n">frozendict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
-<span class="kn">from</span> <span class="nn">historydag.parsimony_utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">frozendict</span><span class="w"> </span><span class="kn">import</span> <span class="n">frozendict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">historydag.parsimony_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">standard_nt_ambiguity_map</span><span class="p">,</span>
     <span class="n">default_nt_transitions</span><span class="p">,</span>
     <span class="n">CharacterSequence</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">historydag.utils</span> <span class="kn">import</span> <span class="n">read_fasta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">historydag.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_fasta</span>
 
 
 <div class="viewcode-block" id="CompactGenome">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome">[docs]</a>
-<span class="k">class</span> <span class="nc">CompactGenome</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompactGenome</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of mutations relative to a reference sequence.</span>
 
 <span class="sd">    Args:</span>
@@ -115,15 +113,15 @@
 
 <div class="viewcode-block" id="CompactGenome.__init__">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mutations</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mutations</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span> <span class="o">=</span> <span class="n">frozendict</span><span class="p">(</span><span class="n">mutations</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">CompactGenome</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
                 <span class="n">other</span><span class="o">.</span><span class="n">mutations</span><span class="p">,</span>
@@ -132,36 +130,36 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">CompactGenome</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">CompactGenome</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">&lt;</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span> <span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__le__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__lt__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;CompactGenome(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="si">}</span><span class="s2">,&quot;</span>
             <span class="sa">f</span><span class="s2">&quot; &lt;reference sequence str with id:</span><span class="si">{</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;)&quot;</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;CompactGenome[</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mutations_as_strings</span><span class="p">())</span><span class="si">}</span><span class="s2">]&quot;</span>
 
 <div class="viewcode-block" id="CompactGenome.get_site">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.get_site">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_site</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_site</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the base at the provided (one-based) site index.&quot;&quot;&quot;</span>
         <span class="n">mut</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutations</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">site</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mut</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -172,7 +170,7 @@
 
 <div class="viewcode-block" id="CompactGenome.mutations_as_strings">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.mutations_as_strings">[docs]</a>
-    <span class="k">def</span> <span class="nf">mutations_as_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutations_as_strings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return mutations as a tuple of strings of the format &#39;&lt;reference</span>
 <span class="sd">        base&gt;&lt;index&gt;&lt;new base&gt;&#39;, sorted by index.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
@@ -185,7 +183,7 @@
 
 <div class="viewcode-block" id="CompactGenome.mutate">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.mutate">[docs]</a>
-    <span class="k">def</span> <span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mutstring</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mutstring</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a mutstring such as &#39;A110G&#39; to this compact genome.</span>
 
 <span class="sd">        In this example, A is the old base, G is the new base, and 110 is the 1-based</span>
@@ -226,7 +224,7 @@
 
 <div class="viewcode-block" id="CompactGenome.apply_muts_raw">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.apply_muts_raw">[docs]</a>
-    <span class="k">def</span> <span class="nf">apply_muts_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">muts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_muts_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">muts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply the mutations from the sequence of tuples ``muts``.</span>
 
 <span class="sd">        Each tuple should contain (one-based site, from_base, to_base)</span>
@@ -245,7 +243,7 @@
 
 <div class="viewcode-block" id="CompactGenome.apply_muts">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.apply_muts">[docs]</a>
-    <span class="k">def</span> <span class="nf">apply_muts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">muts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_muts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">muts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a sequence of mutstrings like &#39;A110G&#39; to this compact genome.</span>
 
 <span class="sd">        In this example, A is the old base, G is the new base, and 110 is the 1-based</span>
@@ -269,15 +267,15 @@
         <span class="k">if</span> <span class="n">reverse</span><span class="p">:</span>
             <span class="n">mod_func</span> <span class="o">=</span> <span class="nb">reversed</span>
 
-            <span class="k">def</span> <span class="nf">rearrange_func</span><span class="p">(</span><span class="n">tup</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">rearrange_func</span><span class="p">(</span><span class="n">tup</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">tup</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tup</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="k">else</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">mod_func</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">mod_func</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
                 <span class="k">yield from</span> <span class="n">seq</span>
 
-            <span class="k">def</span> <span class="nf">rearrange_func</span><span class="p">(</span><span class="n">tup</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">rearrange_func</span><span class="p">(</span><span class="n">tup</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">tup</span>
 
         <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
@@ -293,7 +291,7 @@
 
 <div class="viewcode-block" id="CompactGenome.to_sequence">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.to_sequence">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert this CompactGenome to a full nucleotide sequence.&quot;&quot;&quot;</span>
         <span class="n">newseq</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">newseq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
@@ -308,7 +306,7 @@
 
 <div class="viewcode-block" id="CompactGenome.mask_sites">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.mask_sites">[docs]</a>
-    <span class="k">def</span> <span class="nf">mask_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mask_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove any mutations on sites in `sites`, leaving the reference</span>
 <span class="sd">        sequence unchanged.</span>
 
@@ -320,12 +318,12 @@
         <span class="n">sites</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">sites</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">one_based</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">site_translate</span><span class="p">(</span><span class="n">site</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">site_translate</span><span class="p">(</span><span class="n">site</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">site</span>
 
         <span class="k">else</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">site_translate</span><span class="p">(</span><span class="n">site</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">site_translate</span><span class="p">(</span><span class="n">site</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">site</span> <span class="o">-</span> <span class="mi">1</span>
 
         <span class="k">return</span> <span class="n">CompactGenome</span><span class="p">(</span>
@@ -340,7 +338,7 @@
 
 <div class="viewcode-block" id="CompactGenome.superset_sites">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.superset_sites">[docs]</a>
-    <span class="k">def</span> <span class="nf">superset_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">new_reference</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">superset_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">new_reference</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Do the opposite of `subset_sites`, adjusting site indices from</span>
 <span class="sd">        indices in a sequence of variant sites, to indices in a sequence</span>
 <span class="sd">        containing all sites.</span>
@@ -363,7 +361,7 @@
 
 <div class="viewcode-block" id="CompactGenome.subset_sites">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.subset_sites">[docs]</a>
-    <span class="k">def</span> <span class="nf">subset_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">new_reference</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">new_reference</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove all but those sites in ``sites``, and adjust the reference</span>
 <span class="sd">        sequence.</span>
 
@@ -400,7 +398,7 @@
 
 <div class="viewcode-block" id="CompactGenome.remove_sites">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.CompactGenome.remove_sites">[docs]</a>
-    <span class="k">def</span> <span class="nf">remove_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">new_reference</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sites</span><span class="p">,</span> <span class="n">one_based</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">new_reference</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove all sites in ``sites``, and adjust the reference sequence.</span>
 
 <span class="sd">        Args:</span>
@@ -437,13 +435,13 @@
 
 <div class="viewcode-block" id="unpack_mut_string">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.unpack_mut_string">[docs]</a>
-<span class="k">def</span> <span class="nf">unpack_mut_string</span><span class="p">(</span><span class="n">mut</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unpack_mut_string</span><span class="p">(</span><span class="n">mut</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns (one-based site, from_base, to_base)&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">mut</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">mut</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mut</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
 
 
-<span class="k">def</span> <span class="nf">_iter_adjusted_sites</span><span class="p">(</span><span class="n">recorded_sites</span><span class="p">,</span> <span class="n">removed_sites</span><span class="p">,</span> <span class="n">site_adjust</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_adjusted_sites</span><span class="p">(</span><span class="n">recorded_sites</span><span class="p">,</span> <span class="n">removed_sites</span><span class="p">,</span> <span class="n">site_adjust</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts recorded_sites if removed_sites are removed.</span>
 
 <span class="sd">    For each one, returns a pair (modified site, unmodified site).</span>
@@ -462,7 +460,7 @@
 
 <div class="viewcode-block" id="compact_genome_from_sequence">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.compact_genome_from_sequence">[docs]</a>
-<span class="k">def</span> <span class="nf">compact_genome_from_sequence</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compact_genome_from_sequence</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a CompactGenome from a sequence and a reference sequence.</span>
 
 <span class="sd">    Args:</span>
@@ -480,7 +478,7 @@
 
 <div class="viewcode-block" id="cg_diff">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.cg_diff">[docs]</a>
-<span class="k">def</span> <span class="nf">cg_diff</span><span class="p">(</span><span class="n">parent_cg</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">,</span> <span class="n">child_cg</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cg_diff</span><span class="p">(</span><span class="n">parent_cg</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">,</span> <span class="n">child_cg</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields mutations in the format (parent_nuc, child_nuc, one-based</span>
 <span class="sd">    sequence_index) distinguishing two compact genomes, such that applying the</span>
 <span class="sd">    resulting mutations to `parent_cg` would yield `child_cg`&quot;&quot;&quot;</span>
@@ -495,7 +493,7 @@
 
 <div class="viewcode-block" id="ambiguous_cg_diff">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.ambiguous_cg_diff">[docs]</a>
-<span class="k">def</span> <span class="nf">ambiguous_cg_diff</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ambiguous_cg_diff</span><span class="p">(</span>
     <span class="n">parent_cg</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">,</span>
     <span class="n">child_cg</span><span class="p">:</span> <span class="n">CompactGenome</span><span class="p">,</span>
     <span class="n">transition_model</span><span class="o">=</span><span class="n">default_nt_transitions</span><span class="p">,</span>
@@ -523,7 +521,7 @@
 
 <div class="viewcode-block" id="reconcile_cgs">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.reconcile_cgs">[docs]</a>
-<span class="k">def</span> <span class="nf">reconcile_cgs</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">reconcile_cgs</span><span class="p">(</span>
     <span class="n">cg_list</span><span class="p">,</span> <span class="n">check_references</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ambiguitymap</span><span class="o">=</span><span class="n">standard_nt_ambiguity_map</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a compact genome containing ambiguous bases, representing the</span>
@@ -556,7 +554,7 @@
                 <span class="c1"># Parent nuc must already be added!</span>
                 <span class="n">difference_sites</span><span class="p">[</span><span class="n">one_idx</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">child_nuc</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">process_charset</span><span class="p">(</span><span class="n">charset</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_charset</span><span class="p">(</span><span class="n">charset</span><span class="p">):</span>
         <span class="n">diff</span> <span class="o">=</span> <span class="n">charset</span> <span class="o">-</span> <span class="n">ambiguitymap</span><span class="o">.</span><span class="n">bases</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">charset</span><span class="o">.</span><span class="n">intersection_update</span><span class="p">(</span><span class="n">ambiguitymap</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
@@ -577,7 +575,7 @@
 
 <div class="viewcode-block" id="read_alignment">
 <a class="viewcode-back" href="../../stubs/historydag.compact_genome.html#historydag.compact_genome.read_alignment">[docs]</a>
-<span class="k">def</span> <span class="nf">read_alignment</span><span class="p">(</span><span class="n">alignment_file</span><span class="p">,</span> <span class="n">reference_sequence</span><span class="p">:</span> <span class="n">CharacterSequence</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_alignment</span><span class="p">(</span><span class="n">alignment_file</span><span class="p">,</span> <span class="n">reference_sequence</span><span class="p">:</span> <span class="n">CharacterSequence</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a fasta or vcf alignment and return a dictionary mapping sequence</span>
 <span class="sd">    ID strings to CompactGenomes.</span>
 

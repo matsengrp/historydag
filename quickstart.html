@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -5,19 +7,15 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quickstart &mdash; historydag  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -126,7 +124,7 @@ set of clades beneath that node’s children.</p>
 <p>After annotating each node with its child clades, a <strong>UA (universal ancestor)
 node</strong> is added as a parent of the original tree’s root node. The resulting
 structure is an example of a history DAG which we call a <strong>history</strong>:</p>
-<p><a class="reference internal" href="_images/history_0.svg"><img alt="pic1" src="_images/history_0.svg" width="45%" /></a> -&gt; <a class="reference internal" href="_images/fulltree_0.svg"><img alt="pic2" src="_images/fulltree_0.svg" width="45%" /></a></p>
+<p><a class="reference internal" href="_images/history_0.svg"><img alt="pic1" src="_images/history_0.svg" style="width: 45%;" /></a> -&gt; <a class="reference internal" href="_images/fulltree_0.svg"><img alt="pic2" src="_images/fulltree_0.svg" style="width: 45%;" /></a></p>
 <p>Notice that edges in the history DAG are associated not just to a parent node,
 but to a specific child clade of their parent node. The child clade of the
 parent node associated to an edge, must be the same as the clade below the
@@ -138,16 +136,19 @@ DAG which contains the UA node and all leaves, and has exactly one edge for
 each node-child clade pair, is a history. Histories represent labeled
 trees by the inverse of the correspondence introduced above:</p>
 <p>For example, the history highlighted in red in this image:</p>
-<a class="reference internal image-reference" href="_images/history_dag_example.svg"><img alt="_images/history_dag_example.svg" src="_images/history_dag_example.svg" width="100%" /></a>
+<a class="reference internal image-reference" href="_images/history_dag_example.svg"><img alt="_images/history_dag_example.svg" src="_images/history_dag_example.svg" style="width: 100%;" />
+</a>
 <p>represents this internally labeled tree:</p>
-<a class="reference internal image-reference" href="_images/history.svg"><img alt="_images/history.svg" src="_images/history.svg" width="50%" /></a>
+<a class="reference internal image-reference" href="_images/history.svg"><img alt="_images/history.svg" src="_images/history.svg" style="width: 50%;" />
+</a>
 <p>A history DAG in general represents more trees than used to construct it, since
 it automatically represents trees resulting from swapping certain substructures
 between input trees. The following figure illustrates a simple example of this,
 with the two input trees on the left panel yielding a history DAG which
 represents the original two trees, as well as two new trees shown in the right
 panel.</p>
-<a class="reference internal image-reference" href="_images/historyDAG_findsmore.png"><img alt="_images/historyDAG_findsmore.png" src="_images/historyDAG_findsmore.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="_images/historyDAG_findsmore.png"><img alt="_images/historyDAG_findsmore.png" src="_images/historyDAG_findsmore.png" style="width: 100%;" />
+</a>
 </section>
 <section id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Link to this heading"></a></h2>
@@ -169,7 +170,7 @@ Alternatively, use pip:</p>
 <a class="reference internal" href="stubs/historydag.from_tree.html#historydag.from_tree" title="historydag.from_tree"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_tree()</span></code></a> to create a tree-shaped history DAG (a ‘history’), or <code class="xref py py-meth docutils literal notranslate"><span class="pre">history_dag_from_trees()</span></code>,
 to create a history DAG from many trees.</p>
 <p>Each <a class="reference internal" href="stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode" title="historydag.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a> stores node data in two ways: the <code class="docutils literal notranslate"><span class="pre">label</span></code>
-attribute stores a <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">typing.NamedTuple</span></code></a> whose data is used to distinguish
+attribute stores a <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NamedTuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">typing.NamedTuple</span></code></a> whose data is used to distinguish
 <code class="docutils literal notranslate"><span class="pre">HistoryDagNode</span></code> instances, and the <code class="docutils literal notranslate"><span class="pre">attr</span></code> attribute stores
 all other node annotations not to be used to distinguish node instances.</p>
 <p>The functions <a class="reference internal" href="stubs/historydag.from_tree.html#historydag.from_tree" title="historydag.from_tree"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_tree()</span></code></a> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">history_dag_from_trees()</span></code> provide an
@@ -177,8 +178,8 @@ interface for mapping node data in the provided tree data structures to the
 appropriate place in the <a class="reference internal" href="stubs/historydag.HistoryDagNode.html#historydag.HistoryDagNode" title="historydag.HistoryDagNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistoryDagNode</span></code></a> data structure.</p>
 <p>For example, let’s load some sample trees provided in the [historydag
 repository](<a class="reference external" href="https://github.com/matsengrp/historydag">https://github.com/matsengrp/historydag</a>):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">historydag</span> <span class="k">as</span> <span class="nn">hdag</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pickle</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">historydag</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hdag</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;historydag/sample_data/toy_trees.p&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">ete_trees</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
 </pre></div>
@@ -420,7 +421,7 @@ accumulated weight (for example, their sum).</p></li>
 <p>These functions can be provided to the following methods, as the keyword
 arguments <code class="docutils literal notranslate"><span class="pre">edge_weight_func</span></code> and <code class="docutils literal notranslate"><span class="pre">accum_func</span></code>, respectively:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.weight_count" title="historydag.HistoryDag.weight_count"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.weight_count()</span></code></a>, which returns a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a>
+<li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.weight_count" title="historydag.HistoryDag.weight_count"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.weight_count()</span></code></a>, which returns a <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a>
 object containing the weights of all histories in the DAG,</p></li>
 <li><p><a class="reference internal" href="stubs/historydag.HistoryDag.html#historydag.HistoryDag.optimal_weight_annotate" title="historydag.HistoryDag.optimal_weight_annotate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">HistoryDag.optimal_weight_annotate()</span></code></a>, which annotates each history DAG
 node with the optimal weight of all sub-histories beneath that node, and
@@ -450,7 +451,7 @@ a unique child node).</p>
 <span class="go">Counter({35: 17, 36: 325, 37: 173})</span>
 </pre></div>
 </div>
-<p>Here, the keys in the <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a> are weights, and the values
+<p>Here, the keys in the <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.Counter" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code></a> are weights, and the values
 are the number of histories with each weight. Notice the values will always add
 to <code class="docutils literal notranslate"><span class="pre">len(dag)</span></code>.</p>
 <p>Finally, we can trim <code class="docutils literal notranslate"><span class="pre">dag</span></code> to only express the histories with the maximum
@@ -640,8 +641,8 @@ object, which points to the UA node, and provides API-exposed methods.</p>
 attributes, and which all have the same hamming parsimony score.</p>
 <p>Working from a directory containing the cloned <code class="docutils literal notranslate"><span class="pre">historydag</span></code> repository,
 we can load this data and create a history DAG:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">historydag</span> <span class="k">as</span> <span class="nn">hdag</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pickle</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">historydag</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hdag</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;historydag/sample_data/toy_trees.p&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">ete_trees</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ete_trees</span><span class="p">)</span>

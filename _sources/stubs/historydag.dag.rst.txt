@@ -4,11 +4,6 @@
 .. automodule:: historydag.dag
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -26,10 +21,6 @@
       history_dag_from_trees
       make_binary_complete_dag
    
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -39,17 +30,9 @@
       PreorderHistoryBuilder
       PreorderTreeBuilder
    
-   
-
-   
-   
    .. rubric:: Exceptions
 
    .. autosummary::
    
       IntersectionError
    
-   
-
-
-
