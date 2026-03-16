@@ -170,9 +170,11 @@ def test_postorder():
     tree = ete3.Tree(newickstring2, format=1)
     dag = from_tree(tree, ["sequence"])
     assert [
-        namedict[node.label.sequence]
-        if isinstance(node.label, tuple)
-        else str(node.label)
+        (
+            namedict[node.label.sequence]
+            if isinstance(node.label, tuple)
+            else str(node.label)
+        )
         for node in dag.postorder()
     ] == [
         4,

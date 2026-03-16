@@ -221,6 +221,7 @@ class HistoryDag:
     appropriate subclass's `_required_label_fields` attribute. Be sure to document each subclass, including available
     conversion functions and their keywords, in each subclass's docstring.
     """
+
     _required_label_fields = dict()
     _default_args = frozendict(parsimony_utils.hamming_distance_countfuncs) | {
         "start_func": (lambda n: 0),
@@ -653,12 +654,14 @@ class HistoryDag:
             return res
 
         node_postorder = [
-            UANode(EdgeSet())
-            if label_list[labelidx] is None
-            else HistoryDagNode(
-                (Label(*label_list[labelidx])),
-                {unpack_labels(clade): EdgeSet() for clade in clades},
-                attr,
+            (
+                UANode(EdgeSet())
+                if label_list[labelidx] is None
+                else HistoryDagNode(
+                    (Label(*label_list[labelidx])),
+                    {unpack_labels(clade): EdgeSet() for clade in clades},
+                    attr,
+                )
             )
             for labelidx, clades, attr in node_list
         ]
@@ -1644,14 +1647,14 @@ class HistoryDag:
                 if parent == child:  # skip self-edges
                     continue
                 # Shifts color pallete to less extreme lower bouund
-                color = f"0.0000 {support/total_trees * 0.9 + 0.1} 1.000"
+                color = f"0.0000 {support / total_trees * 0.9 + 0.1} 1.000"
                 G.edge(
                     label_ids[parent],
                     label_ids[child],
                     penwidth="5",
                     color=color,
-                    label=f"{support/total_trees:.2}",
-                    weight=f"{support/total_trees}",
+                    label=f"{support / total_trees:.2}",
+                    weight=f"{support / total_trees}",
                 )
         return G
 

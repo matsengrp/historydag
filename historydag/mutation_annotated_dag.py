@@ -27,7 +27,6 @@ import json
 from math import log
 from typing import NamedTuple, Callable
 
-
 _pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
 _pb_nuc_codes = {nuc: code for code, nuc in _pb_nuc_lookup.items()}
 
@@ -624,6 +623,9 @@ def load_MAD_protobuf(
         def __init__(self, pbdata):
             self.pbdata = pbdata
             self.reference = pbdata.reference_seq
+            assert all(
+                nn.node_id == idx for idx, nn in enumerate(pbdata.node_names)
+            ), "node_names entries must be ordered by node_id for positional indexing"
             parent_edges = {node.node_id: [] for node in pbdata.node_names}
             # a list of list of a node's child edges
             child_edges = {node.node_id: [] for node in pbdata.node_names}
@@ -664,7 +666,7 @@ def load_MAD_protobuf(
 
                 def _id_func(nid):
                     if self.is_leaf(nid):
-                        return pbdata.node_names[node_id].condensed_leaves[0]
+                        return pbdata.node_names[nid].condensed_leaves[0]
                     else:
                         return str(nid)
 
@@ -672,7 +674,7 @@ def load_MAD_protobuf(
 
                 def _id_func(nid):
                     if self.is_leaf(nid):
-                        return pbdata.node_names[node_id].condensed_leaves[0]
+                        return pbdata.node_names[nid].condensed_leaves[0]
                     else:
                         return None
 

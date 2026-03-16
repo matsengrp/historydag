@@ -23,7 +23,6 @@ from typing import (
 )
 from typing import TYPE_CHECKING
 
-
 try:
     from math import comb
 except ImportError:
@@ -160,7 +159,7 @@ def explode_label(labelfield: str):
     """
 
     def decorator(
-        func: Callable[[Any], Iterable[Any]]
+        func: Callable[[Any], Iterable[Any]],
     ) -> Callable[[Label], Iterable[Label]]:
         @wraps(func)
         def wrapfunc(label, *args, **kwargs):
@@ -202,7 +201,7 @@ def hist(c: Counter, samples: int = 1):
     ls.sort()
     print("Weight\t| Frequency\n------------------")
     for weight, freq in ls:
-        print(f"{weight}  \t| {freq if samples==1 else freq/samples}")
+        print(f"{weight}  \t| {freq if samples == 1 else freq / samples}")
 
 
 def is_collapsed(tree: ete3.TreeNode) -> bool:

@@ -48,9 +48,11 @@ def JC_cg_log_edge_weight(seq1, seq2):
 JC_cg_branch_length_countfuncs = AddFuncDict(
     {
         "start_func": lambda n: 0,
-        "edge_weight_func": lambda n1, n2: 0
-        if n1.is_ua_node()
-        else JC_cg_branch_length(n1.label.compact_genome, n2.label.compact_genome),
+        "edge_weight_func": lambda n1, n2: (
+            0
+            if n1.is_ua_node()
+            else JC_cg_branch_length(n1.label.compact_genome, n2.label.compact_genome)
+        ),
         "accum_func": sum,
     },
     name="JukesCantorBranchLength",
@@ -59,9 +61,11 @@ JC_cg_branch_length_countfuncs = AddFuncDict(
 JC_cg_log_countfuncs = AddFuncDict(
     {
         "start_func": lambda n: 0,
-        "edge_weight_func": lambda n1, n2: 0
-        if n1.is_ua_node()
-        else JC_cg_log_edge_weight(n1.label.compact_genome, n2.label.compact_genome),
+        "edge_weight_func": lambda n1, n2: (
+            0
+            if n1.is_ua_node()
+            else JC_cg_log_edge_weight(n1.label.compact_genome, n2.label.compact_genome)
+        ),
         "accum_func": sum,
     },
     name="JukesCantorLogLikelihood",
@@ -70,9 +74,11 @@ JC_cg_log_countfuncs = AddFuncDict(
 JC_branch_length_countfuncs = AddFuncDict(
     {
         "start_func": lambda n: 0,
-        "edge_weight_func": lambda n1, n2: 0
-        if n1.is_ua_node()
-        else JC_branch_length(n1.label.sequence, n2.label.sequence),
+        "edge_weight_func": lambda n1, n2: (
+            0
+            if n1.is_ua_node()
+            else JC_branch_length(n1.label.sequence, n2.label.sequence)
+        ),
         "accum_func": sum,
     },
     name="JukesCantorBranchLength",
@@ -81,9 +87,11 @@ JC_branch_length_countfuncs = AddFuncDict(
 JC_log_countfuncs = AddFuncDict(
     {
         "start_func": lambda n: 0,
-        "edge_weight_func": lambda n1, n2: 0
-        if n1.is_ua_node()
-        else JC_log_edge_weight(n1.label.sequence, n2.label.sequence),
+        "edge_weight_func": lambda n1, n2: (
+            0
+            if n1.is_ua_node()
+            else JC_log_edge_weight(n1.label.sequence, n2.label.sequence)
+        ),
         "accum_func": sum,
     },
     name="JukesCantorLogLikelihood",
