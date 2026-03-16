@@ -149,3 +149,44 @@ def test_adjusted_node_support():
         assert isclose(log(p), p_log, abs_tol=1e-09)
         assert isclose(log(adj_p), adj_p_log, abs_tol=1e-09)
         assert adj_p <= p
+
+
+def test_load_protobuf_leaf_id_closure():
+    """Regression test for closure variable bug in PBDAG._id_func.
+
+    PR #82 refactored load_MAD_protobuf into a PBDAG class defined inside
+    the load_MAD_protobuf function. The _id_func closures referenced
+    ``node_id`` instead of the parameter ``nid``. On Python < 3.12 this
+    accidentally worked: the list comprehension's ``node_id`` had its own
+    implicit function scope, so the closure resolved to the ``for node_id``
+    loop variable in the enclosing load_MAD_protobuf function—which happened
+    to equal ``nid`` at call time. Python 3.12 (PEP 709) inlined
+    comprehensions into the enclosing scope, so the comprehension's
+    ``node_id`` now shadows the outer loop variable; after the comprehension
+    finishes the cell is unbound, causing NameError on every call.
+
+    This test exercises _id_func on leaf nodes (both node_ids=True and
+    node_ids=False paths) and also verifies round-trip correctness by
+    re-loading from an exported protobuf.
+    """
+    dag = load_MAD_protobuf_file(
+        "sample_data/small_test_proto.pb", compact_genomes=True, node_ids=True
+    )
+    leaves = list(dag.get_leaves())
+    assert len(leaves) > 0
+    # Verify leaf node_id labels are non-None strings (not internal node IDs)
+    for leaf in leaves:
+        assert isinstance(leaf.label.node_id, str)
+
+    # Also test the node_ids=False path, which had the same bug
+    dag2 = load_MAD_protobuf_file(
+        "sample_data/small_test_proto.pb", compact_genomes=True, node_ids=False
+    )
+    leaves2 = list(dag2.get_leaves())
+    assert len(leaves2) > 0
+
+    # Round-trip: export to protobuf and re-import, verify leaf labels match
+    reloaded = load_MAD_protobuf(dag.to_protobuf(), compact_genomes=True, node_ids=True)
+    assert set(nd.label for nd in dag.get_leaves()) == set(
+        nd.label for nd in reloaded.get_leaves()
+    )
