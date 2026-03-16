@@ -624,6 +624,9 @@ def load_MAD_protobuf(
         def __init__(self, pbdata):
             self.pbdata = pbdata
             self.reference = pbdata.reference_seq
+            assert all(
+                nn.node_id == idx for idx, nn in enumerate(pbdata.node_names)
+            ), "node_names entries must be ordered by node_id for positional indexing"
             parent_edges = {node.node_id: [] for node in pbdata.node_names}
             # a list of list of a node's child edges
             child_edges = {node.node_id: [] for node in pbdata.node_names}
