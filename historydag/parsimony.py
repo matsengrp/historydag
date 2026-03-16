@@ -1,4 +1,5 @@
 """A module implementing Sankoff Algorithm."""
+
 import random
 import ete3
 import numpy as np

@@ -14,6 +14,7 @@ which describes unit transition costs between non-identical ``Characters``,
 and :class:`SitewiseTransitionModel`, which allows transition costs to depend on the
 location in a sequence in which a transition occurs.
 """
+
 import numpy as np
 import random
 import historydag.utils as utils

@@ -27,7 +27,6 @@ import json
 from math import log
 from typing import NamedTuple, Callable
 
-
 _pb_nuc_lookup = {0: "A", 1: "C", 2: "G", 3: "T"}
 _pb_nuc_codes = {nuc: code for code, nuc in _pb_nuc_lookup.items()}
 
